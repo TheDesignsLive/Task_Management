@@ -26,7 +26,9 @@ app.post("/signup", (req, res) => {
     const sql = "INSERT INTO admins (name, company_name, email, phone, password) VALUES (?,?,?,?,?)";
 
     con.query(sql, [name, company_name, email, phone, password], (err, result) => {
-        if (err) return res.send("Email already exists ❌");
+        if (err) {
+          return res.send("Email already exists ❌");
+        }
         res.send("Signup Success ✅");
     });
 });
@@ -38,8 +40,9 @@ app.post("/login", (req, res) => {
     const sql = "SELECT * FROM admins WHERE email=? AND password=?";
 
     con.query(sql, [email, password], (err, result) => {
-        if (err) throw err;
-
+        if (err) {
+          throw err;
+        }
         if (result.length > 0) {
             res.send("Login Success ✅");
         } else {
