@@ -3,7 +3,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 
-const con = require('./index'); 
+
+const con = require('./config/db'); 
 const app = express();
 const PORT = 3000;
 
@@ -17,7 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.get('/', (req, res) => {
-  res.render('home');
+  res.render('signup');
 });
 
 
@@ -37,18 +38,18 @@ app.post('/add-task', (req, res) => {
   const due_date = date && date.trim() !== '' ? date : null;
   const assigned_to = assignedTo && assignedTo.trim() !== '' ? assignedTo : 'Unassigned';
 
-  const query = `
-    INSERT INTO task (task, due_date, priority, assigned_to)
-    VALUES (?, ?, ?, ?)
-  `;
+  // const query = `
+  //   INSERT INTO task (task, due_date, priority, assigned_to)
+  //   VALUES (?, ?, ?, ?)
+  // `;
 
-  con.query(query, [task.trim(), due_date, dbPriority, assigned_to], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send('Database error');
-    }
-    res.send('Task added successfully!');
-  });
+  // con.query(query, [task.trim(), due_date, dbPriority, assigned_to], (err, result) => {
+  //   if (err) {
+  //     console.log(err);
+  //     return res.status(500).send('Database error');
+  //   }
+  //   res.send('Task added successfully!');
+  // });
 });
 
 app.listen(PORT, () => {
