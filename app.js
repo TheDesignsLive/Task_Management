@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.get('/', (req, res) => {
-  res.render('signup');
+  res.render('home');
 });
 
 app.post("/signup", (req, res) => {
