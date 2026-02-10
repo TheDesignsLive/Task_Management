@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg,#0f766e,#14b8a6);
+}
+
+/* Card */
+.container{
+    width:380px;
+    background:#fff;
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* Tabs */
+.tabs{
+    display:flex;
+    position:relative;
+    border-bottom:2px solid #e5e5e5;
+    margin-bottom:20px;
+}
+
+.tab{
+    flex:1;
+    text-align:center;
+    padding:10px;
+    cursor:pointer;
+    font-weight:bold;
+    color:#666;
+}
+
+.tab.active{
+    color:#0f766e;
+}
+
+/* Sliding underline */
+.underline{
+    position:absolute;
+    bottom:-2px;
+    left:0;
+    width:50%;
+    height:3px;
+    background:#14b8a6;
+    transition:0.3s;
+}
+
+/* Forms */
+.form{
+    display:none;
+}
+
+.form.active{
+    display:block;
+}
+
+.input-group{
+    margin-bottom:15px;
+}
+
+.input-group input{
+    width:100%;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    outline:none;
+}
+
+.input-group input:focus{
+    border-color:#14b8a6;
+    box-shadow:0 0 5px rgba(20,184,166,0.4);
+}
+
+button{
+    width:100%;
+    padding:11px;
+    border:none;
+    border-radius:6px;
+    background:#14b8a6;
+    color:#fff;
+    font-size:15px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#0f766e;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" onclick="showTab(0)">Login</div>
+        <div class="tab" onclick="showTab(1)">Signup</div>
+        <div class="underline" id="underline"></div>
+    </div>
+
+    <!-- Login Form -->
+    <form class="form active">
+        <div class="input-group">
+            <input type="email" placeholder="Email">
+        </div>
+
+        <div class="input-group">
+            <input type="password" placeholder="Password">
+        </div>
+
+        <button>Login</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form class="form">
+        <div class="input-group">
+            <input type="text" placeholder="Full Name">
+        </div>
+
+        <div class="input-group">
+            <input type="text" placeholder="Company Name">
+        </div>
+
+        <div class="input-group">
+            <input type="email" placeholder="Email">
+        </div>
+
+        <div class="input-group">
+            <input type="text" placeholder="Phone">
+        </div>
+
+        <div class="input-group">
+            <input type="password" placeholder="Password">
+        </div>
+
+        <button>Create Account</button>
+    </form>
+
+</div>
+
+<script>
+function showTab(index){
+    const tabs = document.querySelectorAll(".tab");
+    const forms = document.querySelectorAll(".form");
+    const underline = document.getElementById("underline");
+
+    tabs.forEach(t=>t.classList.remove("active"));
+    forms.forEach(f=>f.classList.remove("active"));
+
+    tabs[index].classList.add("active");
+    forms[index].classList.add("active");
+
+    underline.style.left = index * 50 + "%";
+}
+</script>
+
+</body>
+</html>
