@@ -1,0 +1,160 @@
+<style>
+:root{
+  --teal1:#0f9d9a;
+  --teal2:#1bb3a9;
+  --light:#e9f2ef;
+  --white:#ffffff;
+  --border:#d6e3df;
+}
+
+body{
+  margin:0;
+  font-family:Segoe UI, Arial, sans-serif;
+  background:#f4f6f5;
+}
+
+.navbar{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:10px 16px;
+  background:linear-gradient(to right,var(--teal1),var(--teal2));
+  box-shadow:0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logo{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:#0b6e6b;
+}
+
+.input-box{
+  flex:1;
+  background:var(--light);
+  background-color: #fff;
+  border-radius:20px;
+  padding:6px 14px;
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  max-width: 900px;
+  height: 28px;
+}
+
+textarea{
+  width:100%;
+  border:none;
+  resize:none;
+  outline:none;
+  background:transparent;
+  font-size:14px;
+  padding:6px 0;
+  height:22px;
+  overflow:hidden;
+  margin-top: 4px;
+}
+
+.icon-btn{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 8px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+select{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-size:13px;
+}
+
+.flag-red{color:red;}
+.flag-green{color:green;}
+.flag-blue{color:blue;}
+.calendar-wrapper {
+  position: relative; 
+  display: inline-block;
+  margin-right: 10px; 
+}
+
+#flag {
+  margin-right: 10px; 
+}
+
+.input-box select:last-child {
+  margin-right: 0; 
+}
+</style>
+
+<div class="navbar">
+
+  <div class="logo"><img src="" alt=""></div>
+
+  <div class="input-box">
+    <textarea id="taskInput" placeholder="Add Task here"></textarea>
+
+    <div class="calendar-wrapper" style="position: relative;">
+      <button class="icon-btn" onclick="openDate()">📅</button>
+      <input type="date" id="datePicker" 
+             style="position:absolute; top:16px; left:-90px; opacity:0; width:28px; height:28px;">
+    </div>
+
+    <select id="flag">
+      <option class="flag-red">High</option>
+      <option class="flag-green">Medium</option>
+      <option class="flag-blue">Low</option>
+    </select>
+
+    <select id="member">
+      <option>My Self</option>
+      <option>Member 1</option>
+      <option>Member 2</option>
+      <option>Member 3</option>
+    </select>
+  </div>
+
+</div>
+
+<script>
+const textarea = document.getElementById("taskInput");
+
+textarea.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault(); 
+    const task = this.value.trim();
+    const date = document.getElementById("datePicker").value;
+    const priority = document.getElementById("flag").value;
+    const assignedTo = document.getElementById("member").value;
+
+    if(!task){
+      alert("Task cannot be empty!");
+      return;
+    }
+
+    fetch('/add-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task, date, priority, assignedTo })
+    })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      
+      textarea.value = '';
+      document.getElementById("datePicker").value = '';
+    })
+    .catch(err => console.error(err));
+  }
+});
+
+function openDate(){
+  document.getElementById("datePicker").showPicker();
+}
+</script>
