@@ -21,7 +21,6 @@ body{
     background: linear-gradient(135deg,#0f766e,#14b8a6);
 }
 
-/* Card */
 .container{
     width:380px;
     background:#fff;
@@ -30,7 +29,6 @@ body{
     box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
-/* Tabs */
 .tabs{
     display:flex;
     position:relative;
@@ -51,7 +49,6 @@ body{
     color:#0f766e;
 }
 
-/* Sliding underline */
 .underline{
     position:absolute;
     bottom:-2px;
@@ -62,7 +59,6 @@ body{
     transition:0.3s;
 }
 
-/* Forms */
 .form{
     display:none;
 }
@@ -110,49 +106,48 @@ button:hover{
 
 <div class="container">
 
-    <!-- Tabs -->
     <div class="tabs">
         <div class="tab active" onclick="showTab(0)">Login</div>
         <div class="tab" onclick="showTab(1)">Signup</div>
         <div class="underline" id="underline"></div>
     </div>
 
-    <!-- Login Form -->
-    <form class="form active">
+    <!-- Login -->
+    <form class="form active" id="loginForm">
         <div class="input-group">
-            <input type="email" placeholder="Email">
+            <input type="email" id="loginEmail" placeholder="Email">
         </div>
 
         <div class="input-group">
-            <input type="password" placeholder="Password">
+            <input type="password" id="loginPassword" placeholder="Password">
         </div>
 
-        <button>Login</button>
+        <button type="submit">Login</button>
     </form>
 
-    <!-- Signup Form -->
-    <form class="form">
+    <!-- Signup -->
+    <form class="form" id="signupForm">
         <div class="input-group">
-            <input type="text" placeholder="Full Name">
+            <input type="text" id="name" placeholder="Full Name">
         </div>
 
         <div class="input-group">
-            <input type="text" placeholder="Company Name">
+            <input type="text" id="company_name" placeholder="Company Name">
         </div>
 
         <div class="input-group">
-            <input type="email" placeholder="Email">
+            <input type="email" id="email" placeholder="Email">
         </div>
 
         <div class="input-group">
-            <input type="text" placeholder="Phone">
+            <input type="text" id="phone" placeholder="Phone">
         </div>
 
         <div class="input-group">
-            <input type="password" placeholder="Password">
+            <input type="password" id="password" placeholder="Password">
         </div>
 
-        <button>Create Account</button>
+        <button type="submit">Create Account</button>
     </form>
 
 </div>
@@ -171,6 +166,45 @@ function showTab(index){
 
     underline.style.left = index * 50 + "%";
 }
+
+/* ================= BACKEND CONNECT ================= */
+
+// LOGIN
+document.getElementById("loginForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    const res = await fetch("/login", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.text();
+    alert(data);
+});
+
+// SIGNUP
+document.getElementById("signupForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const company_name = document.getElementById("company_name").value;
+    const email = document.getElementById("email").value;
+    const phone = document.getElementById("phone").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch("/signup", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ name, company_name, email, phone, password })
+    });
+
+    const data = await res.text();
+    alert(data);
+});
 </script>
 
 </body>
