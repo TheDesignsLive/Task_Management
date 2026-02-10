@@ -1,9 +1,7 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
-
-const con = require('./config/db'); 
+const con = require('./config/db'); // mysql2 promise pool
 const app = express();
 const PORT = 3000;
 
@@ -15,71 +13,52 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 app.get('/', (req, res) => {
-  res.render('home');
+  res.render('signup');
 });
 
-app.post("/signup", (req, res) => {
+// ================= SIGNUP ====================
+app.post("/signup", async (req, res) => {
     const { name, company_name, email, phone, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.send("Please fill all required fields ❌");
+    }
 
     const sql = "INSERT INTO admins (name, company_name, email, phone, password) VALUES (?,?,?,?,?)";
 
-    con.query(sql, [name, company_name, email, phone, password], (err, result) => {
-        if (err) {
-          return res.send("Email already exists ❌");
-        }
+    try {
+        await con.query(sql, [name, company_name, email, phone, password]);
         res.send("Signup Success ✅");
-    });
+    } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+            res.send("Email already exists ❌");
+        } else {
+            console.error(err);
+            res.send("Something went wrong ❌");
+        }
+    }
 });
 
-// ================= LOGIN =================
-app.post("/login", (req, res) => {
+// ================= LOGIN =====================
+app.post("/login", async (req, res) => {
     const { email, password } = req.body;
+
+    if (!email || !password) return res.send("Please fill all fields ❌");
 
     const sql = "SELECT * FROM admins WHERE email=? AND password=?";
 
-    con.query(sql, [email, password], (err, result) => {
-        if (err) {
-          throw err;
-        }
-        if (result.length > 0) {
+    try {
+        const [rows] = await con.query(sql, [email, password]);
+        if (rows.length > 0) {
             res.send("Login Success ✅");
         } else {
             res.send("Invalid Email or Password ❌");
         }
-    });
-});
-
-
-app.post('/add-task', (req, res) => {
-  const { task, date, priority, assignedTo } = req.body;
-
-  if (!task || task.trim() === '') {
-    return res.status(400).send('Task cannot be empty!');
-  }
-
-  
-  let dbPriority = 'BLUE'; // default
-  if (priority === 'High') dbPriority = 'RED';
-  else if (priority === 'Medium') dbPriority = 'YELLOW';
-  else if (priority === 'Low') dbPriority = 'BLUE';
-
-  const due_date = date && date.trim() !== '' ? date : null;
-  const assigned_to = assignedTo && assignedTo.trim() !== '' ? assignedTo : 'Unassigned';
-
-  const query = `
-    INSERT INTO task (task, due_date, priority, assigned_to)
-    VALUES (?, ?, ?, ?)
-  `;
-
-  con.query(query, [task.trim(), due_date, dbPriority, assigned_to], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send('Database error');
+    } catch (err) {
+        console.error(err);
+        res.send("Database error ❌");
     }
-    res.send('Task added successfully!');
-  });
 });
 
 app.listen(PORT, () => {
