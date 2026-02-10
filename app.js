@@ -20,6 +20,34 @@ app.get('/', (req, res) => {
   res.render('signup');
 });
 
+app.post("/signup", (req, res) => {
+    const { name, company_name, email, phone, password } = req.body;
+
+    const sql = "INSERT INTO admins (name, company_name, email, phone, password) VALUES (?,?,?,?,?)";
+
+    con.query(sql, [name, company_name, email, phone, password], (err, result) => {
+        if (err) return res.send("Email already exists ❌");
+        res.send("Signup Success ✅");
+    });
+});
+
+// ================= LOGIN =================
+app.post("/login", (req, res) => {
+    const { email, password } = req.body;
+
+    const sql = "SELECT * FROM admins WHERE email=? AND password=?";
+
+    con.query(sql, [email, password], (err, result) => {
+        if (err) throw err;
+
+        if (result.length > 0) {
+            res.send("Login Success ✅");
+        } else {
+            res.send("Invalid Email or Password ❌");
+        }
+    });
+});
+
 
 app.post('/add-task', (req, res) => {
   const { task, date, priority, assignedTo } = req.body;
