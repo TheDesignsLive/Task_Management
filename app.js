@@ -6,6 +6,7 @@ const app = express();
 const PORT = 3000;
 
 const authRoutes = require('./routers/auth.routes');
+const homeroutes=require('./routers/home.routes');
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', authRoutes);
+app.use('/home',homeroutes);
 
 
 app.listen(PORT, () => {
