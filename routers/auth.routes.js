@@ -56,7 +56,7 @@ router.post("/login", async (req, res) => {
             );
 
             if (rows.length > 0) {
-                return res.send("User Login Success ✅");
+                return res.redirect("/home");
             } else {
                 return res.send("Invalid User Email or Password ❌");
             }
