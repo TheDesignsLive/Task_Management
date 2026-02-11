@@ -6,6 +6,11 @@ const app = express();
 const PORT = 3000;
 
 const authRoutes = require('./routers/auth.routes');
+const homeroutes=require('./routers/home.routes');
+const viewMemberRoutes = require('./routers/view_member');
+
+
+
 
 app.use(cors());
 app.use(express.json());
@@ -20,8 +25,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', authRoutes);
+app.use('/',homeroutes);
 
-
+app.use('/', viewMemberRoutes); // add this line
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
