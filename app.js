@@ -6,7 +6,6 @@ const session = require('express-session');
 
 const app = express();
 const PORT = 3000;
-const authRoutes = require('./routes/auth.routes');
 
 app.use(cors());
 app.use(express.json());
@@ -16,7 +15,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', authRoutes);
+app.get('/', (req, res) => {
+  res.render('signup');
+});
+
 
 // ================= SIGNUP ====================
 app.post("/signup", async (req, res) => {
