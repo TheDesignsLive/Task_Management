@@ -7,7 +7,7 @@ router.get("/home", async (req, res) => {
 
         console.log(req.session.role);
 
-        let showen_sidebar = "sidebar2";   // default
+        let showen_sidebar = "Usersidebar";   // default
 
         // ================= ADMIN =================
         if (req.session.role === "admin") {
@@ -36,7 +36,7 @@ router.get("/home", async (req, res) => {
                     if (roleRows.length > 0 && roleRows[0].can_manage_members == 1) {
                         showen_sidebar = "sidebar";
                     } else {
-                        showen_sidebar = "sidebar2";
+                        showen_sidebar = "Usersidebar";
                     }
                 }
 
