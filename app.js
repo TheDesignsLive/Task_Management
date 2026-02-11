@@ -44,30 +44,36 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
     const { email, password, login_type } = req.body;
 
-    if (!email || !password) {
+    console.log("TYPE:", login_type);   // 👈 check in terminal
+
+    if (!email || !password || !login_type) {
         return res.send("Please fill all fields ❌");
     }
 
     try {
 
-        // 🔹 LOGIN AS ADMIN
+        // 🔹 ADMIN LOGIN
         if (login_type === "admin") {
 
-            const sql = "SELECT * FROM admins WHERE email=? AND password=?";
-            const [rows] = await con.query(sql, [email, password]);
+            const [rows] = await con.query(
+                "SELECT * FROM admins WHERE email=? AND password=?",
+                [email, password]
+            );
 
             if (rows.length > 0) {
-                return res.send("Admin Login Success ✅");
+               return res.render("/home");
             } else {
                 return res.send("Invalid Admin Email or Password ❌");
             }
         }
 
-        // 🔹 LOGIN AS USER
-        else if (login_type === "user") {
+        // 🔹 USER LOGIN
+        if (login_type === "user") {
 
-            const sql = "SELECT * FROM users WHERE email=? AND password=?";
-            const [rows] = await con.query(sql, [email, password]);
+            const [rows] = await con.query(
+                "SELECT * FROM users WHERE email=? AND password=?",
+                [email, password]
+            );
 
             if (rows.length > 0) {
                 return res.send("User Login Success ✅");
@@ -76,14 +82,16 @@ app.post("/login", async (req, res) => {
             }
         }
 
-        else {
-            return res.send("Invalid login type ❌");
-        }
+        return res.send("Invalid login type ❌");
 
     } catch (err) {
         console.error(err);
         res.send("Database error ❌");
     }
+});
+
+app.get("/home", (req, res) => {
+  res.render("home");
 });
 
 
