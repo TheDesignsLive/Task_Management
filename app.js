@@ -6,6 +6,7 @@ const session = require('express-session');
 
 const app = express();
 const PORT = 3000;
+const authRoutes = require('./routes/auth.routes');
 
 app.use(cors());
 app.use(express.json());
@@ -15,10 +16,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
-  res.render('signup');
-});
-
+app.use('/', authRoutes);
 
 // ================= SIGNUP ====================
 app.post("/signup", async (req, res) => {
@@ -93,8 +91,6 @@ app.post("/login", async (req, res) => {
     }
 });
 
-=======
->>>>>>> 7660d1ce6603b11115f18c4940c56c1658a0d0fd
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
