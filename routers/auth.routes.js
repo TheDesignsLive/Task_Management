@@ -1,6 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const session = require('express-session');
+
+// ================= SESSION ====================
+router.use(session({
+    secret: "mysecretkey",
+    resave: false,
+    saveUninitialized: true
+}));
 
 // ================= SIGNUP ====================
 router.post("/signup", async (req, res) => {
@@ -13,8 +21,13 @@ router.post("/signup", async (req, res) => {
     const sql = "INSERT INTO admins (name, company_name, email, phone, password) VALUES (?,?,?,?,?)";
 
     try {
-        await con.query(sql, [name, company_name, email, phone, password]);
-        res.render('signup');
+        const [result] = await con.query(sql, [name, company_name, email, phone, password]);
+
+        // ✅ STORE SESSION
+        req.session.userId = result.insertId;
+        req.session.role = "admin";
+
+        return res.redirect("/home");
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             res.send("Email already exists ❌");
@@ -42,6 +55,11 @@ router.post("/login", async (req, res) => {
             );
 
             if (rows.length > 0) {
+
+                // ✅ STORE SESSION
+                req.session.userId = rows[0].id;
+                req.session.role = "admin";
+
                 return res.redirect("/home");
             } else {
                 return res.send("Invalid Admin Email or Password ❌");
@@ -56,7 +74,12 @@ router.post("/login", async (req, res) => {
             );
 
             if (rows.length > 0) {
-                return res.send("User Login Success ✅");
+
+                // ✅ STORE SESSION
+                req.session.userId = rows[0].id;
+                req.session.role = "user";
+
+                return res.redirect("/home");
             } else {
                 return res.send("Invalid User Email or Password ❌");
             }

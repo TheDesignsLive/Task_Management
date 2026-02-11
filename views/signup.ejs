@@ -196,9 +196,9 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         body: JSON.stringify({ email, password, login_type: loginType })
     });
     if (res.redirected) {
-    window.location.href = res.url;
-    return;
-}
+        window.location.href = res.url;
+        return;
+    }
 
     const data = await res.text();
     alert(data);
@@ -219,6 +219,10 @@ document.getElementById("signupForm").addEventListener("submit", async function(
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ name, company_name, email, phone, password })
     });
+    if (res.redirected) {
+        window.location.href = res.url;
+        return;
+    }
 
     const data = await res.text();
     alert(data);
