@@ -24,7 +24,7 @@ router.post("/signup", async (req, res) => {
         const [result] = await con.query(sql, [name, company_name, email, phone, password]);
 
         // ✅ STORE SESSION
-        req.session.userId = result.insertId;
+        req.session.adminId = result.insertId;
         req.session.role = "admin";
 
         return res.redirect("/home");
@@ -57,7 +57,7 @@ router.post("/login", async (req, res) => {
             if (rows.length > 0) {
 
                 // ✅ STORE SESSION
-                req.session.userId = rows[0].id;
+                req.session.adminId = rows[0].id;
                 req.session.role = "admin";
 
                 return res.redirect("/home");
@@ -78,6 +78,10 @@ router.post("/login", async (req, res) => {
                 // ✅ STORE SESSION
                 req.session.userId = rows[0].id;
                 req.session.role = "user";
+
+                // 🔹 ADDED (ONLY THIS PART)
+                req.session.admin_id = rows[0].admin_id;
+                req.session.role_id = rows[0].role_id;
 
                 return res.redirect("/home");
             } else {

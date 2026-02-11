@@ -3,9 +3,8 @@ const router = express.Router();
 const con = require('../config/db');   // DB connection
 
 router.get("/home", async (req, res) => {
-    if (req.session.userId) {
-
-        console.log(req.session.role);
+    if (req.session.userId || req.session.adminId) {
+        console.log(req.session);
 
         let show_sidebar = "Usersidebar";   // default
 
@@ -44,7 +43,10 @@ router.get("/home", async (req, res) => {
                 console.error(err);
             }
         }
-        // console.log(show_sidebar);
+
+
+
+
         return res.render("home", { show_sidebar });   // send variable
         
     }
