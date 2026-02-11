@@ -14,7 +14,7 @@ router.post("/signup", async (req, res) => {
 
     try {
         await con.query(sql, [name, company_name, email, phone, password]);
-        res.render('signup');
+         return res.redirect("/home");
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             res.send("Email already exists ❌");
