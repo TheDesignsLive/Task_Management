@@ -71,7 +71,8 @@ body{
     margin-bottom:15px;
 }
 
-.input-group input{
+.input-group input,
+.input-group select{
     width:100%;
     padding:10px;
     border-radius:6px;
@@ -79,7 +80,8 @@ body{
     outline:none;
 }
 
-.input-group input:focus{
+.input-group input:focus,
+.input-group select:focus{
     border-color:#14b8a6;
     box-shadow:0 0 5px rgba(20,184,166,0.4);
 }
@@ -114,6 +116,15 @@ button:hover{
 
     <!-- Login -->
     <form class="form active" id="loginForm">
+
+        <!-- 🔹 DROPDOWN ADDED -->
+        <div class="input-group">
+            <select id="loginType">
+                <option value="admin">Login as Admin</option>
+                <option value="user">Login as User</option>
+            </select>
+        </div>
+
         <div class="input-group">
             <input type="email" id="loginEmail" placeholder="Email">
         </div>
@@ -176,10 +187,13 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
+    // 🔹 GET LOGIN TYPE FROM DROPDOWN
+    const loginType = document.getElementById("loginType").value;
+
     const res = await fetch("/login", {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, login_type: loginType })
     });
 
     const data = await res.text();
