@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const con = require('./config/db'); // mysql2 promise pool
+const session = require('express-session');
+
 const app = express();
 const PORT = 3000;
 
