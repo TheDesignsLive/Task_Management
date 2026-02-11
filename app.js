@@ -29,7 +29,7 @@ app.post("/signup", async (req, res) => {
 
     try {
         await con.query(sql, [name, company_name, email, phone, password]);
-        res.send("Signup Success ✅");
+        res.render('signup');
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             res.send("Email already exists ❌");
