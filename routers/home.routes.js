@@ -44,7 +44,7 @@ router.get("/home", async (req, res) => {
                 console.error(err);
             }
         }
-        console.log(show_sidebar);
+        // console.log(show_sidebar);
         return res.render("home", { show_sidebar });   // send variable
         
     }

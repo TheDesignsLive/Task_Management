@@ -20,7 +20,6 @@
 
     .sidebar-container {
       width: 55px;
-      /* placeholder for sidebar styling */
     }
 
     .main-content {
@@ -73,19 +72,41 @@
       background-color: #CDF4F4;
     }
 
-    /* ====== Action Buttons ====== */
-    .action-btn {
+    /* ====== Suspend Button ====== */
+    .action-btn.suspend-btn {
       margin-right: 5px;
       padding: 5px 8px;
       border: none;
       border-radius: 3px;
       cursor: pointer;
       color: white;
+      background-color: #f44336; /* red */
     }
 
-    .edit-btn { background-color: #2196F3; }
-    .suspend-btn { background-color: #f44336; }
-    .delete-btn { background-color: #9C27B0; }
+    /* ====== Icon Actions ====== */
+    .action-icon {
+      margin-right: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .action-icon svg {
+      transition: opacity 0.2s;
+    }
+
+    .action-icon:hover svg {
+      opacity: 0.7;
+    }
+
+    .edit-icon svg {
+      
+      fill: #FFD000; /* yellow */
+    }
+
+    .delete-icon svg {
+      fill: #ed1e1e; /* red */
+    }
 
     /* ====== No Records ====== */
     .no-records {
@@ -101,28 +122,17 @@
       margin-right: 100px;
     }
 
-    /* ====== Navbar & Sidebar placeholders ====== */
-    .navbar {
-      /* placeholder */
+    /* ====== Sidebar Active ====== */
+    .nav-item.active {
+      border-left: 3px solid #00a896; /* green left border */
+      background-color: #095959;      /* dark teal bg */
     }
-
-    .sidebar {
-      /* placeholder */
-    }
-
-    /* ====== Table Rows ====== */
-    tr {
-      /* placeholder */
-    }
-
-    td, th {
-      /* placeholder */
-    }
-
-    /* ====== Buttons placeholders ====== */
-    button {
-      /* already styled, placeholder for future */
-    }
+    
+  .actions-container {
+  display: flex;
+  align-items: center;  /* vertically center icons/buttons */
+  gap: 10px;            /* space between items */
+}
 
   </style>
 </head>
@@ -166,10 +176,26 @@
                 <td><%= user.email %></td>
                 <td><%= user.status %></td>
                 <td>
-                  <button class="action-btn edit-btn" onclick="location.href='/edit-member/<%= user.id %>'">Edit</button>
-                  <button class="action-btn suspend-btn" onclick="location.href='/suspend-member/<%= user.id %>'">Suspend</button>
-                  <button class="action-btn delete-btn" onclick="location.href='/delete-member/<%= user.id %>'">Delete</button>
-                </td>
+  <div class="actions-container">
+    <!-- Suspend button -->
+    <button class="action-btn suspend-btn" onclick="location.href='/suspend-member/<%= user.id %>'">Suspend</button>
+
+    <!-- Edit icon -->
+    <a href="/edit-member/<%= user.id %>" class="action-icon edit-icon">
+      <svg class="icon" viewBox="0 0 24 24" width="20" height="20">
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      </svg>
+    </a>
+
+    <!-- Delete icon -->
+    <a href="/delete-member/<%= user.id %>" class="action-icon delete-icon">
+      <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="#E53935">
+        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+      </svg>
+    </a>
+  </div>
+</td>
+
               </tr>
             <% }) %>
           </tbody>
