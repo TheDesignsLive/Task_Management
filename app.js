@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', authRoutes);
-app.use('/home',homeroutes);
+app.use('/',homeroutes);
 
 
 app.listen(PORT, () => {
