@@ -2,10 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const con = require('./config/db'); // mysql2 promise pool
-const session = require('express-session');
-
 const app = express();
 const PORT = 3000;
+
+const authRoutes = require('./routers/auth.routes');
 
 app.use(cors());
 app.use(express.json());
@@ -19,79 +19,7 @@ app.get('/', (req, res) => {
   res.render('signup');
 });
 
-
-// ================= SIGNUP ====================
-app.post("/signup", async (req, res) => {
-    const { name, company_name, email, phone, password } = req.body;
-
-    if (!name || !email || !password) {
-        return res.send("Please fill all required fields ❌");
-    }
-
-    const sql = "INSERT INTO admins (name, company_name, email, phone, password) VALUES (?,?,?,?,?)";
-
-    try {
-        await con.query(sql, [name, company_name, email, phone, password]);
-
-        res.send("Signup Success ✅");z
-
-        res.render('signup');
-
-    } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-            res.send("Email already exists ❌");
-        } else {
-            console.error(err);
-            res.send("Something went wrong ❌");
-        }
-    }
-});
-
-// ================= LOGIN =====================
-app.post("/login", async (req, res) => {
-    const { email, password, login_type } = req.body;
-
-    if (!email || !password) {
-        return res.send("Please fill all fields ❌");
-    }
-
-    try {
-
-        // 🔹 LOGIN AS ADMIN
-        if (login_type === "admin") {
-
-            const sql = "SELECT * FROM admins WHERE email=? AND password=?";
-            const [rows] = await con.query(sql, [email, password]);
-
-            if (rows.length > 0) {
-                return res.send("Admin Login Success ✅");
-            } else {
-                return res.send("Invalid Admin Email or Password ❌");
-            }
-        }
-
-        // 🔹 LOGIN AS USER
-        else if (login_type === "user") {
-
-            const sql = "SELECT * FROM users WHERE email=? AND password=?";
-            const [rows] = await con.query(sql, [email, password]);
-
-            if (rows.length > 0) {
-                return res.send("User Login Success ✅");
-            } else {
-                return res.send("Invalid User Email or Password ❌");
-            }
-        }
-
-        else {
-            return res.send("Invalid login type ❌");
-        }
-
-    } catch (err) {
-        console.error(err);
-        res.send("Database error ❌");
-    }
-});
+app.use('/', authRoutes);
 
 
 app.listen(PORT, () => {
