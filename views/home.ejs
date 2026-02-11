@@ -82,7 +82,11 @@
   <div class="layout">
     <!-- Sidebar on the left -->
     <div class="sidebar-container">
-      <%- include('sidebar') %>
+      <% if (show_sidebar === 'sidebar') { %>
+        <%- include('sidebar') %>
+      <% } else if (show_sidebar === 'Usersidebar') { %>
+        <%- include('user_sidebar') %>
+      <% } %>
     </div>
 
     <!-- Main content on the right -->

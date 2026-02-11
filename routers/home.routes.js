@@ -7,11 +7,11 @@ router.get("/home", async (req, res) => {
 
         console.log(req.session.role);
 
-        let showen_sidebar = "Usersidebar";   // default
+        let show_sidebar = "Usersidebar";   // default
 
         // ================= ADMIN =================
         if (req.session.role === "admin") {
-            showen_sidebar = "sidebar";
+            show_sidebar = "sidebar";
         }
 
         // ================= USER =================
@@ -34,9 +34,9 @@ router.get("/home", async (req, res) => {
                     );
 
                     if (roleRows.length > 0 && roleRows[0].can_manage_members == 1) {
-                        showen_sidebar = "sidebar";
+                        show_sidebar = "sidebar";
                     } else {
-                        showen_sidebar = "Usersidebar";
+                        show_sidebar = "Usersidebar";
                     }
                 }
 
@@ -44,8 +44,8 @@ router.get("/home", async (req, res) => {
                 console.error(err);
             }
         }
-        console.log(showen_sidebar);
-        return res.render("home", { showen_sidebar });   // send variable
+        console.log(show_sidebar);
+        return res.render("home", { show_sidebar });   // send variable
         
     }
 
