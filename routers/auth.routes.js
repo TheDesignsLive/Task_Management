@@ -1,27 +1,9 @@
 const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const con = require('./config/db'); // mysql2 promise pool
-const session = require('express-session');
-
-const app = express();
-const PORT = 3000;
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/', (req, res) => {
-  res.render('signup');
-});
-
+const router = express.Router();
+const con = require('../config/db');
 
 // ================= SIGNUP ====================
-app.post("/signup", async (req, res) => {
+router.post("/signup", async (req, res) => {
     const { name, company_name, email, phone, password } = req.body;
 
     if (!name || !email || !password) {
@@ -32,11 +14,7 @@ app.post("/signup", async (req, res) => {
 
     try {
         await con.query(sql, [name, company_name, email, phone, password]);
-
-        res.send("Signup Success ✅");z
-
         res.render('signup');
-
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             res.send("Email already exists ❌");
@@ -48,33 +26,34 @@ app.post("/signup", async (req, res) => {
 });
 
 // ================= LOGIN =====================
-app.post("/login", async (req, res) => {
+router.post("/login", async (req, res) => {
     const { email, password, login_type } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password || !login_type) {
         return res.send("Please fill all fields ❌");
     }
 
     try {
-
-        // 🔹 LOGIN AS ADMIN
+        // ADMIN LOGIN
         if (login_type === "admin") {
-
-            const sql = "SELECT * FROM admins WHERE email=? AND password=?";
-            const [rows] = await con.query(sql, [email, password]);
+            const [rows] = await con.query(
+                "SELECT * FROM admins WHERE email=? AND password=?",
+                [email, password]
+            );
 
             if (rows.length > 0) {
-                return res.send("Admin Login Success ✅");
+                return res.redirect("/home");
             } else {
                 return res.send("Invalid Admin Email or Password ❌");
             }
         }
 
-        // 🔹 LOGIN AS USER
-        else if (login_type === "user") {
-
-            const sql = "SELECT * FROM users WHERE email=? AND password=?";
-            const [rows] = await con.query(sql, [email, password]);
+        // USER LOGIN
+        if (login_type === "user") {
+            const [rows] = await con.query(
+                "SELECT * FROM users WHERE email=? AND password=?",
+                [email, password]
+            );
 
             if (rows.length > 0) {
                 return res.send("User Login Success ✅");
@@ -83,9 +62,7 @@ app.post("/login", async (req, res) => {
             }
         }
 
-        else {
-            return res.send("Invalid login type ❌");
-        }
+        res.send("Invalid login type ❌");
 
     } catch (err) {
         console.error(err);
@@ -93,9 +70,4 @@ app.post("/login", async (req, res) => {
     }
 });
 
-=======
->>>>>>> 7660d1ce6603b11115f18c4940c56c1658a0d0fd
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+module.exports = router;
