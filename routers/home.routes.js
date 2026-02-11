@@ -3,7 +3,7 @@ const router = express.Router();
 
 router.get("/home", (req, res) => {
     if (req.session.userId) {
-        console.log(req.session);
+        console.log(req.session.role);
         return res.render("home");   
     }
     res.redirect("/");
