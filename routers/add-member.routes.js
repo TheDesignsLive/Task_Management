@@ -44,36 +44,65 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
             profile_pic = '/uploads/' + req.file.filename;
         }
 
-        // ---------- REQUESTED_BY LOGIC ----------
-        let requested_by = 0;
-        if (role === "user") {
-            requested_by = userId;
+        // =====================================================
+        // 🔥 ROLE BASED INSERT (ADDED ONLY THIS PART)
+        // =====================================================
+
+        if (role === "admin") {
+
+            // ===== INSERT INTO USERS =====
+            const sql = `
+                INSERT INTO users
+                (admin_id, role_id, name, email, phone, password, profile_pic, created_by, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', NOW())
+            `;
+
+            const values = [
+                admin_id,
+                role_id,
+                name,
+                email,
+                phone,
+                password,
+                profile_pic,
+                admin_id
+            ];
+
+            await con.execute(sql, values);
+
+            console.log("User inserted directly by admin");
+
+        } else if (role === "user") {
+
+            // ---------- REQUESTED_BY LOGIC ----------
+            let requested_by = userId;
+
+            // ===== INSERT INTO MEMBER REQUESTS =====
+            const sql = `
+                INSERT INTO member_requests
+                (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, created_by, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())
+            `;
+
+            const values = [
+                admin_id,
+                role_id,
+                requested_by,
+                name,
+                email,
+                phone,
+                password,
+                profile_pic,
+                role
+            ];
+
+            await con.execute(sql, values);
+
+            console.log("Member request inserted by user");
         }
 
-        // ---------- INSERT QUERY ----------
-        const sql = `
-            INSERT INTO member_requests
-            (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, created_by, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())
-        `;
+        // =====================================================
 
-        const values = [
-            admin_id,
-            role_id,
-            requested_by,
-            name,
-            email,
-            phone,
-            password,
-            profile_pic,
-            role
-        ];
-
-        await con.execute(sql, values);
-
-        console.log("Member request inserted successfully");
-
-        // redirect or send response
         res.redirect('/view_member');
 
     } catch (err) {
@@ -81,6 +110,5 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
         res.status(500).send("Database Insert Error");
     }
 });
-
 
 module.exports = router;
