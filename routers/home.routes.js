@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const con = require('../config/db');   // DB connection
+const con = require('../config/db'); // DB connection
 
 router.get("/home", async (req, res) => {
 
@@ -14,24 +14,19 @@ router.get("/home", async (req, res) => {
 
         // ================= ADMIN =================
         if (req.session.role === "admin") {
-
             show_sidebar = "sidebar";
             adminId = req.session.adminId;
-
         }
 
         // ================= USER =================
         else if (req.session.role === "user") {
-
             try {
-                // get user's role_id + admin_id
                 const [userRows] = await con.query(
                     "SELECT role_id, admin_id FROM users WHERE id=?",
                     [req.session.userId]
                 );
 
                 if (userRows.length > 0) {
-
                     const role_id = userRows[0].role_id;
                     adminId = userRows[0].admin_id;
 
@@ -55,17 +50,13 @@ router.get("/home", async (req, res) => {
 
         // ================= GET MEMBERS FOR DROPDOWN =================
         try {
-
             if (adminId) {
-
                 const [rows] = await con.query(
                     "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
                     [adminId]
                 );
-
-                members = rows;   // send to ejs
+                members = rows; // send to navbar
             }
-
         } catch (err) {
             console.error(err);
         }

@@ -92,7 +92,6 @@ select{
   margin-right: 0; 
 }
 </style>
-
 <div class="navbar">
 
   <div class="logo"><img src="" alt=""></div>
@@ -100,36 +99,29 @@ select{
   <div class="input-box">
     <textarea id="taskInput" placeholder="Add Task here"></textarea>
 
-    <div class="calendar-wrapper" style="position: relative;">
+    <div class="calendar-wrapper">
       <button class="icon-btn" onclick="openDate()">📅</button>
       <input type="date" id="datePicker" 
              style="position:absolute; top:16px; left:-90px; opacity:0; width:28px; height:28px;">
     </div>
 
     <select id="flag">
-      <option class="flag-red">High</option>
-      <option class="flag-green">Medium</option>
-      <option class="flag-blue">Low</option>
+      <option class="flag-red">RED</option>
+      <option class="flag-green">YELLOW</option>
+      <option class="flag-blue">BLUE</option>
     </select>
 
-<select id="member">
-  <option value="<%= session.adminId || session.userId %>">
-    My Self
-  </option>
+    <select id="member">
+      <option value="<%= session.adminId || session.userId %>">My Self</option>
 
-  <% if (members && members.length > 0) { %>
-    <% members.forEach(member => { %>
-      <option value="<%= member.id %>">
-        <%= member.name %>
-      </option>
-    <% }) %>
-  <% } %>
-</select>
-
-
+      <% if (members && members.length > 0) { %>
+        <% members.forEach(member => { %>
+          <option value="<%= member.id %>"><%= member.name %></option>
+        <% }) %>
+      <% } %>
+    </select>
 
   </div>
-
 </div>
 
 <script>
@@ -138,25 +130,30 @@ const textarea = document.getElementById("taskInput");
 textarea.addEventListener("keydown", function(e){
   if(e.key === "Enter" && !e.shiftKey){
     e.preventDefault(); 
-    const task = this.value.trim();
-    const date = document.getElementById("datePicker").value;
-    const priority = document.getElementById("flag").value;
-    const assignedTo = document.getElementById("member").value;
 
-    if(!task){
+    const fullText = this.value.trim();
+    if(!fullText){
       alert("Task cannot be empty!");
       return;
     }
 
+    // Split first line as title, rest as description
+    const lines = fullText.split(/\r?\n/);
+    const title = lines[0];
+    const description = lines.slice(1).join('\n');
+
+    const date = document.getElementById("datePicker").value;
+    const priority = document.getElementById("flag").value;
+    const assignedTo = document.getElementById("member").value;
+
     fetch('/add-task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task, date, priority, assignedTo })
+      body: JSON.stringify({ title, description, date, priority, assignedTo })
     })
     .then(res => res.text())
     .then(msg => {
       alert(msg);
-      
       textarea.value = '';
       document.getElementById("datePicker").value = '';
     })
