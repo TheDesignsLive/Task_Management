@@ -37,8 +37,7 @@
       gap: 10px;
       margin-bottom: 10px;
       margin-left: 26px;
-      margin-right: 50px;
-      
+      margin-right: 70px;
     }
 
     .sub-header input[type="text"] {
@@ -57,12 +56,10 @@
       border-radius: 100px;
       font-weight: bold;
       margin-top:30px ;
-      
     }
 
     /* ====== Table ====== */
     table {
-      
       margin-left: 50px;
       width: 90%;
       border-collapse: collapse;
@@ -89,67 +86,67 @@
       border-radius: 100px;
       cursor: pointer;
       color: white;
-      background-color: #f44336; /* red */
+      background-color: #f44336;
     }
 
-    /* ====== Icon Actions ====== */
-    .action-icon {
-      margin-right: 10px;
-      cursor: pointer;
-      display: inline-flex;
+    /* ===== Dialog ===== */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
       align-items: center;
+      z-index: 999;
     }
 
-    .action-icon svg {
-      transition: opacity 0.2s;
+    .dialog-box {
+      background: #fff;
+      width: 360px;
+      padding: 20px;
+      border-radius: 8px;
+      position: relative;
     }
 
-    .action-icon:hover svg {
-      opacity: 0.7;
+    .dialog-box input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
-    .edit-icon svg {
-      
-      fill: #FFD000; /* yellow */
+    .dialog-box label {
+      font-size: 13px;
+      font-weight: bold;
     }
 
-    .delete-icon svg {
-      fill: #ed1e1e; /* red */
+    .dialog-box button {
+      width: 100%;
+      padding: 10px;
+      background: #209595;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
-    /* ====== No Records ====== */
-    .no-records {
-      margin-top: 20px;
-      text-align: center;
-      color: #555;
+    /* Close ❌ */
+    .close-btn {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    #searchMember {
-      margin-top: 30px;
-      max-width: 400px;
-      margin-left: 30px;
-      margin-right: 600px;
+    .close-btn:hover {
+      color: red;
     }
-
-    /* ====== Sidebar Active ====== */
-    .nav-item.active {
-      border-left: 3px solid #00a896; /* green left border */
-      background-color: #095959;      /* dark teal bg */
-    }
-    
-  .actions-container {
-   
-  display: flex;
-  justify-content: center;
-  align-items: center;  /* vertically center icons/buttons */
-  gap: 10px;   
-           /* space between items */
-}
-
- button{
-  border-radius: 100px;
-}
-
   </style>
 </head>
 <body>
@@ -165,12 +162,12 @@
 
     <!-- Main content -->
     <div class="main-content">
+
       <!-- Search and buttons -->
       <div class="sub-header">
         <input type="text" placeholder="Search member..." id="searchMember">
         <button onclick="location.href='/add-category'">Add Category</button>
-        <button onclick="location.href='/add-member'">Add Member</button>
-        
+        <button onclick="openDialog()">Add Member</button>
       </div>
 
       <!-- Members Table -->
@@ -193,26 +190,8 @@
                 <td><%= user.email %></td>
                 <td><%= user.status %></td>
                 <td>
-  <div class="actions-container">
-    <!-- Suspend button -->
-    <button class="action-btn suspend-btn" onclick="location.href='/suspend-member/<%= user.id %>'">Suspend</button>
-
-    <!-- Edit icon -->
-    <a href="/edit-member/<%= user.id %>" class="action-icon edit-icon">
-      <svg class="icon" viewBox="0 0 24 24" width="20" height="20">
-        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-      </svg>
-    </a>
-
-    <!-- Delete icon -->
-    <a href="/delete-member/<%= user.id %>" class="action-icon delete-icon">
-      <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="#E53935">
-        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-      </svg>
-    </a>
-  </div>
-</td>
-
+                  <button class="action-btn suspend-btn" onclick="location.href='/suspend-member/<%= user.id %>'">Suspend</button>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -220,8 +199,44 @@
       <% } else { %>
         <div class="no-records">No records found</div>
       <% } %>
+
     </div>
   </div>
+
+  <!-- ===== Dialog Form ===== -->
+  <div class="dialog-overlay" id="dialogBox">
+    <div class="dialog-box">
+
+      <span class="close-btn" onclick="closeDialog()">✖</span>
+
+      <form action="/add-member" method="POST" enctype="multipart/form-data">
+
+        <input type="text" name="name" placeholder="Name" required>
+
+        <input type="email" name="email" placeholder="Email" required>
+
+        <input type="text" name="phone" placeholder="Phone">
+
+        <input type="password" name="password" placeholder="Password" required>
+
+        <label>Profile Picture (optional)</label>
+        <input type="file" name="profile_pic">
+
+        <button type="submit">Submit</button>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    function openDialog() {
+      document.getElementById("dialogBox").style.display = "flex";
+    }
+
+    function closeDialog() {
+      document.getElementById("dialogBox").style.display = "none";
+    }
+  </script>
 
 </body>
 </html>
