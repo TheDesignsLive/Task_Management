@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 
 app.use('/', authRoutes);
 app.use('/',homeroutes);
-app.use('/add-member',addmemberRoutes);
+//app.use('/add-member',addmemberRoutes);
 
 app.use('/', viewMemberRoutes); // add this line
 app.listen(PORT, () => {
