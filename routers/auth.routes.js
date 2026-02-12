@@ -59,7 +59,8 @@ router.post("/login", async (req, res) => {
                 // ✅ STORE SESSION
                 req.session.adminId = rows[0].id;
                 req.session.role = "admin";
-
+                // console.log("admin:");
+                // console.log(session);
                 return res.redirect("/home");
             } else {
                 return res.send("Invalid Admin Email or Password ❌");
@@ -82,7 +83,8 @@ router.post("/login", async (req, res) => {
                 // 🔹 ADDED (ONLY THIS PART)
                 req.session.admin_id = rows[0].admin_id;
                 req.session.role_id = rows[0].role_id;
-
+                // console.log("user:");
+                // console.log(session);
                 return res.redirect("/home");
             } else {
                 return res.send("Invalid User Email or Password ❌");
