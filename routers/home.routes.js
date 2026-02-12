@@ -4,7 +4,7 @@ const con = require('../config/db');   // DB connection
 
 router.get("/home", async (req, res) => {
     if (req.session.userId || req.session.adminId) {
-
+        console.log(req.session);
         let show_sidebar = "Usersidebar";   // default
 
         // ================= ADMIN =================
