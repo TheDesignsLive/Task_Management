@@ -8,6 +8,7 @@ const PORT = 3000;
 const authRoutes = require('./routers/auth.routes');
 const homeroutes=require('./routers/home.routes');
 const viewMemberRoutes = require('./routers/view_member');
+const addmemberRoutes=require('./routers/add-member.routes');
 
 
 
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
 
 app.use('/', authRoutes);
 app.use('/',homeroutes);
+app.use('/add-member',addmemberRoutes);
 
 app.use('/', viewMemberRoutes); // add this line
 app.listen(PORT, () => {
