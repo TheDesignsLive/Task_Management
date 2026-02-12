@@ -112,12 +112,22 @@ select{
       <option class="flag-blue">Low</option>
     </select>
 
-    <select id="member">
-      <option>My Self</option>
-      <option>Member 1</option>
-      <option>Member 2</option>
-      <option>Member 3</option>
-    </select>
+<select id="member">
+  <option value="<%= session.adminId || session.userId %>">
+    My Self
+  </option>
+
+  <% if (members && members.length > 0) { %>
+    <% members.forEach(member => { %>
+      <option value="<%= member.id %>">
+        <%= member.name %>
+      </option>
+    <% }) %>
+  <% } %>
+</select>
+
+
+
   </div>
 
 </div>
