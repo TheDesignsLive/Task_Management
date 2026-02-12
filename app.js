@@ -35,10 +35,15 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', authRoutes);
+
+app.use('/',homeroutes);
+app.use('/add-member',addmemberRoutes);
+
 app.use('/', homeroutes);
 app.use('/', viewMemberRoutes);
 // app.use('/', addmemberRoutes);
 app.use('/', taskRoutes);   // <-- Add this AFTER other routes
+
 
 // Start server
 app.listen(PORT, () => {
