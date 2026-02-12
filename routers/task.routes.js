@@ -16,6 +16,7 @@ router.post('/add-task', async (req, res) => {
                         ? req.session.adminId 
                         : req.session.userId;
 
+    const who_assigned = req.session.role;
     // Determine admin_id (owner of task)
     let admin_id;
     if (req.session.role === 'admin') {
@@ -31,12 +32,22 @@ router.post('/add-task', async (req, res) => {
     }
 
     // Insert task
-    await con.execute(
-      `INSERT INTO tasks 
-       (admin_id, title, description, priority, due_date, assigned_to, assigned_by, section, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'TASK', 'OPEN')`,
-      [admin_id, title, description || null, priority.toUpperCase(), date || null, assignedTo, assigned_by]
-    );
+  // Insert task
+await con.execute(
+  `INSERT INTO tasks 
+   (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assinged, section, status) 
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'TASK', 'OPEN')`,
+  [
+    admin_id,
+    title,
+    description || null,
+    priority.toUpperCase(),
+    date || null,
+    assignedTo,
+    assigned_by,
+    who_assigned   // now matches placeholder count
+  ]
+);
 
     res.send("Task added successfully!");
   } catch (err) {
