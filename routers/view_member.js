@@ -34,9 +34,24 @@ router.get('/view_member', async (req, res) => {
             }
         }
 
+        // ==============================
+        // ADD THIS (roles dropdown data)
+        // ==============================
+        const adminIdForRoles = req.session.adminId;
+
+        let roles = [];
+        if (adminIdForRoles) {
+            const [roleRows] = await con.query(
+                "SELECT id, role_name FROM roles WHERE admin_id=?",
+                [adminIdForRoles]
+            );
+            roles = roleRows;
+        }
+        // ==============================
         res.render('view_member', { 
             users,         // for table
             members,       // for dropdown
+            roles,         // <-- added
             session: req.session 
         });
 
