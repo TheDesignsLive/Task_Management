@@ -13,6 +13,7 @@ const homeroutes = require('./routers/home.routes');
 const viewMemberRoutes = require('./routers/view_member');
 const addmemberRoutes = require('./routers/add-member.routes');
 const taskRoutes = require('./routers/task.routes');
+const delete_member=require('./routers/delete-member.routes');
 
 // Middlewares
 app.use(cors());
@@ -38,6 +39,7 @@ app.use('/', authRoutes);
 
 app.use('/',homeroutes);
 app.use('/add-member',addmemberRoutes);
+app.use('/',delete_member);
 
 app.use('/', homeroutes);
 app.use('/', viewMemberRoutes);
