@@ -164,4 +164,23 @@ textarea.addEventListener("keydown", function(e){
 function openDate(){
   document.getElementById("datePicker").showPicker();
 }
+
+
+// ================= LOAD MEMBERS FROM SERVER =================
+fetch('/get-members')
+.then(res => res.json())
+.then(members => {
+
+  const memberSelect = document.getElementById("member");
+
+  members.forEach(member => {
+    const option = document.createElement("option");
+    option.value = member.id;
+    option.textContent = member.name;
+    memberSelect.appendChild(option);
+  });
+
+})
+.catch(err => console.error("Member Fetch Error:", err));
+
 </script>
