@@ -3,7 +3,7 @@ const router = express.Router();
 const con = require('../config/db');
 
 // ADD CATEGORY (ROLE)
-router.post('/add-role', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const adminId = req.session.adminId;
     const { role_name, control_type } = req.body;
