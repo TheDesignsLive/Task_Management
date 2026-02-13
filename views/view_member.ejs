@@ -202,7 +202,7 @@
   <div class="main-content">
     <div class="sub-header">
       <input type="text" placeholder="Search member..." id="searchMember">
-      <button onclick="openCategoryDialog()">Add Category</button>
+      <button onclick="location.href='/view-roles'">View Roles</button>
 
       <!-- ONLY CHANGE: open dialog instead of redirect -->
       <button onclick="openDialog()">Add Member</button>
@@ -280,36 +280,6 @@
   </div>
 </div>
 
-<!-- ===== ADD CATEGORY DIALOG ===== -->
-<div class="dialog-overlay" id="categoryDialog">
-  <div class="dialog-box">
-    <span class="close-btn" onclick="closeCategoryDialog()">✖</span>
-
-    <form action="/add-role" method="POST">
-
-      <!-- Role Name -->
-      <label style="display:block; margin-bottom:4px;">Role Name</label>
-      <input type="text" name="role_name" placeholder="Enter role name" required>
-
-      <!-- Checkbox Row -->
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-        <label style="margin:0;">Can Manage Members</label>
-        <input type="checkbox" name="can_manage_members" value="1" style="width:18px; height:18px;">
-      </div>
-
-      <!-- Control Type -->
-      <select name="control_type" required>
-        <option value="">Select Control Type</option>
-        <option value="ADMIN">ADMIN</option>
-        <option value="PARTIAL">PARTIAL</option>
-        <option value="NONE">NONE</option>
-      </select>
-
-      <button type="submit" style="margin-top:10px;">Create Role</button>
-    </form>
-  </div>
-</div>
-
 <script>
 function openDialog() {
   document.getElementById("dialogBox").style.display = "flex";
@@ -317,14 +287,6 @@ function openDialog() {
 function closeDialog() {
   document.getElementById("dialogBox").style.display = "none";
 }
-
-function openCategoryDialog() {
-  document.getElementById("categoryDialog").style.display = "flex";
-}
-function closeCategoryDialog() {
-  document.getElementById("categoryDialog").style.display = "none";
-}
-
 </script>
 
 </body>

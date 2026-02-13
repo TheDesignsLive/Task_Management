@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Roles</title>
+</head>
+<body>
+  <%- include('navbar') %>
+
+ 
+  <div class="layout">
+   
+    <div class="sidebar-container">
+
+      <% if (show_sidebar === 'sidebar') { %>
+        
+        <%- include('sidebar') %>
+      <% } else if (show_sidebar === 'Usersidebar') { %>
+        <%- include('user_sidebar') %>
+      <% } %>
+    </div>
+<h2>Roles List</h2>
+
+<% if (roles.length > 0) { %>
+  <table border="1" cellpadding="8">
+    <tr>
+      <th>ID</th>
+      <th>Role Name</th>
+      <th>Control Type</th>
+      <th>Manage Members</th>
+      <th>Created</th>
+    </tr>
+
+    <% roles.forEach(r => { %>
+      <tr>
+        <td><%= r.id %></td>
+        <td><%= r.role_name %></td>
+        <td><%= r.control_type %></td>
+        <td><%= r.can_manage_members ? 'YES' : 'NO' %></td>
+        <td><%= r.created_at %></td>
+      </tr>
+    <% }) %>
+
+  </table>
+<% } else { %>
+  <p>No roles found</p>
+<% } %>
+
+<br>
+<a href="/view_member">← Back to Members</a>
+
+</body>
+</html>
