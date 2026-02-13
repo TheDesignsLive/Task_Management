@@ -287,27 +287,28 @@
 
     <form action="/add-role" method="POST">
 
-      <label>Role Name</label>
+      <!-- Role Name -->
+      <label style="display:block; margin-bottom:4px;">Role Name</label>
       <input type="text" name="role_name" placeholder="Enter role name" required>
 
-      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-        <input type="checkbox" name="can_manage_members" value="1">
-        Can Manage Members
-      </label>
+      <!-- Checkbox Row -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <label style="margin:0;">Can Manage Members</label>
+        <input type="checkbox" name="can_manage_members" value="1" style="width:18px; height:18px;">
+      </div>
 
-      <label>Control Type</label>
+      <!-- Control Type -->
       <select name="control_type" required>
-        <option value="">Select Control</option>
+        <option value="">Select Control Type</option>
         <option value="ADMIN">ADMIN</option>
         <option value="PARTIAL">PARTIAL</option>
         <option value="NONE">NONE</option>
       </select>
 
-      <button type="submit">Create Role</button>
+      <button type="submit" style="margin-top:10px;">Create Role</button>
     </form>
   </div>
 </div>
-
 
 <script>
 function openDialog() {
