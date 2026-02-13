@@ -27,8 +27,8 @@ router.get('/view_member', async (req, res) => {
 
             if (adminId) {
                 const [rows] = await con.query(
-                    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
-                    [adminId]
+                    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
+                    [adminId, req.session.userId]
                 );
                 members = rows;
             }
