@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
       [adminId, role_name, control_type, can_manage_members]
     );
 
-    res.redirect('/view_member'); // back to pages
+    res.redirect('/view-roles'); // back to pages
 
   } catch (err) {
     console.error(err);
