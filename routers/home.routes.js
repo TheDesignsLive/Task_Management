@@ -8,10 +8,9 @@ router.get("/home", async (req, res) => {
         return res.redirect("/");
     }
 
-    console.log("SESSION:", req.session);
-
     let show_sidebar = "Usersidebar";
     let members = [];
+    let adminName = null;
     let adminId = null;
 
     try {
@@ -24,7 +23,17 @@ router.get("/home", async (req, res) => {
             show_sidebar = "sidebar";
             adminId = req.session.adminId;
 
-            // Get all company users
+            // Get admin name
+            const [adminRows] = await con.query(
+                "SELECT name FROM admins WHERE id=?",
+                [adminId]
+            );
+
+            if (adminRows.length > 0) {
+                adminName = adminRows[0].name;
+            }
+
+            // Get users
             const [rows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
                 [adminId]
@@ -38,45 +47,58 @@ router.get("/home", async (req, res) => {
         // ============================
         else if (req.session.role === "user") {
 
-            // Get user's role + admin_id
+            // First get admin_id of this user
             const [userRows] = await con.query(
-                "SELECT role_id, admin_id FROM users WHERE id=?",
+                "SELECT admin_id, role_id FROM users WHERE id=?",
                 [req.session.userId]
             );
 
-            if (userRows.length > 0) {
-
-                const role_id = userRows[0].role_id;
-                adminId = userRows[0].admin_id;
-
-                // Check permission
-                const [roleRows] = await con.query(
-                    "SELECT can_manage_members FROM roles WHERE id=?",
-                    [role_id]
-                );
-
-                if (roleRows.length > 0 && roleRows[0].can_manage_members == 1) {
-                    show_sidebar = "sidebar";
-                } else {
-                    show_sidebar = "Usersidebar";
-                }
-
-                // Get company users except himself
-                const [rows] = await con.query(
-                    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?",
-                    [adminId, req.session.userId]
-                );
-
-                members = rows;
+            if (userRows.length === 0) {
+                return res.send("User not found");
             }
+
+            adminId = userRows[0].admin_id;
+
+            // 🔥 Get admin name directly using admin_id
+            const [adminRows] = await con.query(
+                "SELECT name FROM admins WHERE id=?",
+                [adminId]
+            );
+
+            if (adminRows.length > 0) {
+                adminName = adminRows[0].name;
+            }
+
+            // Permission check
+            const role_id = userRows[0].role_id;
+
+            const [roleRows] = await con.query(
+                "SELECT can_manage_members FROM roles WHERE id=?",
+                [role_id]
+            );
+
+            if (roleRows.length > 0 && roleRows[0].can_manage_members == 1) {
+                show_sidebar = "sidebar";
+            } else {
+                show_sidebar = "Usersidebar";
+            }
+
+            // Get company users except himself
+            const [rows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
+                [adminId, req.session.userId]
+            );
+
+            members = rows;
         }
 
         // ============================
-        // 3️⃣ Render Home
+        // 3️⃣ Render
         // ============================
-        return res.render("home", {
+        res.render("home", {
             show_sidebar,
             members,
+            adminName,
             session: req.session
         });
 

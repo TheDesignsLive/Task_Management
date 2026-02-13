@@ -8,6 +8,7 @@ router.get('/view_member', async (req, res) => {
         let users = [];
         let members = [];
         let roles = [];
+        let adminName = null;   // ✅ New variable
 
         // ===============================
         // 1️⃣ ADMIN LOGIN
@@ -16,14 +17,24 @@ router.get('/view_member', async (req, res) => {
 
             const adminId = req.session.adminId;
 
-            // Show only this admin's users
+            // Get admin name
+            const [adminRows] = await con.query(
+                "SELECT name FROM admins WHERE id=?",
+                [adminId]
+            );
+
+            if (adminRows.length > 0) {
+                adminName = adminRows[0].name;
+            }
+
+            // Show only this admin's users (table)
             const [adminUsers] = await con.query(
                 "SELECT * FROM users WHERE admin_id=?",
                 [adminId]
             );
             users = adminUsers;
 
-            // Dropdown members (optional)
+            // Dropdown members
             const [rows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
                 [adminId]
@@ -43,7 +54,7 @@ router.get('/view_member', async (req, res) => {
         // ===============================
         else if (req.session.role === 'user') {
 
-            // Get admin_id of logged-in user
+            // Get admin_id of logged user
             const [userRows] = await con.query(
                 "SELECT admin_id FROM users WHERE id=?",
                 [req.session.userId]
@@ -52,6 +63,16 @@ router.get('/view_member', async (req, res) => {
             if (userRows.length > 0) {
 
                 const adminId = userRows[0].admin_id;
+
+                // ✅ Get Admin name
+                const [adminRows] = await con.query(
+                    "SELECT name FROM admins WHERE id=?",
+                    [adminId]
+                );
+
+                if (adminRows.length > 0) {
+                    adminName = adminRows[0].name;
+                }
 
                 // Show company users in table
                 const [companyUsers] = await con.query(
@@ -76,6 +97,7 @@ router.get('/view_member', async (req, res) => {
             users,
             members,
             roles,
+            adminName,   // ✅ Send admin name to EJS
             session: req.session
         });
 

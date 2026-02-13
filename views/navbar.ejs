@@ -118,16 +118,31 @@ select{
       <option class="flag-blue">BLUE</option>
     </select>
 
-    <select id="member">
-      <option value="<%= session.adminId || session.userId %>">My Self</option>
+  <select id="member">
 
-      <% if (members && members.length > 0) { %>
-        <% members.forEach(member => { %>
-          <option value="<%= member.id %>"><%= member.name %></option>
-        <% }) %>
-      <% } %>
+  <!-- Myself -->
+  <option value="<%= session.userId || session.adminId %>">
+    My Self
+  </option>
 
-    </select>
+  <!-- Show Admin Name if User Login -->
+  <% if (session.role === "user" && adminName) { %>
+    <option value="admin">
+      <%= adminName %> (Admin)
+    </option>
+  <% } %>
+
+  <!-- Members -->
+  <% if (members && members.length > 0) { %>
+    <% members.forEach(member => { %>
+      <option value="<%= member.id %>">
+        <%= member.name %>
+      </option>
+    <% }) %>
+  <% } %>
+
+</select>
+
 
   </div>
 </div>
