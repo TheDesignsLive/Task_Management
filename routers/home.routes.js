@@ -50,16 +50,14 @@ router.get("/home", async (req, res) => {
 
         // ================= GET MEMBERS FOR DROPDOWN =================
         try {
-           if (adminId) {
-    const currentUserId = req.session.userId || req.session.adminId;
-
-    const [rows] = await con.query(
-        "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?",
-        [adminId, currentUserId]
-    );
-    members = rows; // send to navbar
-}
-
+            if (adminId) {
+                const [rows] = await con.query(
+                    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
+                    [adminId]
+                );
+                members = rows; // send to navbar
+            }
+            
         } catch (err) {
             console.error(err);
         }
