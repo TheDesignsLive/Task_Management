@@ -217,7 +217,9 @@ table th {
             <td>
               <div class="actions-container">
 
-                <a href="/edit-role/<%= r.id %>" class="action-icon edit-icon">
+                <a href="javascript:void(0)" 
+   onclick="openEditDialog('<%= r.id %>','<%= r.role_name %>','<%= r.control_type %>','<%= r.can_manage_members %>')" 
+   class="action-icon edit-icon">
                   <svg viewBox="0 0 24 24" width="20" height="20">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/>
                   </svg>
@@ -270,6 +272,32 @@ table th {
     </form>
   </div>
 </div>
+<!-- ===== EDIT ROLE DIALOG ===== -->
+<div class="dialog-overlay" id="editRoleDialog">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeEditDialog()">✖</span>
+
+    <form  id="editRoleForm" method="POST">
+
+      <label>Role Name</label>
+      <input type="text" name="role_name" id="edit_role_name" required>
+
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <label>Can Manage Members</label>
+        <input type="checkbox" name="can_manage_members" value="1" id="edit_can_manage">
+      </div>
+
+      <select name="control_type" id="edit_control_type" required>
+        <option value="ADMIN">ADMIN</option>
+        <option value="PARTIAL">PARTIAL</option>
+        <option value="NONE">NONE</option>
+      </select>
+
+      <button type="submit">Update Role</button>
+    </form>
+  </div>
+</div>
+
 
 <script>
 function openCategoryDialog() {
@@ -278,6 +306,21 @@ function openCategoryDialog() {
 function closeCategoryDialog() {
   document.getElementById("categoryDialog").style.display = "none";
 }
+
+function openEditDialog(id, name, control, canManage) {
+  document.getElementById("editRoleDialog").style.display = "flex";
+
+  document.getElementById("edit_role_name").value = name;
+  document.getElementById("edit_control_type").value = control;
+  document.getElementById("edit_can_manage").checked = (canManage == 1);
+
+  document.getElementById("editRoleForm").action = "/edit-role/" + id;
+}
+
+function closeEditDialog() {
+  document.getElementById("editRoleDialog").style.display = "none";
+}
+
 </script>
 
 </body>
