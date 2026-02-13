@@ -202,7 +202,7 @@
   <div class="main-content">
     <div class="sub-header">
       <input type="text" placeholder="Search member..." id="searchMember">
-      <button onclick="location.href='/add-category'">Add Category</button>
+      <button onclick="openCategoryDialog()">Add Category</button>
 
       <!-- ONLY CHANGE: open dialog instead of redirect -->
       <button onclick="openDialog()">Add Member</button>
@@ -280,6 +280,35 @@
   </div>
 </div>
 
+<!-- ===== ADD CATEGORY DIALOG ===== -->
+<div class="dialog-overlay" id="categoryDialog">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeCategoryDialog()">✖</span>
+
+    <form action="/add-role" method="POST">
+
+      <label>Role Name</label>
+      <input type="text" name="role_name" placeholder="Enter role name" required>
+
+      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <input type="checkbox" name="can_manage_members" value="1">
+        Can Manage Members
+      </label>
+
+      <label>Control Type</label>
+      <select name="control_type" required>
+        <option value="">Select Control</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="PARTIAL">PARTIAL</option>
+        <option value="NONE">NONE</option>
+      </select>
+
+      <button type="submit">Create Role</button>
+    </form>
+  </div>
+</div>
+
+
 <script>
 function openDialog() {
   document.getElementById("dialogBox").style.display = "flex";
@@ -287,6 +316,14 @@ function openDialog() {
 function closeDialog() {
   document.getElementById("dialogBox").style.display = "none";
 }
+
+function openCategoryDialog() {
+  document.getElementById("categoryDialog").style.display = "flex";
+}
+function closeCategoryDialog() {
+  document.getElementById("categoryDialog").style.display = "none";
+}
+
 </script>
 
 </body>
