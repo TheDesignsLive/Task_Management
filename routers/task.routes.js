@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db'); // DB connection
-const abcd="abcd";
 
 router.post('/', async (req, res) => {
   try {
