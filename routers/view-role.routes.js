@@ -16,8 +16,13 @@ router.get('/', async (req, res) => {
       'SELECT * FROM roles WHERE admin_id = ? ORDER BY id DESC',
       [adminId]
     );
+// Get company users except himself
+    const [rows] = await con.query("SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?",
+           [adminId, req.session.userId]);
 
-    res.render('view_role', { roles });
+        members = rows;
+    res.render('view_role', { roles,members});
+    
 
   } catch (err) {
     console.error('View Roles Error:', err);
