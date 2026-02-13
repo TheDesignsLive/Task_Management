@@ -45,7 +45,7 @@ app.use('/',delete_member);
 app.use('/', homeroutes);
 app.use('/', viewMemberRoutes);
 app.use('/', taskRoutes);   // <-- Add this AFTER other routes
-app.use('/',addrole);
+app.use('/add-role',addrole);
 
 
 // Start server
