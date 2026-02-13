@@ -14,6 +14,7 @@ const viewMemberRoutes = require('./routers/view_member');
 const addmemberRoutes = require('./routers/add-member.routes');
 const taskRoutes = require('./routers/task.routes');
 const delete_member=require('./routers/delete-member.routes');
+const addrole=require('./routers/add-role.routes');
 
 // Middlewares
 app.use(cors());
@@ -43,8 +44,8 @@ app.use('/',delete_member);
 
 app.use('/', homeroutes);
 app.use('/', viewMemberRoutes);
-// app.use('/', addmemberRoutes);
 app.use('/', taskRoutes);   // <-- Add this AFTER other routes
+app.use('/',addrole);
 
 
 // Start server
