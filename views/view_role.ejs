@@ -147,6 +147,23 @@ table th {
   color: red;
 }
 
+/* ===== Action Icons ===== */
+.actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-icon {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.edit-icon svg { fill: #FFD000; }
+.delete-icon svg { fill: #ed1e1e; }
+
 </style>
 </head>
 
@@ -183,6 +200,7 @@ table th {
             <th>Control Type</th>
             <th>Manage Members</th>
             <th>Created</th>
+            <th>Actions</th> <!-- ADDED -->
           </tr>
         </thead>
 
@@ -194,6 +212,26 @@ table th {
             <td><%= r.control_type %></td>
             <td><%= r.can_manage_members ? 'YES' : 'NO' %></td>
             <td><%= r.created_at %></td>
+
+            <!-- ACTION COLUMN ADDED -->
+            <td>
+              <div class="actions-container">
+
+                <a href="/edit-role/<%= r.id %>" class="action-icon edit-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/>
+                  </svg>
+                </a>
+
+                <a href="/delete-role/<%= r.id %>" class="action-icon delete-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                  </svg>
+                </a>
+
+              </div>
+            </td>
+
           </tr>
           <% }) %>
         </tbody>

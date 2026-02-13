@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
-router.get('/view_member', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
 
         let users = [];

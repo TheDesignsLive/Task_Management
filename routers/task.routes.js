@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db'); // DB connection
 
-router.post('/add-task', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { title, description, date, priority, assignedTo } = req.body;
 
