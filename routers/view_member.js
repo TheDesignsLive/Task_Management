@@ -1,31 +1,66 @@
 const express = require('express');
 const router = express.Router();
-const con = require('../config/db'); // MySQL connection
+const con = require('../config/db');
 
-// GET route to view all members
 router.get('/view_member', async (req, res) => {
     try {
-        // fetch all users
-        const [users] = await con.execute("SELECT * FROM users");
 
-        // for dropdown like home page
+        let users = [];
         let members = [];
-        let adminId = null;
+        let roles = [];
 
-        if (req.session.userId || req.session.adminId) {
-            if (req.session.role === 'admin') {
-                adminId = req.session.adminId;
-            } else if (req.session.role === 'user') {
-                const [userRows] = await con.query(
-                    "SELECT admin_id FROM users WHERE id=?",
-                    [req.session.userId]
+        // ===============================
+        // 1️⃣ ADMIN LOGIN
+        // ===============================
+        if (req.session.role === 'admin') {
+
+            const adminId = req.session.adminId;
+
+            // Show only this admin's users
+            const [adminUsers] = await con.query(
+                "SELECT * FROM users WHERE admin_id=?",
+                [adminId]
+            );
+            users = adminUsers;
+
+            // Dropdown members (optional)
+            const [rows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
+                [adminId]
+            );
+            members = rows;
+
+            // Roles dropdown
+            const [roleRows] = await con.query(
+                "SELECT id, role_name FROM roles WHERE admin_id=?",
+                [adminId]
+            );
+            roles = roleRows;
+        }
+
+        // ===============================
+        // 2️⃣ USER LOGIN
+        // ===============================
+        else if (req.session.role === 'user') {
+
+            // Get admin_id of logged-in user
+            const [userRows] = await con.query(
+                "SELECT admin_id FROM users WHERE id=?",
+                [req.session.userId]
+            );
+
+            if (userRows.length > 0) {
+
+                const adminId = userRows[0].admin_id;
+
+                // Show company users in table
+                const [companyUsers] = await con.query(
+                    "SELECT * FROM users WHERE admin_id=?",
+                    [adminId]
                 );
-                if (userRows.length > 0) {
-                    adminId = userRows[0].admin_id;
-                }
-            }
+                users = companyUsers;
 
-            if (adminId) {
+                // Dropdown → show other members except himself
                 const [rows] = await con.query(
                     "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
                     [adminId, req.session.userId]
@@ -34,25 +69,14 @@ router.get('/view_member', async (req, res) => {
             }
         }
 
-        // ==============================
-        // ADD THIS (roles dropdown data)
-        // ==============================
-        const adminIdForRoles = req.session.adminId;
-
-        let roles = [];
-        if (adminIdForRoles) {
-            const [roleRows] = await con.query(
-                "SELECT id, role_name FROM roles WHERE admin_id=?",
-                [adminIdForRoles]
-            );
-            roles = roleRows;
-        }
-        // ==============================
-        res.render('view_member', { 
-            users,         // for table
-            members,       // for dropdown
-            roles,         // <-- added
-            session: req.session 
+        // ===============================
+        // 3️⃣ Render
+        // ===============================
+        res.render('view_member', {
+            users,
+            members,
+            roles,
+            session: req.session
         });
 
     } catch (err) {
