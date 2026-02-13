@@ -35,7 +35,7 @@ router.post('/add-task', async (req, res) => {
   // Insert task
 await con.execute(
   `INSERT INTO tasks 
-   (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assinged, section, status) 
+   (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status) 
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'TASK', 'OPEN')`,
   [
     admin_id,
