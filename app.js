@@ -18,6 +18,9 @@ const addrole=require('./routers/add-role.routes');
 const viewrole=require('./routers/view-role.routes');
 const delete_role=require('./routers/delete-role.routes');
 const editrole=require('./routers/edit-role.routes');
+const logoutRoutes = require('./routers/logout.routes');
+
+
 
 // Middlewares
 app.use(cors());
@@ -40,6 +43,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', authRoutes);
+
+app.use('/', logoutRoutes);
 
 app.use('/',homeroutes);
 app.use('/add-member',addmemberRoutes);
