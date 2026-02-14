@@ -229,7 +229,10 @@
                   Suspend
                 </button>
 
-                <a href="/edit-member/<%= user.id %>" class="action-icon edit-icon">
+                <a href="javascript:void(0)" 
+                  onclick="openEditDialog('<%= user.id %>','<%= user.role_id %>','<%= user.name %>','<%= user.email %>','<%= user.phone %>')" 
+                  class="action-icon edit-icon">
+
                   <svg viewBox="0 0 24 24" width="20" height="20">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                   </svg>
@@ -280,12 +283,56 @@
   </div>
 </div>
 
+<!-- ===== EDIT MEMBER DIALOG ===== -->
+<div class="dialog-overlay" id="editDialogBox">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeEditDialog()">✖</span>
+
+    <form id="editMemberForm" method="POST" enctype="multipart/form-data">
+
+      <label>Role</label>
+      <select name="role_id" id="edit_role_id" required>
+        <option value="">Select Role</option>
+        <% if (roles) { roles.forEach(r => { %>
+          <option value="<%= r.id %>"><%= r.role_name %></option>
+        <% }) } %>
+      </select>
+
+      <input type="text" name="name" id="edit_name" placeholder="Name" required>
+      <input type="email" name="email" id="edit_email" placeholder="Email" required>
+      <input type="text" name="phone" id="edit_phone" placeholder="Phone">
+      <input type="password" name="password" placeholder="New Password (optional)">
+
+      <label>Profile Picture (optional)</label>
+      <input type="file" name="profile_pic">
+
+      <button type="submit">Update Member</button>
+    </form>
+  </div>
+</div>
+
+
 <script>
 function openDialog() {
   document.getElementById("dialogBox").style.display = "flex";
 }
 function closeDialog() {
   document.getElementById("dialogBox").style.display = "none";
+}
+
+function openEditDialog(id, roleId, name, email, phone) {
+  document.getElementById("editDialogBox").style.display = "flex";
+
+  document.getElementById("edit_role_id").value = roleId;
+  document.getElementById("edit_name").value = name;
+  document.getElementById("edit_email").value = email;
+  document.getElementById("edit_phone").value = phone;
+
+  document.getElementById("editMemberForm").action = "/edit-member/" + id;
+}
+
+function closeEditDialog() {
+  document.getElementById("editDialogBox").style.display = "none";
 }
 </script>
 
