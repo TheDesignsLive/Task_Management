@@ -52,7 +52,7 @@ app.use('/', logoutRoutes);
 
 
 
-// app.use('/',homeroutes);   ← DELETE THIS
+
 
 app.use('/add-member', addmemberRoutes);
 app.use('/', delete_member);
