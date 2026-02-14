@@ -117,8 +117,8 @@ router.post('/update-task-section', async (req, res) => {
     }
 });
 
-<<<<<<< HEAD
+
 module.exports = router;
-=======
-module.exports = router;
->>>>>>> bccbe1e5c508aa7d237eb2a4bfcff1d60c6077ff
+
+
+
