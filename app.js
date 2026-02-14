@@ -11,6 +11,7 @@ const PORT = 3000;
 const authRoutes = require('./routers/auth.routes');
 const viewMemberRoutes = require('./routers/view_member');
 const addmemberRoutes = require('./routers/add-member.routes');
+const editmember=require('./routers/edit-member.routes');
 const taskRoutes = require('./routers/task.routes');
 const delete_member = require('./routers/delete-member.routes');
 const addrole = require('./routers/add-role.routes');
@@ -18,7 +19,14 @@ const viewrole = require('./routers/view-role.routes');
 const delete_role = require('./routers/delete-role.routes');
 const editrole = require('./routers/edit-role.routes');
 const logoutRoutes = require('./routers/logout.routes');
+<<<<<<< HEAD
 const homeTaskRoutes = require('./routers/home_task.routes'); // ✅ ONLY HOME ROUTE
+=======
+const suspendmember=require('./routers/suspend-member.routes');
+const notification=require('./routers/notifications.routes');
+const memberRequest=require('./routers/memberRequest.routes');
+
+>>>>>>> c2c49236ed977616bfdfdeade32202e8b29a903d
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -43,6 +51,7 @@ app.get('/', (req, res) => {
 app.use('/', authRoutes);
 app.use('/', logoutRoutes);
 
+<<<<<<< HEAD
 // ❌ REMOVE home.routes.js completely
 // app.use('/',homeroutes);   ← DELETE THIS
 
@@ -54,6 +63,24 @@ app.use('/view-roles', viewrole);
 app.use('/add-role', addrole);
 app.use('/', editrole);
 app.use('/', delete_role);
+=======
+app.use('/',homeroutes);
+app.use('/add-task', taskRoutes);   // <-- Add this AFTER other routes
+
+app.use('/add-member',addmemberRoutes);
+app.use('/',suspendmember);
+app.use('/',editmember);
+app.use('/',delete_member);
+app.use('/view_member', viewMemberRoutes);
+
+app.use('/',notification);
+app.use('/',memberRequest);
+
+app.use('/view-roles',viewrole);
+app.use('/add-role',addrole);
+app.use('/',editrole);
+app.use('/',delete_role);
+>>>>>>> c2c49236ed977616bfdfdeade32202e8b29a903d
 
 // ✅ KEEP ONLY THIS HOME ROUTE
 app.use('/', homeTaskRoutes);

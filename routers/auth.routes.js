@@ -70,7 +70,7 @@ router.post("/login", async (req, res) => {
         // USER LOGIN
         if (login_type === "user") {
             const [rows] = await con.query(
-                "SELECT * FROM users WHERE email=? AND password=?",
+                "SELECT * FROM users WHERE email=? AND password=? AND status='ACTIVE'",
                 [email, password]
             );
 
