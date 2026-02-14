@@ -224,10 +224,13 @@
             <td><%= user.status %></td>
             <td>
               <div class="actions-container">
-                <button class="action-btn suspend-btn"
-                  onclick="location.href='/suspend-member/<%= user.id %>'">
-                  Suspend
-                </button>
+            <button class="action-btn suspend-btn"
+              style="background-color:<%= user.status === 'ACTIVE' ? '#f44336' : '#28a745' %>;"
+              onclick="location.href='/suspend-member/<%= user.id %>'">
+              <%= user.status === 'ACTIVE' ? 'Suspend' : 'Active' %>
+            </button>
+
+
 
                 <a href="javascript:void(0)" 
                   onclick="openEditDialog('<%= user.id %>','<%= user.role_id %>','<%= user.name %>','<%= user.email %>','<%= user.phone %>')" 

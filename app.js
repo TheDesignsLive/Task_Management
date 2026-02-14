@@ -20,6 +20,7 @@ const viewrole=require('./routers/view-role.routes');
 const delete_role=require('./routers/delete-role.routes');
 const editrole=require('./routers/edit-role.routes');
 const logoutRoutes = require('./routers/logout.routes');
+const suspendmember=require('./routers/suspend-member.routes');
 
 
 
@@ -49,13 +50,16 @@ app.use('/', authRoutes);
 app.use('/', logoutRoutes);
 
 app.use('/',homeroutes);
+app.use('/add-task', taskRoutes);   // <-- Add this AFTER other routes
+
 app.use('/add-member',addmemberRoutes);
+app.use('/',suspendmember);
 app.use('/',editmember);
 app.use('/',delete_member);
 
-app.use('/', homeroutes);
 app.use('/view_member', viewMemberRoutes);
-app.use('/add-task', taskRoutes);   // <-- Add this AFTER other routes
+
+
 app.use('/view-roles',viewrole);
 app.use('/add-role',addrole);
 app.use('/',editrole);
