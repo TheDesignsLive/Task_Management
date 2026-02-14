@@ -59,6 +59,7 @@ router.post("/login", async (req, res) => {
                 // ✅ STORE SESSION
                 req.session.adminId = rows[0].id;
                 req.session.role = "admin";
+                req.session.email = rows[0].email; 
 
                 return res.redirect("/home");
             } else {
@@ -78,6 +79,7 @@ router.post("/login", async (req, res) => {
                 // ✅ STORE SESSION
                 req.session.userId = rows[0].id;
                 req.session.role = "user";
+                req.session.email = rows[0].email; 
 
                 // 🔹 ADDED (ONLY THIS PART)
                 req.session.adminId = rows[0].admin_id;
