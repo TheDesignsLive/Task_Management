@@ -5,7 +5,6 @@ const con = require('../config/db'); // mysql2 promise pool
 
 // DELETE MEMBER (because HTML uses <a href="/delete-member/:id"> -> GET)
 router.get('/delete-member/:id', async (req, res) => {
-  console.log("✅ delete-member router loaded");
 
   try {
     const memberId = req.params.id;

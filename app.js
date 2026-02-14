@@ -21,6 +21,8 @@ const delete_role=require('./routers/delete-role.routes');
 const editrole=require('./routers/edit-role.routes');
 const logoutRoutes = require('./routers/logout.routes');
 const suspendmember=require('./routers/suspend-member.routes');
+const notification=require('./routers/notifications.routes');
+const memberRequest=require('./routers/memberRequest.routes');
 
 
 
@@ -56,9 +58,10 @@ app.use('/add-member',addmemberRoutes);
 app.use('/',suspendmember);
 app.use('/',editmember);
 app.use('/',delete_member);
-
 app.use('/view_member', viewMemberRoutes);
 
+app.use('/',notification);
+app.use('/',memberRequest);
 
 app.use('/view-roles',viewrole);
 app.use('/add-role',addrole);
