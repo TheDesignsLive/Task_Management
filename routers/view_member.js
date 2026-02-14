@@ -29,7 +29,10 @@ router.get('/', async (req, res) => {
 
             // Show only this admin's users (table)
             const [adminUsers] = await con.query(
-                "SELECT * FROM users WHERE admin_id=?",
+                `SELECT users.*, roles.role_name 
+                 FROM users 
+                 JOIN roles ON users.role_id = roles.id
+                 WHERE users.admin_id=?`,
                 [adminId]
             );
             users = adminUsers;
@@ -76,7 +79,10 @@ router.get('/', async (req, res) => {
 
                 // Show company users in table
                 const [companyUsers] = await con.query(
-                    "SELECT * FROM users WHERE admin_id=?",
+                     `SELECT users.*, roles.role_name 
+                     FROM users 
+                     JOIN roles ON users.role_id = roles.id
+                     WHERE users.admin_id=?`,
                     [adminId]
                 );
                 users = companyUsers;
