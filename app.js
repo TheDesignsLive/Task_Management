@@ -19,9 +19,14 @@ const viewrole = require('./routers/view-role.routes');
 const delete_role = require('./routers/delete-role.routes');
 const editrole = require('./routers/edit-role.routes');
 const logoutRoutes = require('./routers/logout.routes');
+<<<<<<< HEAD
 const homeroutes=require('./routers/home.routes');
 
 
+=======
+
+const homeTaskRoutes = require('./routers/home_task.routes'); // ✅ ONLY HOME ROUTE
+>>>>>>> 6bf255002e8c1ee682d14b84a3d733004e472f49
 
 const suspendmember=require('./routers/suspend-member.routes');
 const notification=require('./routers/notifications.routes');
@@ -65,7 +70,12 @@ app.use('/add-role', addrole);
 app.use('/', editrole);
 app.use('/', delete_role);
 
+<<<<<<< HEAD
 app.use('/',homeroutes);
+=======
+// app.use('/',homeroutes);
+app.use('/add-task', taskRoutes);   // <-- Add this AFTER other routes
+>>>>>>> 6bf255002e8c1ee682d14b84a3d733004e472f49
 
 app.use('/add-member',addmemberRoutes);
 app.use('/',suspendmember);
