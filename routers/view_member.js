@@ -10,11 +10,11 @@ router.get('/', async (req, res) => {
         let users = [];
         let members = [];
         let roles = [];
-        let adminName = null;   // ✅ New variable
+        let adminName = null;   
 
-        // ===============================
+        
         // 1️⃣ ADMIN LOGIN
-        // ===============================
+       
         if (req.session.role === 'admin') {
 
             const adminId = req.session.adminId;
@@ -54,9 +54,9 @@ router.get('/', async (req, res) => {
             roles = roleRows;
         }
 
-        // ===============================
+       
         // 2️⃣ USER LOGIN
-        // ===============================
+      
         else if (req.session.role === 'user') {
 
             // Get admin_id of logged user
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
 
                 const adminId = userRows[0].admin_id;
 
-                // ✅ Get Admin name
+                //  Get Admin name
                 const [adminRows] = await con.query(
                     "SELECT name FROM admins WHERE id=?",
                     [adminId]
@@ -98,14 +98,14 @@ router.get('/', async (req, res) => {
             }
         }
 
-        // ===============================
+       
         // 3️⃣ Render
-        // ===============================
+     
         res.render('view_member', {
             users,
             members,
             roles,
-            adminName,   // ✅ Send admin name to EJS
+            adminName,   //  Send admin name to EJS
             session: req.session
         });
 
