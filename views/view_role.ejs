@@ -205,13 +205,14 @@ table th {
         </thead>
 
         <tbody>
-          <% roles.forEach(r => { %>
+         <% roles.forEach((r, index) => { %>
           <tr>
-            <td><%= r.id %></td>
+             <td><%= index + 1 %></td>
             <td><%= r.role_name %></td>
             <td><%= r.control_type %></td>
             <td><%= r.can_manage_members ? 'YES' : 'NO' %></td>
-            <td><%= r.created_at %></td>
+          <td><%= new Date(r.created_at).toLocaleDateString() %></td>
+
 
             <!-- ACTION COLUMN ADDED -->
             <td>
