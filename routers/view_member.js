@@ -1,9 +1,11 @@
+
+//view_member.js
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
 router.get('/', async (req, res) => {
-   
+    try {
 
         let users = [];
         let members = [];
@@ -63,7 +65,16 @@ router.get('/', async (req, res) => {
                 [req.session.userId]
             );
 
-           
+            if (userRows.length > 0) {
+
+                const adminId = userRows[0].admin_id;
+
+                // ✅ Get Admin name
+                const [adminRows] = await con.query(
+                    "SELECT name FROM admins WHERE id=?",
+                    [adminId]
+                );
+
                 if (adminRows.length > 0) {
                     adminName = adminRows[0].name;
                 }
@@ -90,9 +101,18 @@ router.get('/', async (req, res) => {
         // ===============================
         // 3️⃣ Render
         // ===============================
-        
+        res.render('view_member', {
+            users,
+            members,
+            roles,
+            adminName,   // ✅ Send admin name to EJS
+            session: req.session
+        });
 
-    
+    } catch (err) {
+        console.error(err);
+        res.send("Error fetching members");
+    }
 });
 
 module.exports = router;
