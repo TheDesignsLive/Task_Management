@@ -66,7 +66,7 @@ app.use('/', delete_role);
 
 app.use('/',homeroutes);
 
-// app.use('/',homeroutes);
+
 app.use('/add-task', taskRoutes);   // <-- Add this AFTER other routes
 
 
