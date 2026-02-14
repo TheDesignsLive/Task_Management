@@ -51,7 +51,7 @@ app.use('/', authRoutes);
 app.use('/', logoutRoutes);
 
 
-// ❌ REMOVE home.routes.js completely
+
 // app.use('/',homeroutes);   ← DELETE THIS
 
 app.use('/add-member', addmemberRoutes);
