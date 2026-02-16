@@ -37,7 +37,7 @@ router.get('/home', async (req, res) => {
             );
             members = rows;
 
-            // Tasks for admin only where who_assigned = 'admin', assigned_to = 0
+            // Tasks for admin only
             const [taskRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
@@ -54,6 +54,27 @@ router.get('/home', async (req, res) => {
         ============================ */
         else if (req.session.role === "user") {
             adminId = req.session.adminId;
+
+            // 🔹 GET ROLE ID FROM USER
+            const [userRoleRows] = await con.query(
+                "SELECT role_id FROM users WHERE id=?",
+                [req.session.userId]
+            );
+
+            if (userRoleRows.length > 0) {
+                const roleId = userRoleRows[0].role_id;
+
+                // 🔹 CHECK can_manage_member FROM roles
+                const [roleRows] = await con.query(
+                    "SELECT can_manage_members FROM roles WHERE id=?",
+                    [roleId]
+                );
+                if (roleRows.length > 0 && roleRows[0].can_manage_members == 1) {
+                    show_sidebar = "sidebar";
+                } else {
+                    show_sidebar = "Usersidebar";
+                }
+            }
 
             // Admin Name
             const [adminRows] = await con.query(
@@ -117,8 +138,4 @@ router.post('/update-task-section', async (req, res) => {
     }
 });
 
-
 module.exports = router;
-
-
-

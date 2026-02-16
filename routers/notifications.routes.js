@@ -59,7 +59,29 @@ router.get('/notifications', async (req, res) => {
 
         // ================= USER =================
         else if (req.session.role === "user") {
-            // DO NOTHING
+           // get role_id of current user
+            const [uRows] = await con.query(
+                "SELECT role_id, admin_id FROM users WHERE id=?",
+                [req.session.userId]
+            );
+
+            if (uRows.length > 0) {
+
+                adminId = uRows[0].admin_id;
+                const roleId = uRows[0].role_id;
+
+                // check permission from roles table
+                const [rRows] = await con.query(
+                    "SELECT can_manage_members FROM roles WHERE id=?",
+                    [roleId]
+                );
+
+                if (rRows.length > 0 && rRows[0].can_manage_members == 1) {
+                    show_sidebar = "sidebar";       // show admin sidebar
+                } else {
+                    show_sidebar = "Usersidebar";   // show user sidebar
+                }
+            }
         }
 
         res.render('notifications', {
