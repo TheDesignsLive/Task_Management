@@ -265,6 +265,8 @@ function createTaskElement(task) {
 
       <span style="flex:1; margin-left:8px;">
         ${task.title}
+${task.assigned_by_name ? ' 👤 ' + task.assigned_by_name : ''}
+
       </span>
 
       <span style="min-width:60px; text-align:right;">
@@ -360,7 +362,8 @@ function initSections() {
     sectionTasks[targetSection].push(task);
   });
 
-  ['TASK','CHANGES','UPDATE'].forEach(sec => {
+  ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
+
     const taskList = sectionTasks[sec];
     if (!taskList.length) return;
 

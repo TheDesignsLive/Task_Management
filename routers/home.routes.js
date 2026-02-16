@@ -47,6 +47,31 @@ router.get('/home', async (req, res) => {
             );
 
             tasks = taskRows;
+
+            
+            /* ==========================================================
+               ✅✅✅ ADDED FOR OTHERS SECTION (USER → ADMIN TASKS)
+               Condition:
+               admin_id = adminId
+               assigned_to = 0
+               who_assigned = 'user'
+            ========================================================== */
+            const [otherTaskRows] = await con.query(
+                `SELECT t.id, t.title, t.description, t.priority,
+                        t.due_date, t.status,
+                        'OTHERS' AS section,
+                        u.name AS assigned_by_name
+                 FROM tasks t
+                 JOIN users u ON t.assigned_by = u.id
+                 WHERE t.admin_id=?
+                 AND t.assigned_to=0
+                 AND t.who_assigned='user'
+                 ORDER BY t.due_date ASC`,
+                [adminId]
+            );
+
+            // Merge into same tasks array
+            tasks = [...tasks, ...otherTaskRows];
         }
 
         /* ============================
