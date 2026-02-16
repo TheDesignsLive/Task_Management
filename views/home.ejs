@@ -140,7 +140,6 @@
 
   </div>
 </div>
-
 <script>
   const tasks = <%- JSON.stringify(tasks) %>;
 
@@ -207,41 +206,71 @@
 
     tasks.forEach(task => {
       const el = createTaskElement(task);
-      if (task.status === 'COMPLETED') sections['COMPLETED'].appendChild(el);
-      else if (task.section === 'TASK') sections['TASK'].appendChild(el);
-      else if (task.section === 'CHANGES') sections['CHANGES'].appendChild(el);
-      else if (task.section === 'UPDATE') sections['UPDATE'].appendChild(el);
-      else sections['OTHERS'].appendChild(el);
+
+      if (task.status === 'COMPLETED') {
+        sections['COMPLETED'].appendChild(el);
+      }
+      else if (task.section === 'TASK') {
+        sections['TASK'].appendChild(el);
+      }
+      else if (task.section === 'CHANGES') {
+        sections['CHANGES'].appendChild(el);
+      }
+      else if (task.section === 'UPDATE') {
+        sections['UPDATE'].appendChild(el);
+      }
+      else {
+        sections['OTHERS'].appendChild(el);
+      }
     });
   }
 
-  // ===== DRAG & DROP =====
+  // ===== FIXED DRAG & DROP =====
   function enableDragAndDrop() {
-    const draggables = document.querySelectorAll('.task-item');
-    const containers = document.querySelectorAll('.task-box');
 
-    draggables.forEach(item => {
-      item.addEventListener('dragstart', () => item.classList.add('dragging'));
-      item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    const containers = {
+      'task-section': 'TASK',
+      'change-section': 'CHANGES',
+      'update-section': 'UPDATE',
+      'other-section': 'OTHERS'
+    };
+
+    document.querySelectorAll('.task-item').forEach(item => {
+
+      item.addEventListener('dragstart', () => {
+        item.classList.add('dragging');
+      });
+
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+      });
+
     });
 
-    containers.forEach(container => {
-      container.addEventListener('dragover', e => {
+    // ===== FIX START =====
+    Object.keys(containers).forEach(containerId => {
+
+      const container = document.getElementById(containerId);
+
+      container.addEventListener('dragover', (e) => {
         e.preventDefault();
-        const dragging = document.querySelector('.dragging');
-        if (container.id !== 'other-section') container.appendChild(dragging);
       });
-      container.addEventListener('drop', e => {
-        const dragging = document.querySelector('.dragging');
-        let newSection = '';
-        if (container.id === 'task-section') newSection = 'TASK';
-        else if (container.id === 'change-section') newSection = 'CHANGES';
-        else if (container.id === 'update-section') newSection = 'UPDATE';
-        else newSection = 'OTHERS';
 
-        updateTaskSection(dragging.dataset.id, newSection);
+      container.addEventListener('drop', (e) => {
+        e.preventDefault();
+
+        const dragging = document.querySelector('.dragging');
+        if (!dragging) return;
+
+        container.appendChild(dragging);
+
+        const newSection = containers[containerId];  // ✅ Correct section mapping
+
+        updateTaskSection(dragging.dataset.id, newSection);  // ✅ DB update only here
       });
+
     });
+    // ===== FIX END =====
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -249,8 +278,6 @@
     enableDragAndDrop();
   });
 
-
-  
 </script>
 
 
