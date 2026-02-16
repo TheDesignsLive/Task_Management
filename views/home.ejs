@@ -93,6 +93,73 @@
     background-color: #2E2D2D;
     color: white;
   }
+  /* ===== TASK BOX ===== */
+.task-item {
+  padding: 6px;
+  margin: 6px 0;
+  background-color: #444;
+  color: #fff;
+  border-radius: 4px;
+  cursor: move;
+}
+
+/* Completed Task */
+.completed-task {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Layout row */
+.task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Checkbox base style */
+.task-checkbox {
+  width: 16px;
+  height: 16px;
+  appearance: none;
+  border: 2px solid white;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Checked style */
+.task-checkbox:checked {
+  background-color: white;
+}
+
+/* ===== PRIORITY COLORS ===== */
+.priority-red {
+  border-color: #ff4d4d;
+}
+
+.priority-yellow {
+  border-color: #ffd633;
+}
+
+.priority-blue {
+  border-color: #4da6ff;
+}
+/* Keep checkbox color visible when checked */
+.task-checkbox:checked {
+  background-color: transparent; /* don't override border color */
+}
+
+/* Optional: Add a small checkmark to show it is checked */
+.task-checkbox:checked::after {
+  content: "✔";
+  position: absolute;
+  font-size: 12px;
+  top: 0;
+  left: 2px;
+  color: inherit; /* will match border color */
+}
+
 
 </style>
 </head>
@@ -145,9 +212,35 @@
 
   function formatDate(dateStr) {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const options = { day: 'numeric', month: 'short' };
-    return d.toLocaleDateString('en-US', options);
+
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    const taskDate = new Date(dateStr);
+
+    today.setHours(0,0,0,0);
+    tomorrow.setHours(0,0,0,0);
+    taskDate.setHours(0,0,0,0);
+
+    if (taskDate.getTime() === today.getTime()) {
+      return "Today";
+    } else if (taskDate.getTime() === tomorrow.getTime()) {
+      return "Tom";
+    } else {
+      const options = { day: '2-digit', month: 'short' };
+      return taskDate.toLocaleDateString('en-GB', options);
+    }
+  }
+
+  function getPriorityClass(priority) {
+    if (!priority) return '';
+
+    if (priority.toUpperCase() === 'RED') return 'priority-red';
+    if (priority.toUpperCase() === 'YELLOW') return 'priority-yellow';
+    if (priority.toUpperCase() === 'BLUE') return 'priority-blue';
+
+    return '';
   }
 
   function createTaskElement(task) {
@@ -155,24 +248,45 @@
     div.className = 'task-item';
     div.dataset.id = task.id;
 
+    if (task.status === 'COMPLETED') {
+      div.classList.add('completed-task');
+    }
+
+    const priorityClass = getPriorityClass(task.priority);
+
     div.innerHTML = `
-      <input type="checkbox" class="task-checkbox" ${task.status === 'COMPLETED' ? 'checked' : ''}/>
-      <span style="margin-left:5px; display:inline-block;">${task.title} (${formatDate(task.due_date)})</span>
+      <div class="task-row">
+        <input type="checkbox"
+          class="task-checkbox ${priorityClass}"
+          ${task.status === 'COMPLETED' ? 'checked' : ''} />
+
+        <span style="flex:1; margin-left:8px;">
+          ${task.title}
+        </span>
+
+        <span style="min-width:60px; text-align:right;">
+          ${formatDate(task.due_date)}
+        </span>
+      </div>
     `;
 
-    div.style.padding = "5px";
-    div.style.margin = "5px 0";
-    div.style.backgroundColor = "#444";
-    div.style.color = "#fff";
-    div.style.borderRadius = "4px";
-    div.style.cursor = "move";
     div.draggable = true;
 
-    div.addEventListener('change', (e) => {
-      if (e.target.checked) {
+    const checkbox = div.querySelector('input.task-checkbox');
+    checkbox.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      if (isChecked) {
+        // Move to Completed
         updateTaskStatus(task.id, 'COMPLETED');
+        div.classList.add('completed-task');
         div.remove();
         document.getElementById('completed-section').appendChild(div);
+      } else {
+        // Move back to TASK section
+        updateTaskStatus(task.id, 'PENDING'); // or 'INCOMPLETE' depending on your DB
+        div.classList.remove('completed-task');
+        div.remove();
+        document.getElementById('task-section').appendChild(div);
       }
     });
 
@@ -209,76 +323,54 @@
 
       if (task.status === 'COMPLETED') {
         sections['COMPLETED'].appendChild(el);
-      }
-      else if (task.section === 'TASK') {
+      } else if (task.section === 'TASK') {
         sections['TASK'].appendChild(el);
-      }
-      else if (task.section === 'CHANGES') {
+      } else if (task.section === 'CHANGES') {
         sections['CHANGES'].appendChild(el);
-      }
-      else if (task.section === 'UPDATE') {
+      } else if (task.section === 'UPDATE') {
         sections['UPDATE'].appendChild(el);
-      }
-      else {
+      } else {
         sections['OTHERS'].appendChild(el);
       }
     });
   }
 
-  // ===== FIXED DRAG & DROP =====
   function enableDragAndDrop() {
-
     const containers = {
       'task-section': 'TASK',
       'change-section': 'CHANGES',
-      'update-section': 'UPDATE',
-      'other-section': 'OTHERS'
+      'update-section': 'UPDATE'
+      // intentionally not allowing drop in OTHERS
     };
 
     document.querySelectorAll('.task-item').forEach(item => {
-
-      item.addEventListener('dragstart', () => {
-        item.classList.add('dragging');
-      });
-
-      item.addEventListener('dragend', () => {
-        item.classList.remove('dragging');
-      });
-
+      item.addEventListener('dragstart', () => item.classList.add('dragging'));
+      item.addEventListener('dragend', () => item.classList.remove('dragging'));
     });
 
-    // ===== FIX START =====
     Object.keys(containers).forEach(containerId => {
-
       const container = document.getElementById(containerId);
 
-      container.addEventListener('dragover', (e) => {
-        e.preventDefault();
-      });
+      container.addEventListener('dragover', (e) => e.preventDefault());
 
       container.addEventListener('drop', (e) => {
         e.preventDefault();
-
         const dragging = document.querySelector('.dragging');
         if (!dragging) return;
 
         container.appendChild(dragging);
-
-        const newSection = containers[containerId];  // ✅ Correct section mapping
-
-        updateTaskSection(dragging.dataset.id, newSection);  // ✅ DB update only here
+        const newSection = containers[containerId];
+        updateTaskSection(dragging.dataset.id, newSection);
       });
-
     });
-    // ===== FIX END =====
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     initSections();
     enableDragAndDrop();
   });
-
 </script>
+
 
 
 
