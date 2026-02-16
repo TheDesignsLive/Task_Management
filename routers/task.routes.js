@@ -1,20 +1,3 @@
-
-
-//      res.send(`
-//       <script>
-//         // Redirect back to home page (refresh)
-//         window.location.href = '/home';
-//       </script>
-//     `);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).send("Error adding task");
-//   }
-// });
-
-// module.exports = router;
-
-
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
