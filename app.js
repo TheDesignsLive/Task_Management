@@ -24,6 +24,7 @@ const homeroutes=require('./routers/home.routes');
 const suspendmember=require('./routers/suspend-member.routes');
 const notification=require('./routers/notifications.routes');
 const memberRequest=require('./routers/memberRequest.routes');
+const updateTaskRoute = require('./routers/update-task-status');
 
 
 
@@ -83,6 +84,8 @@ app.use('/view-roles',viewrole);
 app.use('/add-role',addrole);
 app.use('/',editrole);
 app.use('/',delete_role);
+
+app.use(updateTaskRoute);
 
 
 // ✅ KEEP ONLY THIS HOME ROUTE
