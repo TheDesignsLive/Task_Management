@@ -41,7 +41,7 @@ router.get('/home', async (req, res) => {
             const [taskRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
-                 WHERE admin_id=? AND assigned_to=0
+                 WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin'
                  ORDER BY due_date ASC`,
                 [adminId]
             );
@@ -83,13 +83,22 @@ router.get('/home', async (req, res) => {
             );
             if (adminRows.length > 0) adminName = adminRows[0].name;
 
+
+            // ✅✅✅ ADD THIS BLOCK (FETCH ALL COMPANY USERS FOR DROPDOWN)
+            const [rows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
+                [adminId, req.session.userId]
+            );
+            members = rows;
+            // ✅✅✅ END ADDED BLOCK
+
             // Tasks assigned to user
             const [taskRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
-                 WHERE admin_id=? AND assigned_to=?
+                 WHERE admin_id=? AND assigned_to=? AND who_assigned='user' AND assigned_by=?
                  ORDER BY due_date ASC`,
-                [adminId, req.session.userId]
+                [adminId, req.session.userId,req.session.userId]
             );
 
             tasks = taskRows;
