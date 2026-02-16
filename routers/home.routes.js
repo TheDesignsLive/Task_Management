@@ -41,7 +41,7 @@ router.get('/home', async (req, res) => {
             const [taskRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
-                 WHERE admin_id=? AND assigned_to=0
+                 WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin'
                  ORDER BY due_date ASC`,
                 [adminId]
             );
@@ -87,9 +87,9 @@ router.get('/home', async (req, res) => {
             const [taskRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
-                 WHERE admin_id=? AND assigned_to=?
+                 WHERE admin_id=? AND assigned_to=? AND who_assigned='user' AND assigned_by=?
                  ORDER BY due_date ASC`,
-                [adminId, req.session.userId]
+                [adminId, req.session.userId,req.session.userId]
             );
 
             tasks = taskRows;
