@@ -25,7 +25,7 @@ const suspendmember=require('./routers/suspend-member.routes');
 const notification=require('./routers/notifications.routes');
 const memberRequest=require('./routers/memberRequest.routes');
 
-
+const profile=require('./routers/profile.routes');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -69,6 +69,7 @@ app.use('/',homeroutes);
 
 app.use('/add-task', taskRoutes);   
 
+app.use('/',profile);
 
 app.use('/add-member',addmemberRoutes);
 app.use('/',suspendmember);

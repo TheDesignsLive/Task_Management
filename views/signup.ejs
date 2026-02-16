@@ -117,7 +117,6 @@ button:hover{
     <!-- Login -->
     <form class="form active" id="loginForm">
 
-        <!-- 🔹 DROPDOWN ADDED -->
         <div class="input-group">
             <select id="loginType">
                 <option value="user">Login as User</option>
@@ -137,7 +136,7 @@ button:hover{
     </form>
 
     <!-- Signup -->
-    <form class="form" id="signupForm">
+    <form class="form" id="signupForm" enctype="multipart/form-data">
         <div class="input-group">
             <input type="text" id="name" placeholder="Full Name">
         </div>
@@ -156,6 +155,11 @@ button:hover{
 
         <div class="input-group">
             <input type="password" id="password" placeholder="Password">
+        </div>
+
+        <!-- 🔹 PROFILE PIC ADDED -->
+        <div class="input-group">
+            <input type="file" id="profile_pic" accept="image/*">
         </div>
 
         <button type="submit">Create Account</button>
@@ -186,8 +190,6 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
-
-    // 🔹 GET LOGIN TYPE FROM DROPDOWN
     const loginType = document.getElementById("loginType").value;
 
     const res = await fetch("/login", {
@@ -195,6 +197,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ email, password, login_type: loginType })
     });
+
     if (res.redirected) {
         window.location.href = res.url;
         return;
@@ -204,21 +207,27 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     alert(data);
 });
 
-// SIGNUP
+// SIGNUP (WITH IMAGE)
 document.getElementById("signupForm").addEventListener("submit", async function(e){
     e.preventDefault();
 
-    const name = document.getElementById("name").value;
-    const company_name = document.getElementById("company_name").value;
-    const email = document.getElementById("email").value;
-    const phone = document.getElementById("phone").value;
-    const password = document.getElementById("password").value;
+    const formData = new FormData();
+    formData.append("name", document.getElementById("name").value);
+    formData.append("company_name", document.getElementById("company_name").value);
+    formData.append("email", document.getElementById("email").value);
+    formData.append("phone", document.getElementById("phone").value);
+    formData.append("password", document.getElementById("password").value);
+
+    const fileInput = document.getElementById("profile_pic");
+    if(fileInput.files.length > 0){
+        formData.append("profile_pic", fileInput.files[0]);
+    }
 
     const res = await fetch("/signup", {
         method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ name, company_name, email, phone, password })
+        body: formData
     });
+
     if (res.redirected) {
         window.location.href = res.url;
         return;
@@ -226,7 +235,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
 
     const data = await res.text();
     alert(data);
-});z
+});
 </script>
 
 </body>

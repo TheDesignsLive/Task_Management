@@ -41,7 +41,7 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
         // ---------- PROFILE PIC ----------
         let profile_pic = null;
         if (req.file) {
-            profile_pic = '/uploads/' + req.file.filename;
+            profile_pic =  req.file.filename;
         }
 
         // =====================================================
