@@ -1,0 +1,84 @@
+const express = require('express');
+const router = express.Router();
+const con = require('../config/db');
+
+router.get('/profile', async (req, res) => {
+
+    if (!req.session.role) {
+        return res.redirect('/');
+    }
+
+    let show_sidebar = "Usersidebar";
+    let members = [];
+    let adminName = null;
+    let adminId = null;
+    let profilePic = null;   // 🔹 ADDED
+
+    try {
+
+        // ================= ADMIN =================
+        if (req.session.role === "admin") {
+
+            show_sidebar = "sidebar";
+            adminId = req.session.adminId;
+
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
+                [adminId]
+            );
+            members = mRows;
+
+            // 🔹 GET ADMIN NAME + PROFILE PIC
+            const [aRows] = await con.query(
+                "SELECT name, profile_pic FROM admins WHERE id=?",
+                [adminId]
+            );
+            if (aRows.length > 0) {
+                adminName = aRows[0].name;
+                profilePic = aRows[0].profile_pic;
+            }
+        }
+
+        // ================= USER =================
+        else if (req.session.role === "user") {
+
+            const [uRows] = await con.query(
+                "SELECT role_id, admin_id, profile_pic FROM users WHERE id=?",
+                [req.session.userId]
+            );
+            
+            if (uRows.length > 0) {
+
+                adminId = uRows[0].admin_id;
+                const roleId = uRows[0].role_id;
+
+                // 🔹 USER PROFILE PIC
+                profilePic = uRows[0].profile_pic;
+                const [rRows] = await con.query(
+                    "SELECT can_manage_members FROM roles WHERE id=?",
+                    [roleId]
+                );
+
+                if (rRows.length > 0 && rRows[0].can_manage_members == 1) {
+                    show_sidebar = "sidebar";
+                } else {
+                    show_sidebar = "Usersidebar";
+                }
+            }
+        }
+
+        res.render('profile', {
+            members,
+            adminName,
+            show_sidebar,
+            profilePic,     // 🔹 ADDED
+            session: req.session
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.send("Error loading profile");
+    }
+});
+
+module.exports = router;
