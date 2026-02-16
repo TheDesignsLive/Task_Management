@@ -303,10 +303,7 @@ function createTaskElement(task) {
         div.classList.remove('completed-task');
         div.remove();
 
-        //  Update task object in tasks array
-        const t = tasks.find(tsk => tsk.id == task.id);
-        t.status = 'OPEN';
-        t.section = 'TASK';
+
         //Here i want to refresh page
         window.location.reload();
         // Insert in TASK section in ascending date order
