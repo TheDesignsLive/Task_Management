@@ -83,6 +83,15 @@ router.get('/home', async (req, res) => {
             );
             if (adminRows.length > 0) adminName = adminRows[0].name;
 
+
+            // ✅✅✅ ADD THIS BLOCK (FETCH ALL COMPANY USERS FOR DROPDOWN)
+            const [rows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
+                [adminId, req.session.userId]
+            );
+            members = rows;
+            // ✅✅✅ END ADDED BLOCK
+
             // Tasks assigned to user
             const [taskRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
