@@ -117,48 +117,38 @@
 }
 
 /* Checkbox base style */
+/* Checkbox base */
 .task-checkbox {
   width: 16px;
   height: 16px;
   appearance: none;
-  border: 2px solid white;
+  border: 2px solid white; /* default, will be overridden by priority class */
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
   position: relative;
 }
 
-/* Checked style */
+/* Checked style: keep border same, show white tick */
 .task-checkbox:checked {
-  background-color: white;
+  background-color: transparent; /* keep background transparent */
 }
 
-/* ===== PRIORITY COLORS ===== */
-.priority-red {
-  border-color: #ff4d4d;
-}
-
-.priority-yellow {
-  border-color: #ffd633;
-}
-
-.priority-blue {
-  border-color: #4da6ff;
-}
-/* Keep checkbox color visible when checked */
-.task-checkbox:checked {
-  background-color: transparent; /* don't override border color */
-}
-
-/* Optional: Add a small checkmark to show it is checked */
+/* White checkmark using ::after */
 .task-checkbox:checked::after {
-  content: "✔";
+  content: "✔";               /* tick */
   position: absolute;
-  font-size: 12px;
   top: 0;
   left: 2px;
-  color: inherit; /* will match border color */
+  font-size: 12px;
+  color: white;               /* always white */
 }
+
+/* ===== PRIORITY BORDER COLORS ===== */
+.priority-red { border-color: #ff4d4d; }
+.priority-yellow { border-color: #ffd633; }
+.priority-blue { border-color: #4da6ff; }
+
 
 
 </style>
