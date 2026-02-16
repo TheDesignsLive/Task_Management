@@ -58,7 +58,14 @@ router.get('/', async (req, res) => {
         // 2️⃣ USER LOGIN
       
         else if (req.session.role === 'user') {
-
+            const adminId = req.session.adminId;
+              // Roles dropdown
+            const [roleRows] = await con.query(
+                "SELECT id, role_name FROM roles WHERE admin_id=?",
+                [adminId]
+            );
+            roles = roleRows;
+            
             // Get admin_id of logged user
             const [userRows] = await con.query(
                 "SELECT admin_id FROM users WHERE id=?",
