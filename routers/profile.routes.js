@@ -1,18 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const multer = require('multer');
+const fs = require('fs');
+const session = require('express-session');
+const r="user";
 
+if(session.role=="admin"){
+    r="admin";
+}
+
+// ================= FILE UPLOAD =================
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'public/uploads'),
+    filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname)
+});
+const upload = multer({ storage });
+
+
+// ================= PROFILE PAGE =================
 router.get('/', async (req, res) => {
 
-    if (!req.session.role) {
-        return res.redirect('/');
-    }
+    if (!req.session.role) return res.redirect('/');
 
     let show_sidebar = "Usersidebar";
     let members = [];
     let adminName = null;
     let adminId = null;
-    let profilePic = null;   // 🔹 ADDED
+    let profilePic = null;
+
+    let name="", email="", phone="", company="";
 
     try {
 
@@ -28,43 +45,43 @@ router.get('/', async (req, res) => {
             );
             members = mRows;
 
-            // 🔹 GET ADMIN NAME + PROFILE PIC
             const [aRows] = await con.query(
-                "SELECT name, profile_pic FROM admins WHERE id=?",
+                "SELECT name,email,phone,company_name,profile_pic FROM admins WHERE id=?",
                 [adminId]
             );
-            if (aRows.length > 0) {
+
+            if (aRows.length) {
                 adminName = aRows[0].name;
+                name = aRows[0].name;
+                email = aRows[0].email;
+                phone = aRows[0].phone;
+                company = aRows[0].company_name;
                 profilePic = aRows[0].profile_pic;
             }
-
         }
 
         // ================= USER =================
-        else if (req.session.role === "user") {
+        else {
 
             const [uRows] = await con.query(
-                "SELECT role_id, admin_id, profile_pic FROM users WHERE id=?",
+                "SELECT name,email,phone,profile_pic,role_id,admin_id FROM users WHERE id=?",
                 [req.session.userId]
             );
-            
-            if (uRows.length > 0) {
 
-                adminId = uRows[0].admin_id;
-                const roleId = uRows[0].role_id;
+            if (uRows.length) {
 
-                // 🔹 USER PROFILE PIC
+                name = uRows[0].name;
+                email = uRows[0].email;
+                phone = uRows[0].phone;
                 profilePic = uRows[0].profile_pic;
+
                 const [rRows] = await con.query(
                     "SELECT can_manage_members FROM roles WHERE id=?",
-                    [roleId]
+                    [uRows[0].role_id]
                 );
 
-                if (rRows.length > 0 && rRows[0].can_manage_members == 1) {
+                if (rRows.length && rRows[0].can_manage_members == 1)
                     show_sidebar = "sidebar";
-                } else {
-                    show_sidebar = "Usersidebar";
-                }
             }
         }
 
@@ -72,13 +89,92 @@ router.get('/', async (req, res) => {
             members,
             adminName,
             show_sidebar,
-            profilePic,     // 🔹 ADDED
-            session: req.session
+            profilePic,
+            session: req.session,
+            name,
+            email,
+            phone,
+            company,
+            r
         });
 
     } catch (err) {
         console.error(err);
         res.send("Error loading profile");
+    }
+});
+
+
+// ================= UPDATE PROFILE =================
+router.post('/update-profile', upload.single('profile_pic'), async (req, res) => {
+
+    if (!req.session.role) return res.redirect('/');
+
+    const { name, email, phone, company } = req.body;
+    const newPic = req.file ? req.file.filename : null;
+
+    try {
+
+        if (req.session.role === "admin") {
+
+            if (newPic) {
+
+                const [old] = await con.query(
+                    "SELECT profile_pic FROM admins WHERE id=?",
+                    [req.session.adminId]
+                );
+
+                if (old.length && old[0].profile_pic) {
+                    const path = "public/uploads/" + old[0].profile_pic;
+                    if (fs.existsSync(path)) fs.unlinkSync(path);
+                }
+
+                await con.query(
+                    "UPDATE admins SET name=?,email=?,phone=?,company_name=?,profile_pic=? WHERE id=?",
+                    [name, email, phone, company, newPic, req.session.adminId]
+                );
+
+            } else {
+                await con.query(
+                    "UPDATE admins SET name=?,email=?,phone=?,company_name=? WHERE id=?",
+                    [name, email, phone, company, req.session.adminId]
+                );
+            }
+        }
+
+        else {
+
+            if (newPic) {
+
+                const [old] = await con.query(
+                    "SELECT profile_pic FROM users WHERE id=?",
+                    [req.session.userId]
+                );
+
+                if (old.length && old[0].profile_pic) {
+                    const path = "public/uploads/" + old[0].profile_pic;
+                    if (fs.existsSync(path)) fs.unlinkSync(path);
+                }
+
+                await con.query(
+                    "UPDATE users SET name=?,email=?,phone=?,profile_pic=? WHERE id=?",
+                    [name, email, phone, newPic, req.session.userId]
+                );
+
+            } else {
+                await con.query(
+                    "UPDATE users SET name=?,email=?,phone=? WHERE id=?",
+                    [name, email, phone, req.session.userId]
+                );
+            }
+        }
+
+        req.session.email = email;
+        res.redirect('/profile');
+
+    } catch (err) {
+        console.error(err);
+        res.send("Profile update failed");
     }
 });
 

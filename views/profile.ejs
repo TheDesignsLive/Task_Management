@@ -167,10 +167,7 @@ body{
           <strong>Status:</strong> Active
         </div>
 
-        <button class="profile-btn">
-          Edit Profile (Coming Soon)
-        </button>
-
+        <button class="profile-btn" onclick="openEdit()">Edit Profile</button>
       </div>
 
     </div>
@@ -178,6 +175,35 @@ body{
   </div>
 
 </div>
+
+<div class="modal" id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;">
+<div style="width:420px;background:white;border-radius:10px;padding:20px;">
+
+<h3>Edit Profile</h3>
+
+<form action="/profile/update-profile" method="POST" enctype="multipart/form-data">
+
+<input type="text" name="name" value="<%= name %>" placeholder="Name" required style="width:100%;padding:8px;margin-bottom:10px;">
+<input type="email" name="email" value="<%= email %>" placeholder="Email" required style="width:100%;padding:8px;margin-bottom:10px;">
+<input type="text" name="phone" value="<%= phone %>" placeholder="Phone" style="width:100%;padding:8px;margin-bottom:10px;">
+<% if(r=="admin"){ %>
+<input type="text" name="company" value="<%= company %>" placeholder="Company" style="width:100%;padding:8px;margin-bottom:10px;">
+<% } %>
+<input type="file" name="profile_pic" style="margin-bottom:10px;">
+
+<div style="display:flex;gap:10px;">
+<button style="flex:1;background:#00a896;color:white;border:none;padding:10px;">Save</button>
+<button type="button" onclick="closeEdit()" style="flex:1;background:#ddd;border:none;padding:10px;">Cancel</button>
+</div>
+
+</form>
+</div>
+</div>
+
+<script>
+function openEdit(){document.getElementById('editModal').style.display='flex';}
+function closeEdit(){document.getElementById('editModal').style.display='none';}
+</script>
 
 </body>
 </html>
