@@ -27,6 +27,7 @@ const memberRequest=require('./routers/memberRequest.routes');
 const updateTaskRoute = require('./routers/update-task-status');
 
 const profile=require('./routers/profile.routes');
+const settings=require('./routers/settings.routes');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -70,7 +71,8 @@ app.use('/',homeroutes);
 
 app.use('/add-task', taskRoutes);   
 
-app.use('/',profile);
+app.use('/profile',profile);
+app.use('/settings',settings);
 
 app.use('/add-member',addmemberRoutes);
 app.use('/',suspendmember);

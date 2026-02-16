@@ -12,7 +12,6 @@ router.get('/', async (req, res) => {
     let members = [];
     let adminName = null;
     let adminId = null;
-    let profilePic = null;   // 🔹 ADDED
 
     try {
 
@@ -28,33 +27,26 @@ router.get('/', async (req, res) => {
             );
             members = mRows;
 
-            // 🔹 GET ADMIN NAME + PROFILE PIC
             const [aRows] = await con.query(
-                "SELECT name, profile_pic FROM admins WHERE id=?",
+                "SELECT name FROM admins WHERE id=?",
                 [adminId]
             );
-            if (aRows.length > 0) {
-                adminName = aRows[0].name;
-                profilePic = aRows[0].profile_pic;
-            }
-
+            if (aRows.length > 0) adminName = aRows[0].name;
         }
 
         // ================= USER =================
         else if (req.session.role === "user") {
 
             const [uRows] = await con.query(
-                "SELECT role_id, admin_id, profile_pic FROM users WHERE id=?",
+                "SELECT role_id, admin_id FROM users WHERE id=?",
                 [req.session.userId]
             );
-            
+
             if (uRows.length > 0) {
 
                 adminId = uRows[0].admin_id;
                 const roleId = uRows[0].role_id;
 
-                // 🔹 USER PROFILE PIC
-                profilePic = uRows[0].profile_pic;
                 const [rRows] = await con.query(
                     "SELECT can_manage_members FROM roles WHERE id=?",
                     [roleId]
@@ -68,17 +60,16 @@ router.get('/', async (req, res) => {
             }
         }
 
-        res.render('profile', {
+        res.render('settings', {
             members,
             adminName,
             show_sidebar,
-            profilePic,     // 🔹 ADDED
             session: req.session
         });
 
     } catch (err) {
         console.error(err);
-        res.send("Error loading profile");
+        res.send("Error loading settings");
     }
 });
 
