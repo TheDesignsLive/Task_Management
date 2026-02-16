@@ -307,7 +307,8 @@ function createTaskElement(task) {
         const t = tasks.find(tsk => tsk.id == task.id);
         t.status = 'OPEN';
         t.section = 'TASK';
-
+        //Here i want to refresh page
+        window.location.reload();
         // Insert in TASK section in ascending date order
         let inserted = false;
         const taskItems = Array.from(taskSection.querySelectorAll('.task-item'));

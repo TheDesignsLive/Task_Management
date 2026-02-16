@@ -88,7 +88,7 @@ app.use('/add-role',addrole);
 app.use('/',editrole);
 app.use('/',delete_role);
 
-app.use(updateTaskRoute);
+// app.use(updateTaskRoute);
 
 
 //  KEEP ONLY THIS HOME ROUTE
