@@ -4,11 +4,7 @@ const con = require('../config/db');
 const multer = require('multer');
 const fs = require('fs');
 const session = require('express-session');
-const r="user";
 
-if(session.role=="admin"){
-    r="admin";
-}
 
 // ================= FILE UPLOAD =================
 const storage = multer.diskStorage({
@@ -20,7 +16,11 @@ const upload = multer({ storage });
 
 // ================= PROFILE PAGE =================
 router.get('/', async (req, res) => {
-
+    
+    let r="user";
+    if(req.session.role=="admin"){
+        r="admin";
+    }
     if (!req.session.role) return res.redirect('/');
 
     let show_sidebar = "Usersidebar";
