@@ -148,7 +148,7 @@ select{
 </div>
 
 
-<script>
+<!-- <script>
 const textarea = document.getElementById("taskInput");
 
 textarea.addEventListener("keydown", function(e){
@@ -182,6 +182,52 @@ textarea.addEventListener("keydown", function(e){
       document.getElementById("datePicker").value = '';
     })
     .catch(err => console.error(err));
+  }
+});
+
+function openDate(){
+  document.getElementById("datePicker").showPicker();
+}
+</script> -->
+
+
+<script>
+const textarea = document.getElementById("taskInput");
+
+textarea.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+
+    const fullText = this.value.trim();
+    if(!fullText){
+      alert("Task cannot be empty!");
+      return;
+    }
+
+    // Split first line as title, rest as description
+    const lines = fullText.split(/\r?\n/);
+    const title = lines[0];
+    const description = lines.slice(1).join('\n');
+
+    const date = document.getElementById("datePicker").value;
+    const priority = document.getElementById("flag").value;
+    const assignedTo = document.getElementById("member").value;
+
+    fetch('/add-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description, date, priority, assignedTo })
+    })
+    .then(res => res.text())
+    .then(msg => {
+      // ===== AUTO REFRESH PAGE AFTER SUCCESS =====
+      window.location.reload();
+    })
+    .catch(err => console.error(err));
+
+    // Clear input immediately
+    textarea.value = '';
+    document.getElementById("datePicker").value = '';
   }
 });
 

@@ -235,7 +235,7 @@ async function updateTaskStatus(id, status, section=null) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, status, section })
   });
-  return res.json(); // ✅ Updated to return response
+  return res.json(); // Updated to return response
 }
 
 // ===== UPDATE TASK SECTION =====
@@ -276,7 +276,7 @@ function createTaskElement(task) {
   // Only allow drag if task is not completed
   if (task.status !== 'COMPLETED') div.draggable = true;
 
-  // ===== ✅ FIXED CHECKBOX HANDLER =====
+  // =====  FIXED CHECKBOX HANDLER =====
   const checkbox = div.querySelector('input.task-checkbox');
   checkbox.addEventListener('change', async (e) => {
     const isChecked = e.target.checked;
@@ -291,7 +291,7 @@ function createTaskElement(task) {
         div.remove();
         completedSection.appendChild(div);
 
-        // ✅ Update task object in tasks array
+        // Update task object in tasks array
         const t = tasks.find(tsk => tsk.id == task.id);
         t.status = 'COMPLETED';
         t.section = 'COMPLETED';
@@ -303,7 +303,7 @@ function createTaskElement(task) {
         div.classList.remove('completed-task');
         div.remove();
 
-        // ✅ Update task object in tasks array
+        //  Update task object in tasks array
         const t = tasks.find(tsk => tsk.id == task.id);
         t.status = 'OPEN';
         t.section = 'TASK';
@@ -449,9 +449,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   enableDragAndDrop();
 });
 </script>
-
-
-
 
 
 </body>
