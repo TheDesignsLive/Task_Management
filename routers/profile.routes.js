@@ -37,6 +37,7 @@ router.get('/profile', async (req, res) => {
                 adminName = aRows[0].name;
                 profilePic = aRows[0].profile_pic;
             }
+
         }
 
         // ================= USER =================
