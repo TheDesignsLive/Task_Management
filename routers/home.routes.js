@@ -50,7 +50,7 @@ router.get('/home', async (req, res) => {
 
             
             /* ==========================================================
-               ✅✅✅ ADDED FOR OTHERS SECTION (USER → ADMIN TASKS)
+             ADDED FOR OTHERS SECTION (USER → ADMIN TASKS)
                Condition:
                admin_id = adminId
                assigned_to = 0
@@ -109,15 +109,15 @@ router.get('/home', async (req, res) => {
             if (adminRows.length > 0) adminName = adminRows[0].name;
 
 
-            // 100%✅ ADD THIS BLOCK (FETCH ALL COMPANY USERS FOR DROPDOWN)
+            //  ADD THIS BLOCK (FETCH ALL COMPANY USERS FOR DROPDOWN)
             const [rows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
                 [adminId, req.session.userId]
             );
             members = rows;
-            // 100%✅ END ADDED BLOCK
+            //  END ADDED BLOCK
 
-            // 100%✅ FETCH TASKS GIVEN BY ADMIN TO USER
+            //  FETCH TASKS GIVEN BY ADMIN TO USER
             const [adminTasksRows] = await con.query(
                 `SELECT t.id, t.title, t.description, t.priority,
                         t.due_date, t.status,
@@ -132,7 +132,7 @@ router.get('/home', async (req, res) => {
                 [adminId, req.session.userId]
             );
 
-            // 100%✅ FETCH TASKS GIVEN BY USER ITSELF
+            // FETCH TASKS GIVEN BY USER ITSELF
             const [userTasksRows] = await con.query(
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
@@ -141,7 +141,7 @@ router.get('/home', async (req, res) => {
                 [adminId, req.session.userId]
             );
 
-            // 100%✅ FETCH TASKS GIVEN BY OTHER USERS IN SAME ADMIN
+            // FETCH TASKS GIVEN BY OTHER USERS IN SAME ADMIN
             const [otherUserTasksRows] = await con.query(
                 `SELECT t.id, t.title, t.description, t.priority,
                         t.due_date, t.status,
@@ -157,7 +157,7 @@ router.get('/home', async (req, res) => {
                 [adminId, req.session.userId, req.session.userId]
             );
 
-            // 100%✅ MERGE USER TASKS + ADMIN TASKS + OTHER USERS TASKS
+            //  MERGE USER TASKS + ADMIN TASKS + OTHER USERS TASKS
             tasks = [...userTasksRows, ...adminTasksRows, ...otherUserTasksRows];
         }
 

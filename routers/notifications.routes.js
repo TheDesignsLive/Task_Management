@@ -36,7 +36,7 @@ router.get('/notifications', async (req, res) => {
             );
             if (aRows.length > 0) adminName = aRows[0].name;
 
-            // ✅ UPDATED FETCH WITH JOINS
+            //  UPDATED FETCH WITH JOINS
             const [reqRows] = await con.query(`
                 SELECT 
                     mr.id,

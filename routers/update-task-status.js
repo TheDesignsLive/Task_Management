@@ -39,10 +39,10 @@ router.post('/update-task-status', async (req, res) => {
     try {
         let { id, status, section } = req.body;
 
-        // ✅ Fix: If status is null or 'OPEN', treat as OPEN
+        //  Fix: If status is null or 'OPEN', treat as OPEN
         if (!status || status === null) status = 'OPEN';
 
-        // ✅ Fix: If section is null or undefined, default to TASK
+        //  Fix: If section is null or undefined, default to TASK
         if (!section || section === null) section = 'TASK';
 
         await db.execute(
@@ -50,7 +50,7 @@ router.post('/update-task-status', async (req, res) => {
             [status, section, id]
         );
 
-        // ✅ Send back updated status and section so frontend can update tasks array
+        //  Send back updated status and section so frontend can update tasks array
         res.json({ success: true, status, section });
     } catch (err) {
         console.error(err);
