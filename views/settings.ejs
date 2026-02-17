@@ -42,11 +42,10 @@ button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
 
 <div class="settings-menu">
 <div class="settings-item" onclick="openCard('passwordCard')">Change Password</div>
-<div class="settings-item" onclick="openCard('forgotCard')">Forgot Password</div>
 </div>
 
 <!-- CHANGE PASSWORD -->
-<div id="passwordCard" class="card">
+<div id="passwordCard" class="card active">
 <h3>Change Password</h3>
 
 <form method="POST" action="/settings/change-password">
@@ -57,65 +56,13 @@ button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
 </form>
 </div>
 
-
-<!-- FORGOT PASSWORD -->
-<div id="forgotCard" class="card">
-
-<h3>Forgot Password</h3>
-
-<input type="text" id="contact" placeholder="Enter Email or Phone">
-<button onclick="sendOtp()">Send OTP</button>
-
-<div id="otpBox" style="display:none;">
-<input type="text" id="otp" placeholder="Enter OTP">
-<input type="password" id="newpass" placeholder="New Password">
-<input type="password" id="confpass" placeholder="Confirm Password">
-<button onclick="verifyOtp()">Reset Password</button>
-<button id="resendBtn" onclick="sendOtp()" disabled>Resend OTP</button>
-</div>
-
-</div>
-
 </div>
 </div>
-
 
 <script>
 function openCard(id){
 document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
 document.getElementById(id).classList.add('active');
-}
-
-function sendOtp(){
-const contact=document.getElementById('contact').value;
-
-fetch('/settings/send-otp',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({contact})
-})
-.then(()=>{
-
-document.getElementById('otpBox').style.display='block';
-
-let btn=document.getElementById('resendBtn');
-btn.disabled=true;
-setTimeout(()=>btn.disabled=false,120000); // 2 min
-
-});
-}
-
-function verifyOtp(){
-fetch('/settings/verify-otp',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-contact:document.getElementById('contact').value,
-otp:document.getElementById('otp').value,
-new_password:document.getElementById('newpass').value,
-confirm_password:document.getElementById('confpass').value
-})
-}).then(()=>location.reload());
 }
 </script>
 

@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
-let otpStore = {}; // { key: { otp, expires, resendTime } }
-
 // ================= PAGE LOAD =================
 router.get('/', async (req, res) => {
 
@@ -53,7 +51,7 @@ router.get('/', async (req, res) => {
 
         res.render('settings', {
             show_sidebar,
-            members,      // ✅ FIX navbar error
+            members,
             adminName,
             session: req.session
         });
@@ -70,7 +68,9 @@ router.get('/', async (req, res) => {
 router.post('/change-password', async (req, res) => {
 
     const { current_password, new_password, confirm_password } = req.body;
-    if (new_password !== confirm_password) return res.send("<script>alert('Password mismatch'); window.location=document.referrer;</script>");
+
+    if (new_password !== confirm_password)
+        return res.send("<script>alert('Password mismatch'); window.location=document.referrer;</script>");
 
     try {
 
@@ -91,61 +91,5 @@ router.post('/change-password', async (req, res) => {
         res.send("<script>alert('Password change failed'); window.location=document.referrer;</script>");
     }
 });
-
-
-/* ================= SEND OTP ================= */
-
-router.post('/send-otp', async (req, res) => {
-
-    const { contact } = req.body;
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    otpStore[contact] = {
-        otp,
-        expires: Date.now() + 5 * 60 * 1000,
-        resendTime: Date.now() + 2 * 60 * 1000
-    };
-
-    console.log("OTP:", otp); // 🔴 show in console (use SMS/email later)
-    res.send("<script>alert('OTP sent'); window.location=document.referrer;</script>");
-});
-
-
-/* ================= VERIFY OTP & RESET ================= */
-
-router.post('/verify-otp', async (req, res) => {
-
-    const { contact, otp, new_password, confirm_password } = req.body;
-
-    if (new_password !== confirm_password)
-        return res.send("<script>alert('Password mismatch'); window.location=document.referrer;</script>");
-
-    const data = otpStore[contact];
-    if (!data) return res.send("<script>alert('OTP not found'); window.location=document.referrer;</script>");
-
-    if (Date.now() > data.expires)
-        return res.send("<script>alert('OTP expired'); window.location=document.referrer;</script>");
-
-    if (parseInt(otp) !== data.otp)
-        return res.send("<script>alert('Wrong OTP'); window.location=document.referrer;</script>");
-
-    try {
-
-        let table = req.session.role === "admin" ? "admins" : "users";
-
-        await con.query(
-            `UPDATE ${table} SET password=? WHERE email=? OR phone=?`,
-            [new_password, contact, contact]
-        );
-
-        delete otpStore[contact];
-        res.send("<script>alert('Password reset successfully'); window.location='/settings';</script>");
-
-    } catch (err) {
-        console.log(err);
-        res.send("<script>alert('Reset failed'); window.location=document.referrer;</script>");
-    }
-});
-
 
 module.exports = router;
