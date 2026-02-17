@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
+
 // ================= PAGE LOAD =================
 router.get('/', async (req, res) => {
 
@@ -51,7 +52,7 @@ router.get('/', async (req, res) => {
 
         res.render('settings', {
             show_sidebar,
-            members,
+            members,      // for navbar dropdown
             adminName,
             session: req.session
         });
@@ -91,5 +92,6 @@ router.post('/change-password', async (req, res) => {
         res.send("<script>alert('Password change failed'); window.location=document.referrer;</script>");
     }
 });
+
 
 module.exports = router;
