@@ -263,11 +263,11 @@ function createTaskElement(task) {
         class="task-checkbox ${priorityClass}"
         ${task.status === 'COMPLETED' ? 'checked' : ''} />
 
-      <span style="flex:1; margin-left:8px;">
-        ${task.title}
-${task.assigned_by_name ? ' 👤 ' + task.assigned_by_name : ''}
+<span style="flex:1;">
+  &nbsp;${task.title}${task.assigned_by_name ? '&emsp;&emsp;' + task.assigned_by_name : ''}
+</span>
 
-      </span>
+
 
       <span style="min-width:60px; text-align:right;">
         ${formatDate(task.due_date)}

@@ -50,7 +50,7 @@ router.get('/home', async (req, res) => {
 
             
             /* ==========================================================
-               ✅✅✅ ADDED FOR OTHERS SECTION (USER → ADMIN TASKS)
+             ADDED FOR OTHERS SECTION (USER → ADMIN TASKS)
                Condition:
                admin_id = adminId
                assigned_to = 0
@@ -109,24 +109,56 @@ router.get('/home', async (req, res) => {
             if (adminRows.length > 0) adminName = adminRows[0].name;
 
 
-            // ✅✅✅ ADD THIS BLOCK (FETCH ALL COMPANY USERS FOR DROPDOWN)
+            //  ADD THIS BLOCK (FETCH ALL COMPANY USERS FOR DROPDOWN)
             const [rows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
                 [adminId, req.session.userId]
             );
             members = rows;
-            // ✅✅✅ END ADDED BLOCK
+            //  END ADDED BLOCK
 
-            // Tasks assigned to user
-            const [taskRows] = await con.query(
-                `SELECT id, title, description, priority, due_date, status, section
-                 FROM tasks
-                 WHERE admin_id=? AND assigned_to=? AND who_assigned='user' AND assigned_by=?
-                 ORDER BY due_date ASC`,
-                [adminId, req.session.userId,req.session.userId]
+            //  FETCH TASKS GIVEN BY ADMIN TO USER
+            const [adminTasksRows] = await con.query(
+                `SELECT t.id, t.title, t.description, t.priority,
+                        t.due_date, t.status,
+                        'OTHERS' AS section,
+                        a.name AS assigned_by_name
+                 FROM tasks t
+                 JOIN admins a ON t.assigned_by = a.id
+                 WHERE t.admin_id=?
+                 AND t.assigned_to=?
+                 AND t.who_assigned='admin'
+                 ORDER BY t.due_date ASC`,
+                [adminId, req.session.userId]
             );
 
-            tasks = taskRows;
+            // FETCH TASKS GIVEN BY USER ITSELF
+            const [userTasksRows] = await con.query(
+                `SELECT id, title, description, priority, due_date, status, section
+                 FROM tasks
+                 WHERE admin_id=? AND assigned_to=? AND who_assigned='user'
+                 ORDER BY due_date ASC`,
+                [adminId, req.session.userId]
+            );
+
+            // FETCH TASKS GIVEN BY OTHER USERS IN SAME ADMIN
+            const [otherUserTasksRows] = await con.query(
+                `SELECT t.id, t.title, t.description, t.priority,
+                        t.due_date, t.status,
+                        'OTHERS' AS section,
+                        u.name AS assigned_by_name
+                 FROM tasks t
+                 JOIN users u ON t.assigned_by = u.id
+                 WHERE t.admin_id=? 
+                 AND t.assigned_to=? 
+                 AND t.who_assigned='user' 
+                 AND t.assigned_by != ? 
+                 ORDER BY t.due_date ASC`,
+                [adminId, req.session.userId, req.session.userId]
+            );
+
+            //  MERGE USER TASKS + ADMIN TASKS + OTHER USERS TASKS
+            tasks = [...userTasksRows, ...adminTasksRows, ...otherUserTasksRows];
         }
 
         // Render home

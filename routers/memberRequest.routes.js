@@ -25,7 +25,7 @@ router.get('/approve-member/:id', async (req, res) => {
 
         const request = rows[0];
 
-        // ✅ CHECK DUPLICATE EMAIL IN USERS TABLE
+        //  CHECK DUPLICATE EMAIL IN USERS TABLE
         const [existingUser] = await con.query(
             "SELECT id FROM users WHERE email=?",
             [request.email]
@@ -57,7 +57,7 @@ router.get('/approve-member/:id', async (req, res) => {
             [requestId]
         );
 
-        // ✅ DELETE REQUEST AFTER APPROVE
+        //  DELETE REQUEST AFTER APPROVE
         await con.query(
             "DELETE FROM member_requests WHERE id=?",
             [requestId]
@@ -89,7 +89,7 @@ router.get('/reject-member/:id', async (req, res) => {
             [requestId]
         );
 
-        // ✅ DELETE REQUEST AFTER REJECT
+        //  DELETE REQUEST AFTER REJECT
         await con.query(
             "DELETE FROM member_requests WHERE id=?",
             [requestId]
