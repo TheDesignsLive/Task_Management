@@ -18,7 +18,8 @@ router.get('/delete-role/:id', async (req, res) => {
     );
 
     if (used.length > 0) {
-      return res.send("Cannot delete: Role is assigned to users");
+      return res.send("<script>alert('Cannot delete: Role is assigned to users'); window.location=document.referrer;</script>");
+      //return res.send("Cannot delete: Role is assigned to users");
     }
 
     // DELETE ROLE
