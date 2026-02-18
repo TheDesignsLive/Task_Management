@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     let adminId = null;
     let profilePic = null;
 
-    let name="", email="", phone="", company="";
+    let name="", email="", phone="", company="", role="";
 
     try {
 
@@ -38,6 +38,7 @@ router.get('/', async (req, res) => {
 
             show_sidebar = "sidebar";
             adminId = req.session.adminId;
+            role = "Admin";
 
             const [mRows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
@@ -55,13 +56,15 @@ router.get('/', async (req, res) => {
                 name = aRows[0].name;
                 email = aRows[0].email;
                 phone = aRows[0].phone;
-                company = aRows[0].company_name;
+                company = aRows[0].company_name;   // ✅ company from admins
                 profilePic = aRows[0].profile_pic;
             }
         }
 
         // ================= USER =================
         else {
+
+            role = "User";
 
             const [uRows] = await con.query(
                 "SELECT name,email,phone,profile_pic,role_id,admin_id FROM users WHERE id=?",
@@ -74,6 +77,13 @@ router.get('/', async (req, res) => {
                 email = uRows[0].email;
                 phone = uRows[0].phone;
                 profilePic = uRows[0].profile_pic;
+
+                // ✅ Fetch company from ADMIN using admin_id
+                const [cRows] = await con.query(
+                    "SELECT company_name FROM admins WHERE id=?",
+                    [uRows[0].admin_id]
+                );
+                if (cRows.length) company = cRows[0].company_name;
 
                 const [rRows] = await con.query(
                     "SELECT can_manage_members FROM roles WHERE id=?",
@@ -95,7 +105,8 @@ router.get('/', async (req, res) => {
             email,
             phone,
             company,
-            r
+            r,
+            role        // ✅ send role
         });
 
     } catch (err) {
