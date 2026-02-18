@@ -118,28 +118,6 @@ button:hover{
     color: #065f46;       /* slightly darker on hover */
 }
 
-.password-box{
-  position:relative;
-  width:100%;
-}
-
-.password-box input{
-  width:100%;
-  padding:8px 35px 8px 8px;   /* space for eye */
-  box-sizing:border-box;
-}
-
-.eye{
-  position:absolute;
-  right:10px;
-  top:50%;
-  transform:translateY(-50%);
-  cursor:pointer;
-  user-select:none;
-  font-size:16px;
-}
-
-
 
 </style>
 </head>
@@ -168,27 +146,17 @@ button:hover{
             <input type="email" id="loginEmail" placeholder="Email">
         </div>
 
-<<<<<<< HEAD
         <!-- <div class="input-group">
             <input type="password" id="loginPassword" placeholder="Password">
         </div> -->
 
-        <div class="input-group" style="position:relative;">
+<div class="input-group" style="position:relative;">
+    <input type="password" id="loginPassword" placeholder="Password" name="password" required>
+    <i class="fa-solid fa-eye" id="toggleLoginPassword"
+       style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+       cursor:pointer; color:#999;"></i>
+</div>
 
-              <input type="password" id="password" placeholder="Password" name="password" required>
-
-    <i class="fa-solid fa-eye"
-       id="togglePassword"
-       style="position:absolute; right:12px; top:50%;
-       transform:translateY(-50%);
-       cursor:pointer; color:#999;">
-    </i>
-=======
-        <div class="input-group passwor-box">
-            <input type="password" id="loginPassword" placeholder="Password">
-            <span class="eye" onclick="togglePassword()">👁</span>
->>>>>>> bcc798b2826131dbc9496bab0b95ea47f0729831
-        </div>
 
 
         <button type="submit">Login</button>
@@ -221,14 +189,10 @@ button:hover{
         </div> -->
 
 <div class="input-group" style="position:relative;">
-    <input type="password" id="password" placeholder="Password" name="password" required>
-
-    <i class="fa-solid fa-eye"
-       id="togglePassword"
-       style="position:absolute; right:12px; top:50%;
-       transform:translateY(-50%);
-       cursor:pointer; color:#999;">
-    </i>
+    <input type="password" id="signupPassword" placeholder="Password" name="password" required>
+    <i class="fa-solid fa-eye" id="toggleSignupPassword"
+       style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+       cursor:pointer; color:#999;"></i>
 </div>
 
 
@@ -318,24 +282,40 @@ document.getElementById("signupForm").addEventListener("submit", async function(
 //show password
 document.addEventListener("DOMContentLoaded", function () {
 
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
+    // Login password toggle
+    const toggleLogin = document.getElementById('toggleLoginPassword');
+    const loginInput = document.getElementById('loginPassword');
 
-    togglePassword.addEventListener('click', function () {
-
-        if (passwordInput.type === "password") {
-            passwordInput.type = "text";
-            togglePassword.classList.remove("fa-eye");
-            togglePassword.classList.add("fa-eye-slash");
+    toggleLogin.addEventListener('click', function () {
+        if (loginInput.type === "password") {
+            loginInput.type = "text";
+            toggleLogin.classList.remove("fa-eye");
+            toggleLogin.classList.add("fa-eye-slash");
         } else {
-            passwordInput.type = "password";
-            togglePassword.classList.remove("fa-eye-slash");
-            togglePassword.classList.add("fa-eye");
+            loginInput.type = "password";
+            toggleLogin.classList.remove("fa-eye-slash");
+            toggleLogin.classList.add("fa-eye");
         }
+    });
 
+    // Signup password toggle
+    const toggleSignup = document.getElementById('toggleSignupPassword');
+    const signupInput = document.getElementById('signupPassword');
+
+    toggleSignup.addEventListener('click', function () {
+        if (signupInput.type === "password") {
+            signupInput.type = "text";
+            toggleSignup.classList.remove("fa-eye");
+            toggleSignup.classList.add("fa-eye-slash");
+        } else {
+            signupInput.type = "password";
+            toggleSignup.classList.remove("fa-eye-slash");
+            toggleSignup.classList.add("fa-eye");
+        }
     });
 
 });
+
 
 
 </script>
