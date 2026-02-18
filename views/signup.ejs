@@ -100,7 +100,23 @@ button{
 
 button:hover{
     background:#0f766e;
+}/* Forgot Password Link Style */
+.forgot-password {
+    display: block;
+    text-align: center;
+    margin-bottom: -5px;
+    margin-top: 16px;
+    font-size: 15px;
+    color: #0f766e;       /* dark teal/green for professional look */
+    text-decoration: none;
+    transition: color 0.3s;
 }
+
+.forgot-password:hover {
+    color: #065f46;       /* slightly darker on hover */
+}
+
+
 </style>
 </head>
 
@@ -133,6 +149,10 @@ button:hover{
         </div>
 
         <button type="submit">Login</button>
+<a href="/forgot-password" class="forgot-password">Forgot Password?</a>
+
+
+
     </form>
 
     <!-- Signup -->

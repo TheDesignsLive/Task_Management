@@ -42,6 +42,10 @@ button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
 
 <div class="settings-menu">
 <div class="settings-item" onclick="openCard('passwordCard')">Change Password</div>
+
+
+<!-- <div class="settings-item" onclick="openCard('forgotCard')">Forgot Password</div> -->
+
 </div>
 
 <!-- CHANGE PASSWORD -->
@@ -55,6 +59,26 @@ button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
 <button>Change Password</button>
 </form>
 </div>
+
+<!-- 
+
+<div id="forgotCard" class="card">
+
+<h3>Forgot Password</h3>
+
+<input type="text" id="contact" placeholder="Enter Email or Phone">
+<button onclick="sendOtp()">Send OTP</button>
+
+<div id="otpBox" style="display:none;">
+<input type="text" id="otp" placeholder="Enter OTP">
+<input type="password" id="newpass" placeholder="New Password">
+<input type="password" id="confpass" placeholder="Confirm Password">
+<button onclick="verifyOtp()">Reset Password</button>
+<button id="resendBtn" onclick="sendOtp()" disabled>Resend OTP</button>
+</div> -->
+
+</div>
+
 
 </div>
 </div>
