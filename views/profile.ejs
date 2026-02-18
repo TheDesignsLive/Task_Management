@@ -11,16 +11,13 @@ body{
   font-family: 'Segoe UI', Tahoma, sans-serif;
   background:#3C3A3A;
 }
-
 .layout{
   display:flex;
   min-height:calc(100vh - 60px);
 }
-
 .sidebar-container{
   width:55px;
 }
-
 .main-content{
   flex:1;
   padding:25px;
@@ -29,9 +26,6 @@ body{
   justify-content:center;
   align-items:flex-start;
 }
-
-/* ===== Profile Card ===== */
-
 .profile-card{
   width:420px;
   background:#fff;
@@ -40,16 +34,12 @@ body{
   overflow:hidden;
   text-align:center;
 }
-
-/* Top Banner */
 .profile-header{
   background:linear-gradient(135deg,#095959,#00a896);
   padding:35px 20px 60px;
   color:white;
   position:relative;
 }
-
-/* Profile Image */
 .profile-img{
   width:110px;
   height:110px;
@@ -62,25 +52,19 @@ body{
   bottom:-55px;
   background:#ddd;
 }
-
-/* Body */
 .profile-body{
   padding:70px 25px 25px;
 }
-
 .profile-name{
   font-size:20px;
   font-weight:600;
   color:#333;
 }
-
 .profile-role{
   font-size:13px;
   color:#888;
   margin-bottom:20px;
 }
-
-/* Info Box */
 .info-box{
   background:#f7f7f7;
   padding:12px;
@@ -89,12 +73,9 @@ body{
   text-align:left;
   font-size:14px;
 }
-
 .info-box strong{
   color:#095959;
 }
-
-/* Button */
 .profile-btn{
   margin-top:15px;
   width:100%;
@@ -107,7 +88,6 @@ body{
   cursor:pointer;
   transition:0.3s;
 }
-
 .profile-btn:hover{
   opacity:0.9;
   transform:translateY(-1px);
@@ -117,12 +97,10 @@ body{
 
 <body>
 
-<!-- NAVBAR -->
 <%- include('navbar') %>
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <div class="sidebar-container">
     <% if (show_sidebar === 'sidebar') { %>
         <%- include('sidebar') %>
@@ -131,41 +109,24 @@ body{
     <% } %>
   </div>
 
-  <!-- MAIN CONTENT -->
   <div class="main-content">
 
     <div class="profile-card">
 
-      <!-- HEADER -->
       <div class="profile-header">
         <h3>My Profile</h3>
-
-        <!-- Profile Image -->
-            <img src="<%= profilePic ? '/uploads/' + profilePic : '/default-profile.png' %>" class="profile-img">
+        <img src="<%= profilePic ? '/uploads/' + profilePic : '/default-profile.png' %>" class="profile-img">
       </div>
 
-      <!-- BODY -->
       <div class="profile-body">
 
-        <div class="profile-name">
-          <%= session.email.split('@')[0] %>
-        </div>
+        <div class="profile-name"><%= name %></div>
+        <div class="profile-role"><%= role %></div>
 
-        <div class="profile-role">
-          <%= session.role.toUpperCase() %>
-        </div>
-
-        <div class="info-box">
-          <strong>Email:</strong> <%= session.email %>
-        </div>
-
-        <div class="info-box">
-          <strong>Account Type:</strong> <%= session.role %>
-        </div>
-
-        <div class="info-box">
-          <strong>Status:</strong> Active
-        </div>
+        <div class="info-box"><strong>Email:</strong> <%= email %></div>
+        <div class="info-box"><strong>Company:</strong> <%= company || 'N/A' %></div>
+        <div class="info-box"><strong>Account Type:</strong> <%= role %></div>
+        <div class="info-box"><strong>Status:</strong> Active</div>
 
         <button class="profile-btn" onclick="openEdit()">Edit Profile</button>
       </div>
