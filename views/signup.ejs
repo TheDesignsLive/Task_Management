@@ -118,6 +118,135 @@ button:hover{
     color: #065f46;       /* slightly darker on hover */
 }
 
+/* Hide all steps by default */
+.form-step {
+    display: none;
+}
+
+/* Show only active step */
+.form-step.active {
+    display: block;
+}
+/* ================= SIGNUP FORM CSS ================= */
+
+/* Container for the form */
+#signupForm {
+    width: 100%;
+}
+
+/* Hide all steps by default */
+.form-step {
+    display: none;
+}
+
+/* Show only active step */
+.form-step.active {
+    display: block;
+}
+
+/* Headings & tagline */
+#signupForm h2 {
+    text-align: center;
+    margin-bottom: 8px;
+    color: #0f766e;
+}
+
+#signupForm .tagline {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Input groups */
+#signupForm .input-group {
+    margin-bottom: 15px;
+}
+
+#signupForm .input-group input,
+#signupForm .input-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 14px;
+}
+
+#signupForm .input-group input:focus,
+#signupForm .input-group select:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 5px rgba(20, 184, 166, 0.4);
+}
+
+/* Gender buttons */
+#signupForm .gender-group {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+/* Gender buttons */
+#signupForm .gender-btn {
+    flex: 1;
+    margin: 0 5px;
+    padding: 10px;
+    background: #f1f1f1;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #666; /* default grey text */
+    transition: all 0.3s;
+     font-family: 'Arial', 'Helvetica', sans-serif; 
+}
+
+/* Active button style */
+#signupForm .gender-btn.active {
+    background: #e0f7f5; /* light teal background */
+    color: #0f766e;      /* teal text */
+    border-color: #0f766e; /* teal border */
+}
+
+/* Next / Verify / Submit buttons */
+#signupForm button.next-btn,
+#signupForm button[type="submit"] {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 6px;
+    background: #14b8a6;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#signupForm button.next-btn:hover,
+#signupForm button[type="submit"]:hover {
+    background: #0f766e;
+}
+
+/* Password toggle icon */
+#signupForm .input-group i.fa-eye,
+#signupForm .input-group i.fa-eye-slash {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+}
+
+/* Optional: small spacing for verification text */
+#signupForm .form-step p {
+    margin-bottom: 10px;
+    color: #555;
+    font-size: 14px;
+    text-align: center;
+}
+
+
 
 </style>
 </head>
@@ -164,67 +293,112 @@ button:hover{
 
     </form>
 
-    <!-- Signup -->
-    <form class="form" id="signupForm" enctype="multipart/form-data">
-        <div class="input-group">
-            <input type="text" id="name" placeholder="Full Name">
-        </div>
+    <!--SignUp  -->
+    <form class="form" id="signupForm">
+  <h2>Create Account</h2>
+  <p class="tagline">Sign up to manage your tasks efficiently</p>
 
-        <div class="input-group">
-            <input type="text" id="company_name" placeholder="Company Name">
-        </div>
+  <!-- Step 1 -->
+  <div class="form-step step-1 active">
+    <div class="input-group">
+      <input type="text" id="fullName" placeholder="Full Name" required>
+    </div>
 
-        <div class="input-group">
-            <input type="email" id="email" placeholder="Email">
-        </div>
+    <div class="input-group">
+      <input type="email" id="signupEmail" placeholder="Email" required>
+    </div>
 
-        <div class="input-group">
-            <input type="text" id="phone" placeholder="Phone">
-        </div>
 
-   
+    <button type="button" class="next-btn" onclick="nextStep(1)">Next</button>
+  </div>
 
-<div class="input-group" style="position:relative;">
-    <input type="password" id="signupPassword" placeholder="Password" name="password" required>
-    <i class="fa-solid fa-eye" id="toggleSignupPassword"
-       style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
-       cursor:pointer; color:#999;"></i>
+  <!-- Step 2 -->
+<!-- Step 2 -->
+<div class="form-step step-2">
+  <p>Enter the verification code sent to your email</p>
+  <div class="input-group">
+    <input type="text" id="verificationCode" placeholder="Verification Code" required>
+  </div>
+  <div class="input-group" style="display:flex; gap:10px;">
+    <button type="button" onclick="prevStep(2)">Back</button>
+    <button type="button" class="next-btn" onclick="nextStep(2)">Verify</button>
+  </div>
 </div>
 
 
+  <!-- Step 3 -->
+  <div class="form-step step-3">
+    <div class="input-group">
+      <input type="text" id="companyName" placeholder="Company Name" required>
+    </div>
 
+    <div class="input-group">
+      <input type="text" id="phone" placeholder="Phone">
+    </div>
 
-        <!--  PROFILE PIC ADDED -->
-        <div class="input-group">
-            <input type="file" id="profile_pic" accept="image/*">
-        </div>
+    <div class="input-group" style="position:relative;">
+      <input type="password" id="signupPassword" placeholder="Password" required>
+      <i class="fa-solid fa-eye" id="toggleSignupPassword"
+         style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#999;"></i>
+    </div>
 
-        <button type="submit">Create Account</button>
-    </form>
+    <div class="input-group" style="position:relative;">
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+      <i class="fa-solid fa-eye" id="toggleConfirmPassword"
+         style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#999;"></i>
+    </div>
+
+     <div class="input-group" style="display:flex; gap:10px;">
+    <button type="button" onclick="prevStep(3)">Back</button>
+    <button type="submit">Create Account</button>
+  </div>
+  </div>
+</form>
+
+    
+
 
 </div>
-
 <script>
-function showTab(index){
-    const tabs = document.querySelectorAll(".tab");
-    const forms = document.querySelectorAll(".form");
-    const underline = document.getElementById("underline");
+    let signupOtp = null; // store generated OTP
+let signupEmail = null; // store email for verification
 
-    tabs.forEach(t=>t.classList.remove("active"));
-    forms.forEach(f=>f.classList.remove("active"));
+async function sendSignupOtp(email){
+    signupOtp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+    signupEmail = email;
 
-    tabs[index].classList.add("active");
-    forms[index].classList.add("active");
+    console.log(signupEmail, signupOtp); 
+    const res = await fetch("/forgot-password/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            contact: email, 
+            otp: signupOtp, 
+            sent_for: "signup" 
+        })
+    });
 
-    underline.style.left = index * 50 + "%";
+    const data = await res.json();
+    if(data.status === "sent"){
+        alert("OTP sent successfully to your email.");
+       if(data.status === "sent"){
+    alert("OTP sent successfully to your email.");
+
+    document.querySelector(".step-1").classList.remove("active");
+    document.querySelector(".step-2").classList.add("active");
 }
+
+    } else {
+        alert("Failed to send OTP. Try again.");
+    }
+}
+
 
 /* ================= BACKEND CONNECT ================= */
 
 // LOGIN
 document.getElementById("loginForm").addEventListener("submit", async function(e){
     e.preventDefault();
-
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
     const loginType = document.getElementById("loginType").value;
@@ -244,77 +418,136 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     alert(data);
 });
 
-// SIGNUP (WITH IMAGE)
+
 document.getElementById("signupForm").addEventListener("submit", async function(e){
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("name", document.getElementById("name").value);
-    formData.append("company_name", document.getElementById("company_name").value);
-    formData.append("email", document.getElementById("email").value);
-    formData.append("phone", document.getElementById("phone").value);
-    formData.append("password", document.getElementById("password").value);
+    const company = document.getElementById("companyName").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
 
-    const fileInput = document.getElementById("profile_pic");
-    if(fileInput.files.length > 0){
-        formData.append("profile_pic", fileInput.files[0]);
-    }
-
-    const res = await fetch("/signup", {
-        method:"POST",
-        body: formData
-    });
-
-    if (res.redirected) {
-        window.location.href = res.url;
+    if(!company || !password || !confirmPassword) {
+        alert("Fill all required fields.");
         return;
     }
 
-    const data = await res.text();
-    alert(data);
+    if(password !== confirmPassword){
+        alert("Passwords do not match.");
+        return;
+    }
+
+    // TODO: send all data to backend
+    alert("Account created successfully!");
+});
+
+// SignUp Steps
+let currentStep = 1;
+
+function nextStep(step) {
+    const stepElement = document.querySelector(`.step-${step}`);
+    const nextStepElement = document.querySelector(`.step-${step+1}`);
+
+    // Step 1 validation
+    if(step === 1) {
+        const fullName = document.getElementById("fullName").value.trim();
+        const email = document.getElementById("signupEmail").value.trim();
+
+        if(!fullName || !email ) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(email)){
+            alert("Enter a valid email address.");
+            return;
+        }
+
+         sendSignupOtp(email);
+    }
+
+    // Step 2 validation
+   
+if(step === 2) {
+    const code = document.getElementById("verificationCode").value.trim();
+
+    if(!code) {
+        alert("Enter verification code.");
+        return;
+    }
+
+    // ✅ Compare OTP here
+    if(code != signupOtp){
+        alert("Invalid OTP. Try again.");
+        return;   // STOP here if wrong
+    }
+
+  
+    // HERE I WANT TO PERFORM Insert in admins table like following:
+    //insert into admins (name,company_name,email,phone,profile_pic,password) values (all values)
+      alert("OTP Verified Successfully!");
+}
+
+
+    // Hide current step, show next step
+    if(nextStepElement) {
+        stepElement.classList.remove("active");
+        nextStepElement.classList.add("active");
+    }
+}
+
+function prevStep(step){
+    const current = document.querySelector(`.step-${step}`);
+    const previous = document.querySelector(`.step-${step-1}`);
+
+    if(previous){
+        current.classList.remove("active");
+        previous.classList.add("active");
+    }
+}
+
+
+// Password toggle reusable function
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+
+    if(input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+// Add event listeners for Step 3 password toggles
+document.addEventListener("DOMContentLoaded", function(){
+    document.getElementById("toggleSignupPassword").addEventListener("click", ()=>togglePassword("signupPassword","toggleSignupPassword"));
+    document.getElementById("toggleConfirmPassword").addEventListener("click", ()=>togglePassword("confirmPassword","toggleConfirmPassword"));
 });
 
 
-//show password
-document.addEventListener("DOMContentLoaded", function () {
-
-    // Login password toggle
-    const toggleLogin = document.getElementById('toggleLoginPassword');
-    const loginInput = document.getElementById('loginPassword');
-
-    toggleLogin.addEventListener('click', function () {
-        if (loginInput.type === "password") {
-            loginInput.type = "text";
-            toggleLogin.classList.remove("fa-eye");
-            toggleLogin.classList.add("fa-eye-slash");
-        } else {
-            loginInput.type = "password";
-            toggleLogin.classList.remove("fa-eye-slash");
-            toggleLogin.classList.add("fa-eye");
-        }
-    });
-
-    // Signup password toggle
-    const toggleSignup = document.getElementById('toggleSignupPassword');
-    const signupInput = document.getElementById('signupPassword');
-
-    toggleSignup.addEventListener('click', function () {
-        if (signupInput.type === "password") {
-            signupInput.type = "text";
-            toggleSignup.classList.remove("fa-eye");
-            toggleSignup.classList.add("fa-eye-slash");
-        } else {
-            signupInput.type = "password";
-            toggleSignup.classList.remove("fa-eye-slash");
-            toggleSignup.classList.add("fa-eye");
-        }
-    });
-
-});
 
 
+function showTab(index){
+    const tabs = document.querySelectorAll(".tab");
+    const forms = document.querySelectorAll(".form");
+    const underline = document.getElementById("underline");
 
+    tabs.forEach(t=>t.classList.remove("active"));
+    forms.forEach(f=>f.classList.remove("active"));
+
+    tabs[index].classList.add("active");
+    forms[index].classList.add("active");
+
+    underline.style.left = index * 50 + "%";
+}
 </script>
+
 
 </body>
 </html>
