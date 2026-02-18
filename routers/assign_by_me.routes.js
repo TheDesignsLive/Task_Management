@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res) => { // Assuming route is /assign-by-me based on context
 
     if (!req.session.role) {
         return res.redirect('/');
@@ -16,23 +16,27 @@ router.get('/', async (req, res) => {
 
     try {
 
-        /* ================= ADMIN ================= */
+        // ================= ADMIN =================
         if (req.session.role === "admin") {
 
             show_sidebar = "sidebar";
 
+            // members for navbar dropdown
             const [mRows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
                 [req.session.adminId]
             );
             members = mRows;
 
+            // admin name
             const [aRows] = await con.query(
                 "SELECT name FROM admins WHERE id=?",
                 [req.session.adminId]
             );
             if (aRows.length > 0) adminName = aRows[0].name;
 
+            // FETCH ALL TASKS ASSIGNED BY ADMIN
+            // Added due_date to selection
             const [rows] = await con.query(`
                 SELECT 
                     t.id,
@@ -40,6 +44,7 @@ router.get('/', async (req, res) => {
                     t.description,
                     t.status,
                     t.due_date,
+                    t.created_at,
                     u.name AS assigned_to
                 FROM tasks t
                 JOIN users u ON u.id = t.assigned_to
@@ -48,13 +53,17 @@ router.get('/', async (req, res) => {
                 ORDER BY t.due_date ASC
             `, [req.session.adminId]);
 
+            // SPLIT OPEN & COMPLETED
             rows.forEach(task => {
-                if (task.status === 'COMPLETED') completedTasks.push(task);
-                else openTasks.push(task);
+                if (task.status === 'COMPLETED') {
+                    completedTasks.push(task);
+                } else {
+                    openTasks.push(task);
+                }
             });
         }
 
-        /* ================= USER ================= */
+        // ================= USER =================
         else if (req.session.role === "user") {
 
             const [uRows] = await con.query(
@@ -63,6 +72,7 @@ router.get('/', async (req, res) => {
             );
 
             if (uRows.length > 0) {
+
                 const roleId = uRows[0].role_id;
 
                 const [rRows] = await con.query(
@@ -70,12 +80,15 @@ router.get('/', async (req, res) => {
                     [roleId]
                 );
 
-                if (rRows.length > 0 && rRows[0].can_manage_members == 1)
+                if (rRows.length > 0 && rRows[0].can_manage_members == 1) {
                     show_sidebar = "sidebar";
-                else
+                } else {
                     show_sidebar = "Usersidebar";
+                }
             }
 
+            // FETCH USER ASSIGNED TASKS
+            // Added due_date to selection
             const [rows] = await con.query(`
                 SELECT 
                     t.id,
@@ -83,6 +96,7 @@ router.get('/', async (req, res) => {
                     t.description,
                     t.status,
                     t.due_date,
+                    t.created_at,
                     u.name AS assigned_to
                 FROM tasks t
                 JOIN users u ON u.id = t.assigned_to
@@ -91,9 +105,13 @@ router.get('/', async (req, res) => {
                 ORDER BY t.due_date ASC
             `, [req.session.userId]);
 
+            // SPLIT OPEN & COMPLETED
             rows.forEach(task => {
-                if (task.status === 'COMPLETED') completedTasks.push(task);
-                else openTasks.push(task);
+                if (task.status === 'COMPLETED') {
+                    completedTasks.push(task);
+                } else {
+                    openTasks.push(task);
+                }
             });
         }
 
