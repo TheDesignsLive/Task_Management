@@ -90,6 +90,32 @@ select{
 .input-box select:last-child{
   margin-right:0;
 }
+
+/* user/admin name*/
+.navbar {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #14b8a6; /* teal color */
+}
+
+.navbar .logo {
+    margin-right: 15px;
+}
+
+.navbar .input-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.navbar .user-display {
+    margin-left: auto; /* pushes it to right */
+    font-weight: bold;
+    color: #fff;
+    font-size: 14px;
+}
+
 </style>
 
 
@@ -101,7 +127,8 @@ select{
 
   <div class="input-box">
     
-    <textarea id="taskInput" placeholder="Add Task here"></textarea>
+    <!-- <textarea id="taskInput" placeholder="Add Task here"></textarea> -->
+<textarea id="taskInput" placeholder="Add Task here" style="padding-left:3.5px;"></textarea>
 
     <div class="calendar-wrapper">
       <button class="icon-btn" onclick="openDate()">📅</button>
@@ -144,6 +171,10 @@ select{
 </select>
 
 
+  </div>
+    <!-- Right side user/admin display -->
+  <div class="user-display" style="margin-left:auto; font-weight:bold; color:#fff;">
+    Welcome  <%= session.userName || adminName || "Guest" %>
   </div>
 </div>
 
