@@ -138,7 +138,8 @@
     /* ===== Dialog (added only, no change above CSS) ===== */
     .dialog-overlay {
       position:fixed;
-      top:0; left:0;
+      top:0;
+      left:0;
       width:100%; height:100%;
       background:rgba(0,0,0,0.5);
       display:none;
@@ -204,7 +205,6 @@
       <input type="text" placeholder="Search member..." id="searchMember">
       <button onclick="location.href='/view-roles'">View Roles</button>
 
-      <!-- ONLY CHANGE: open dialog instead of redirect -->
       <button onclick="openDialog()">Add Member</button>
     </div>
 
@@ -212,13 +212,12 @@
       <table>
         <thead>
           <tr>
-         <th>No</th>
-<th>Name</th>
-<th>Email</th>
-<th>Role</th>
-<th>Status</th>
-<th>Actions</th>
-
+            <th>No</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -235,9 +234,9 @@
        
     <button class="action-btn suspend-btn"
     style="background-color:<%= user.status === 'ACTIVE' ? '#f44336' : '#28a745' %>;"
-    onclick="openSuspendPopup(<%= user.id %>, '<%= user.name %>')">
+    onclick="openSuspendPopup(<%= user.id %>, '<%= user.name %>', '<%= user.status %>')">
     <%= user.status === 'ACTIVE' ? 'Suspend' : 'Active' %>
-</button>
+    </button>
 
 
 
@@ -250,7 +249,7 @@
                   </svg>
                 </a>
 
-                <a href="/delete-member/<%= user.id %>" class="action-icon delete-icon">
+                <a href="javascript:void(0)" onclick="openDeletePopup(<%= user.id %>, '<%= user.name %>')" class="action-icon delete-icon">
                   <svg viewBox="0 0 24 24" width="20" height="20">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                   </svg>
@@ -267,7 +266,6 @@
   </div>
 </div>
 
-<!-- ===== ADD MEMBER DIALOG (from code 1) ===== -->
 <div class="dialog-overlay" id="dialogBox">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeDialog()">✖</span>
@@ -295,7 +293,6 @@
   </div>
 </div>
 
-<!-- ===== EDIT MEMBER DIALOG ===== -->
 <div class="dialog-overlay" id="editDialogBox">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeEditDialog()">✖</span>
@@ -322,6 +319,7 @@
     </form>
   </div>
 </div>
+
 <div id="suspendModal" style="display:none; position:fixed; top:0; left:0; 
 width:100%; height:100%; background:rgba(0,0,0,0.5); 
 justify-content:center; align-items:center;">
@@ -341,7 +339,24 @@ justify-content:center; align-items:center;">
   </div>
 </div>
 
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; 
+width:100%; height:100%; background:rgba(0,0,0,0.5); 
+justify-content:center; align-items:center;">
 
+  <div style="background:white; padding:20px; border-radius:8px; width:300px; text-align:center;">
+    <h3>Are you sure?</h3>
+    
+    <p id="deleteMessage"></p>
+
+    <button onclick="confirmDelete()" style="background:#ed1e1e; color:white; padding:8px 15px; border:none;">
+      Yes
+    </button>
+
+    <button onclick="closeDeletePopup()" style="background:gray; color:white; padding:8px 15px; border:none;">
+      Cancel
+    </button>
+  </div>
+</div>
 
 <script>
 function openDialog() {
@@ -365,13 +380,17 @@ function openEditDialog(id, roleId, name, email, phone) {
 function closeEditDialog() {
   document.getElementById("editDialogBox").style.display = "none";
 }
+
+// === SUSPEND LOGIC ===
 let selectedUserId = null;
 
-function openSuspendPopup(userId, userName) {
+function openSuspendPopup(userId, userName, status) {
     selectedUserId = userId;
-
-    document.getElementById("suspendMessage").innerText =
-        "Do you really want to change status of " + userName + "?";
+    
+    let actionText = (status === 'ACTIVE') ? 'suspend' : 'active';
+    
+    document.getElementById("suspendMessage").innerText = 
+        "Are you sure you want to " + actionText + " \"" + userName + "\"?";
 
     document.getElementById("suspendModal").style.display = "flex";
 }
@@ -383,6 +402,28 @@ function closeSuspendPopup() {
 function confirmSuspend() {
     if (selectedUserId) {
         location.href = "/suspend-member/" + selectedUserId;
+    }
+}
+
+// === DELETE LOGIC ===
+let deleteUserId = null;
+
+function openDeletePopup(userId, userName) {
+    deleteUserId = userId;
+
+    document.getElementById("deleteMessage").innerText = 
+        "Are you sure you want to delete \"" + userName + "\"?";
+
+    document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeletePopup() {
+    document.getElementById("deleteModal").style.display = "none";
+}
+
+function confirmDelete() {
+    if (deleteUserId) {
+        location.href = "/delete-member/" + deleteUserId;
     }
 }
 </script>
