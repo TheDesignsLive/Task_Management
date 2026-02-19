@@ -25,6 +25,7 @@ const suspendmember=require('./routers/suspend-member.routes');
 const notification=require('./routers/notifications.routes');
 const memberRequest=require('./routers/memberRequest.routes');
 const updateTaskRoute = require('./routers/update-task-status');
+const AssignByMe=require('./routers/assign_by_me.routes');
 
 const profile=require('./routers/profile.routes');
 const settings=require('./routers/settings.routes');
@@ -76,7 +77,7 @@ app.use('/',homeroutes);
 
 
 app.use('/add-task', taskRoutes);   
-
+app.use('/assign_by_me',AssignByMe);
 app.use('/profile',profile);
 app.use('/settings',settings);
 
