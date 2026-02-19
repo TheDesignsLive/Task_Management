@@ -348,6 +348,11 @@ button:hover{
          style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#999;"></i>
     </div>
 
+    <div class="input-group">
+    <input type="file" id="profilePic" accept="image/*">
+</div>
+
+
      <div class="input-group" style="display:flex; gap:10px;">
     <button type="button" onclick="prevStep(3)">Back</button>
     <button type="submit">Create Account</button>
@@ -379,16 +384,16 @@ async function sendSignupOtp(email){
     });
 
     const data = await res.json();
-    if(data.status === "sent"){
-        alert("OTP sent successfully to your email.");
-       if(data.status === "sent"){
+    if(data.status === "sent")
+    {
     alert("OTP sent successfully to your email.");
+      
 
     document.querySelector(".step-1").classList.remove("active");
     document.querySelector(".step-2").classList.add("active");
-}
-
-    } else {
+    }
+    else 
+    {
         alert("Failed to send OTP. Try again.");
     }
 }
@@ -422,10 +427,15 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 document.getElementById("signupForm").addEventListener("submit", async function(e){
     e.preventDefault();
 
+   
+    const fullName = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
     const company = document.getElementById("companyName").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const password = document.getElementById("signupPassword").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
+    const profilePic = document.getElementById("profilePic").files[0];
+
 
     if(!company || !password || !confirmPassword) {
         alert("Fill all required fields.");
@@ -437,8 +447,30 @@ document.getElementById("signupForm").addEventListener("submit", async function(
         return;
     }
 
-    // TODO: send all data to backend
-    alert("Account created successfully!");
+      
+    const formData = new FormData();
+    formData.append("name", fullName);
+    formData.append("company_name", company);
+    formData.append("email", email);
+    formData.append("phone", phone);
+    formData.append("password", password);
+
+    if(profilePic){
+        formData.append("profile_pic", profilePic); // MUST match multer name
+    }
+
+    const res = await fetch("/signup", {
+        method: "POST",
+        body: formData
+    });
+
+    if(res.redirected){
+        window.location.href = res.url;
+        return;
+    }
+
+    const data = await res.text();
+    alert(data);
 });
 
 // SignUp Steps
@@ -463,8 +495,31 @@ function nextStep(step) {
             alert("Enter a valid email address.");
             return;
         }
+         // 🔥 CHECK EMAIL IN DATABASE
+    fetch("/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+    })
+    .then(res => res.json())
+    .then(data => {
 
-         sendSignupOtp(email);
+        if(data.exists){
+            alert("Email already exists ❌");
+            document.getElementById("signupEmail").value = ""; // Clear email input
+             signupOtp = null; // Clear any previously generated OTP
+             signupEmail = null; // Clear stored email
+        } else {
+            sendSignupOtp(email);   // only send OTP if email not exist
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Server error");
+    });
+
+    return;  // STOP automatic step change
     }
 
     // Step 2 validation
@@ -484,8 +539,7 @@ if(step === 2) {
     }
 
   
-    // HERE I WANT TO PERFORM Insert in admins table like following:
-    //insert into admins (name,company_name,email,phone,profile_pic,password) values (all values)
+ 
       alert("OTP Verified Successfully!");
 }
 

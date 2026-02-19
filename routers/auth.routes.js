@@ -18,11 +18,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // ================= SESSION ====================
-router.use(session({
-    secret: "mysecretkey",
-    resave: false,
-    saveUninitialized: true
-}));
+// router.use(session({
+//     secret: "mysecretkey",
+//     resave: false,
+//     saveUninitialized: true
+// }));
 
 // ================= SIGNUP ====================
 router.post("/signup", upload.single("profile_pic"), async (req, res) => {
@@ -56,6 +56,30 @@ router.post("/signup", upload.single("profile_pic"), async (req, res) => {
             console.error(err);
             res.send("Something went wrong ❌");
         }
+    }
+});
+
+
+// check admins email exist or not in admins table
+// CHECK EMAIL EXISTS
+router.post("/check-email", async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const [rows] = await con.query(
+            "SELECT id FROM admins WHERE email=?",
+            [email]
+        );
+
+        if (rows.length > 0) {
+            return res.json({ exists: true });
+        } else {
+            return res.json({ exists: false });
+        }
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Database error" });
     }
 });
 
