@@ -31,6 +31,10 @@ const profile=require('./routers/profile.routes');
 const settings=require('./routers/settings.routes');
 const forgotPasswordRoutes = require('./routers/forgot-password.routes');
 const SentMailRoutes = require('./routers/sent-mail.routes');
+const changePassword = require("./routers/change-password.routes");
+
+
+
 
 
 
@@ -110,31 +114,9 @@ app.get('/reset-password', (req, res) => {
     res.render('reset_password'); // reset_password.ejs
 });
 
-// Reset password API
-app.post('/forgot-password/reset', async (req, res) => {
-    const { contact, new_password } = req.body;
 
-    try {
-        // Check in admins
-        let [adminRows] = await con.query("SELECT * FROM admins WHERE email=? OR phone=?", [contact, contact]);
-        if(adminRows.length > 0){
-            await con.query("UPDATE admins SET password=? WHERE email=? OR phone=?", [new_password, contact, contact]);
-            return res.json({ status: "success" });
-        }
 
-        // Check in users
-        let [userRows] = await con.query("SELECT * FROM users WHERE email=? OR phone=?", [contact, contact]);
-        if(userRows.length > 0){
-            await con.query("UPDATE users SET password=? WHERE email=? OR phone=?", [new_password, contact, contact]);
-            return res.json({ status: "success" });
-        }
-
-        return res.json({ status: "error", message: "Contact not found" });
-    } catch(err){
-        console.error(err);
-        return res.status(500).json({ status: "error", message: "Server error" });
-    }
-});
+app.use("/forgot-password", changePassword);
 
 app.use('/', SentMailRoutes);
 
