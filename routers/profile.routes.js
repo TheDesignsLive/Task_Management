@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
                 name = aRows[0].name;
                 email = aRows[0].email;
                 phone = aRows[0].phone;
-                company = aRows[0].company_name;   // ✅ company from admins
+                company = aRows[0].company_name;   //  company from admins
                 profilePic = aRows[0].profile_pic;
             }
         }
@@ -78,7 +78,7 @@ router.get('/', async (req, res) => {
                 phone = uRows[0].phone;
                 profilePic = uRows[0].profile_pic;
 
-                // ✅ Fetch company from ADMIN using admin_id
+                //  Fetch company from ADMIN using admin_id
                 const [cRows] = await con.query(
                     "SELECT company_name FROM admins WHERE id=?",
                     [uRows[0].admin_id]
@@ -106,7 +106,7 @@ router.get('/', async (req, res) => {
             phone,
             company,
             r,
-            role        // ✅ send role
+            role        //  send role
         });
 
     } catch (err) {

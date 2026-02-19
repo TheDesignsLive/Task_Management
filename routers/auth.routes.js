@@ -61,7 +61,7 @@ router.post("/signup", upload.single("profile_pic"), async (req, res) => {
 
 
 // check admins email exist or not in admins table
-// CHECK EMAIL EXISTS
+
 router.post("/check-email", async (req, res) => {
     const { email } = req.body;
 

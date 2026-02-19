@@ -16,13 +16,12 @@ router.post("/check", async (req, res) => {
         return res.json({ status: "not_found" });
     }
 
-    // Generate 6-digit OTP and store in session
     const otp = Math.floor(100000 + Math.random() * 900000);
     req.session.otp = otp;
     req.session.contact = contact;
 
     // Here you can send OTP via email/SMS in production
-    console.log("Generated OTP:", otp); // ✅ prints OTP in server console
+    console.log("Generated OTP:", otp); 
 
     return res.json({ status: "found" });
   } catch(err){

@@ -13,7 +13,7 @@ router.get('/approve-member/:id', async (req, res) => {
     const requestId = req.params.id;
 
     try {
-        // 🔹 GET REQUEST DATA
+        //  GET REQUEST DATA
         const [rows] = await con.query(
             "SELECT * FROM member_requests WHERE id=? AND status='PENDING'",
             [requestId]
@@ -35,7 +35,7 @@ router.get('/approve-member/:id', async (req, res) => {
             return res.send("❌ Email already exists in users");
         }
 
-        // 🔹 INSERT INTO USERS TABLE
+        //  INSERT INTO USERS TABLE
         await con.query(
             `INSERT INTO users 
             (admin_id, role_id, name, email, password, profile_pic, created_by, status) 
@@ -51,7 +51,7 @@ router.get('/approve-member/:id', async (req, res) => {
             ]
         );
 
-        // 🔹 UPDATE REQUEST STATUS
+        //  UPDATE REQUEST STATUS
         await con.query(
             "UPDATE member_requests SET status='APPROVED' WHERE id=?",
             [requestId]
