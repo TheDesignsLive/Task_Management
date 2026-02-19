@@ -35,15 +35,15 @@
   .sub-header {
     display: flex;
     background-color: #CDF4F4;
-    padding: 10px;
+    padding: 6px;
     gap: 10px;
     align-items: center;
   }
 
-  .sub-header .task { flex: 4; padding: 8px; text-align: center; border-radius: 5px; background-color: #CDF4F4; }
+  .sub-header .task { flex: 4; padding: 4px; text-align: center; border-radius: 5px; background-color: #CDF4F4; }
   .sub-header .change,
-  .sub-header .update { flex: 1.5; padding: 8px; text-align: center; border-radius: 5px; background-color: #CDF4F4; }
-  .sub-header .other-task { flex: 2; padding: 8px; text-align: center; border-radius: 5px; background-color: #CDF4F4; }
+  .sub-header .update { flex: 1.5; padding: 4px; text-align: center; border-radius: 5px; background-color: #CDF4F4; }
+  .sub-header .other-task { flex: 2; padding: 4px; text-align: center; border-radius: 5px; background-color: #CDF4F4; }
 
   /* ===== CONTENT WRAPPER ===== */
   .content-wrapper {
@@ -95,7 +95,9 @@
   }
   /* ===== TASK BOX ===== */
 .task-item {
-  padding: 6px;
+  font-size: 12px;
+  padding: 4px;
+  
   margin: 6px 0;
   background-color: #444;
   color: #fff;
@@ -119,8 +121,8 @@
 /* Checkbox base style */
 /* Checkbox base */
 .task-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   appearance: none;
   border: 2px solid white; /* default, will be overridden by priority class */
   border-radius: 3px;
@@ -139,8 +141,8 @@
   content: "✔";               
   position: absolute;
   top: 0;
-  left: 2px;
-  font-size: 12px;
+  left: 1px;
+  font-size: 7px;
   color: white;               
 }
 
@@ -149,7 +151,12 @@
 .priority-yellow { border-color: #ffd633; }
 .priority-blue { border-color: #4da6ff; }
 
-
+.task-date {
+  min-width: 60px;
+  text-align: right;
+  font-size: 11px;    
+  opacity: 0.8;        
+}
 
 </style>
 </head>
@@ -269,7 +276,8 @@ function createTaskElement(task) {
 
 
 
-      <span style="min-width:60px; text-align:right;">
+      <span class="task-date">
+
         ${formatDate(task.due_date)}
       </span>
     </div>
