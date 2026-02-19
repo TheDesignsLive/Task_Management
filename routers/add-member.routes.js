@@ -38,14 +38,29 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
         const phone = req.body.phone;
         const password = req.body.password;
 
-        // ---------- PROFILE PIC ----------
-        let profile_pic = null;
-        if (req.file) {
-            profile_pic =  req.file.filename;
+        // =====================================================
+        // 🔥 CHECK EMAIL ALREADY EXISTS (ADDED ONLY THIS PART)
+        // =====================================================
+
+        const [emailCheck] = await con.execute(
+            "SELECT id FROM users WHERE email=? UNION SELECT id FROM member_requests WHERE email=?",
+            [email, email]
+        );
+
+        if (emailCheck.length > 0) {
+            return res.send("<script>alert('Email already exists'); window.location=document.referrer;</script>");
         }
 
         // =====================================================
-        // 🔥 ROLE BASED INSERT (ADDED ONLY THIS PART)
+
+        // ---------- PROFILE PIC ----------
+        let profile_pic = null;
+        if (req.file) {
+            profile_pic = req.file.filename;
+        }
+
+        // =====================================================
+        // 🔥 ROLE BASED INSERT
         // =====================================================
 
         if (role === "admin") {
