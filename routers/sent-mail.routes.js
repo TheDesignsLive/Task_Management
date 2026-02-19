@@ -9,8 +9,8 @@ router.post("/forgot-password/send-otp", async (req, res) => {
     let transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-            user: "jay13981398@gmail.com",
-            pass: "yjoy emfi hkuq ncuj" // Use App Password for Gmail
+            user: "school.activity.management.pro@gmail.com",
+            pass: "plet rkli ycvg uwez" // Use App Password for Gmail
         }
     });
     let mailOptions=null;
@@ -31,7 +31,7 @@ router.post("/forgot-password/send-otp", async (req, res) => {
         if(sent_for=="signup"){
 
     mailOptions = {
-        from: 'jay13981398@gmail.com',
+        from: 'school.activity.management.pro@gmail.com',
         to: contact,
         subject: "Your OTP for Signup Verification",
         text: `Your OTP is ${otp}`
