@@ -104,6 +104,7 @@ router.post("/login", async (req, res) => {
                 req.session.adminId = rows[0].id;
                 req.session.role = "admin";
                 req.session.email = rows[0].email; 
+                req.session.adminName = rows[0].name; 
 
                 return res.redirect("/home");
             } else {

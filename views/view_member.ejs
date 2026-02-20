@@ -10,6 +10,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background-color: #3C3A3A;
+      overflow: hidden;
     }
 
     /* ====== Layout ====== */
@@ -38,6 +39,11 @@
       margin-bottom: 10px;
       margin-left: 26px;
       margin-right: 70px;
+    }
+
+    .table-scroll {
+      max-height: 420px;   /* adjust if needed */
+      overflow-y: auto;
     }
 
     .sub-header input[type="text"] {
@@ -209,6 +215,7 @@
     </div>
 
     <% if (users && users.length > 0) { %>
+      <div class="table-scroll">
       <table>
         <thead>
           <tr>
@@ -260,6 +267,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
     <% } else { %>
       <div class="no-records">No records found</div>
     <% } %>
