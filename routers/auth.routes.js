@@ -18,11 +18,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // ================= SESSION ====================
-// router.use(session({
-//     secret: "mysecretkey",
-//     resave: false,
-//     saveUninitialized: true
-// }));
+router.use(session({
+    secret: "mysecretkey",
+    resave: false,
+    saveUninitialized: true
+}));
 
 // ================= SIGNUP ====================
 router.post("/signup", upload.single("profile_pic"), async (req, res) => {

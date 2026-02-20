@@ -42,13 +42,23 @@
     align-items: center;
     font-weight: bold;
     color: #333;
+    font-size: 14px;
   }
 
   /* Header Columns - Flex Ratios */
   .col-title { flex: 2; padding-left: 10px; }
   .col-desc { flex: 3; }
   .col-assign { flex: 1.5; text-align: center; }
-  .col-date { flex: 1; text-align: right; padding-right: 10px; }
+  .col-date { flex: 1; text-align: right; padding-right: 10px; }  
+
+  
+  
+/* Header Columns - Flex Ratios (header only) */
+.sub-header .col-title { flex: 2; padding-left: 40px; }   /* move right */
+.sub-header .col-desc { flex: 3; padding-left: 20px; }
+.sub-header .col-assign { flex: 1.5; text-align: center; }
+.sub-header .col-date { flex: 1; text-align: right; padding-right: 20px; }
+
 
   /* ===== CONTENT WRAPPER ===== */
   .content-wrapper {
@@ -126,7 +136,7 @@
   <div class="main-content">
 
     <div class="sub-header">
-      <div class="col-title">Title</div>
+      <div class="col-title">Task</div>
       <div class="col-desc">Description</div>
       <div class="col-assign">Assigned To</div>
       <div class="col-date">Date</div>
