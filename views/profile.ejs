@@ -6,6 +6,7 @@
 <title>Profile</title>
 
 <style>
+/* SAME CSS - NO CHANGE */
 body{
   margin:0;
   font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -123,7 +124,8 @@ body{
         <div class="profile-name"><%= name %></div>
         <div class="profile-role"><%= role %></div>
 
-        <div class="info-box"><strong>Email:</strong> <%= email %></div>
+        <!-- EMAIL REMOVED HERE -->
+
         <div class="info-box"><strong>Company:</strong> <%= company || 'N/A' %></div>
         <div class="info-box"><strong>Account Type:</strong> <%= role %></div>
         <div class="info-box"><strong>Status:</strong> Active</div>
@@ -145,11 +147,15 @@ body{
 <form action="/profile/update-profile" method="POST" enctype="multipart/form-data">
 
 <input type="text" name="name" value="<%= name %>" placeholder="Name" required style="width:100%;padding:8px;margin-bottom:10px;">
-<input type="email" name="email" value="<%= email %>" placeholder="Email" required style="width:100%;padding:8px;margin-bottom:10px;">
+
+<!-- EMAIL INPUT REMOVED -->
+
 <input type="text" name="phone" value="<%= phone %>" placeholder="Phone" style="width:100%;padding:8px;margin-bottom:10px;">
+
 <% if(r=="admin"){ %>
 <input type="text" name="company" value="<%= company %>" placeholder="Company" style="width:100%;padding:8px;margin-bottom:10px;">
 <% } %>
+
 <input type="file" name="profile_pic" style="margin-bottom:10px;">
 
 <div style="display:flex;gap:10px;">
