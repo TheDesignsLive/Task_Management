@@ -17,8 +17,9 @@ body{margin:0;font-family:Arial;background:#3C3A3A;}
 .card{display:none;background:#fff;padding:20px;border-radius:8px;}
 .card.active{display:block;}
 
-input{width:100%;padding:8px;margin:6px 0;}
-button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
+input{width:100%;padding:8px;margin:6px 0;box-sizing:border-box;}
+button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;margin-top:5px;border-radius:4px;}
+button:hover{background:#0b7373;}
 </style>
 </head>
 
@@ -42,13 +43,9 @@ button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
 
 <div class="settings-menu">
 <div class="settings-item" onclick="openCard('passwordCard')">Change Password</div>
-
-
-
-
+<div class="settings-item" onclick="openCard('emailCard')">Change Gmail</div>
 </div>
 
-<!-- CHANGE PASSWORD -->
 <div id="passwordCard" class="card">
 <h3>Change Password</h3>
 
@@ -60,18 +57,121 @@ button{padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;}
 </form>
 </div>
 
+<div id="emailCard" class="card">
+<h3>Change Gmail</h3>
 
+<div id="email-step1">
+    <p>Current Email: <strong><%= session.email %></strong></p>
+    <button type="button" onclick="sendOtpToCurrent('<%= session.email %>')">Send OTP to Current Email</button>
+</div>
+
+<div id="email-step2" style="display:none;">
+    <p style="color:green;font-size:14px;">OTP sent to your current email.</p>
+    <input type="text" id="currentOtpInput" placeholder="Enter OTP">
+    <button type="button" onclick="verifyCurrentOtp()">Verify OTP</button>
+</div>
+
+<div id="email-step3" style="display:none;">
+    <p>Current email verified. Please enter your new email.</p>
+    <input type="email" id="newEmailInput" placeholder="Enter New Email" required>
+    <button type="button" onclick="sendOtpToNew()">Send OTP to New Email</button>
+</div>
+
+<div id="email-step4" style="display:none;">
+    <p style="color:green;font-size:14px;">OTP sent to your new email.</p>
+    <form method="POST" action="/settings/change-email" id="changeEmailForm" onsubmit="return verifyNewOtpAndSubmit(event)">
+        <input type="hidden" name="new_email" id="finalNewEmail">
+        <input type="text" id="newOtpInput" placeholder="Enter OTP" required>
+        <button type="submit">Verify & Update Email</button>
+    </form>
+</div>
+
+</div>
 
 </div>
 
 
-</div>
 </div>
 
 <script>
 function openCard(id){
-document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    
+    // Reset email flow if switching cards
+    if(id === 'emailCard') {
+        document.getElementById('email-step1').style.display = 'block';
+        document.getElementById('email-step2').style.display = 'none';
+        document.getElementById('email-step3').style.display = 'none';
+        document.getElementById('email-step4').style.display = 'none';
+        document.getElementById('currentOtpInput').value = '';
+        document.getElementById('newEmailInput').value = '';
+        document.getElementById('newOtpInput').value = '';
+    }
+}
+
+// === OTP LOGIC FOR EMAIL CHANGE ===
+let generatedCurrentOtp = "";
+let generatedNewOtp = "";
+
+function generateOtp() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendOtpToCurrent(email) {
+    generatedCurrentOtp = generateOtp();
+    const res = await fetch('/forgot-password/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: email, otp: generatedCurrentOtp, sent_for: 'change_email' })
+    });
+    const data = await res.json();
+    if (data.status === 'sent') {
+        document.getElementById('email-step1').style.display = 'none';
+        document.getElementById('email-step2').style.display = 'block';
+    } else {
+        alert('Failed to send OTP');
+    }
+}
+
+function verifyCurrentOtp() {
+    const input = document.getElementById('currentOtpInput').value;
+    if (input === generatedCurrentOtp) {
+        document.getElementById('email-step2').style.display = 'none';
+        document.getElementById('email-step3').style.display = 'block';
+    } else {
+        alert('Invalid OTP. Please try again.');
+    }
+}
+
+async function sendOtpToNew() {
+    const newEmail = document.getElementById('newEmailInput').value;
+    if(!newEmail || !newEmail.includes('@')) return alert("Please enter a valid new email address");
+    
+    generatedNewOtp = generateOtp();
+    const res = await fetch('/forgot-password/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: newEmail, otp: generatedNewOtp, sent_for: 'change_email' })
+    });
+    const data = await res.json();
+    if (data.status === 'sent') {
+        document.getElementById('finalNewEmail').value = newEmail;
+        document.getElementById('email-step3').style.display = 'none';
+        document.getElementById('email-step4').style.display = 'block';
+    } else {
+        alert('Failed to send OTP');
+    }
+}
+
+function verifyNewOtpAndSubmit(e) {
+    const input = document.getElementById('newOtpInput').value;
+    if (input !== generatedNewOtp) {
+        e.preventDefault();
+        alert('Invalid OTP. Please try again.');
+        return false;
+    }
+    return true; // allows form to submit normally
 }
 </script>
 

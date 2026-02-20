@@ -94,5 +94,36 @@ router.post('/change-password', async (req, res) => {
     }
 });
 
+/* ================= CHANGE GMAIL ================= */
+router.post('/change-email', async (req, res) => {
+    if (!req.session.role) return res.redirect('/');
+
+    const { new_email } = req.body;
+
+    try {
+        let table = req.session.role === "admin" ? "admins" : "users";
+        let id = req.session.role === "admin" ? req.session.adminId : req.session.userId;
+
+        // Check if new email is already used by an admin or user
+        const [adminCheck] = await con.query("SELECT id FROM admins WHERE email=?", [new_email]);
+        const [userCheck] = await con.query("SELECT id FROM users WHERE email=?", [new_email]);
+
+        if (adminCheck.length > 0 || userCheck.length > 0) {
+            return res.send("<script>alert('Email already in use by another account!'); window.location='/settings';</script>");
+        }
+
+        // Update email in the database
+        await con.query(`UPDATE ${table} SET email=? WHERE id=?`, [new_email, id]);
+        
+        // Update session so UI reflects change immediately
+        req.session.email = new_email;
+
+        res.send("<script>alert('Gmail changed successfully'); window.location='/settings';</script>");
+
+    } catch (err) {
+        console.log(err);
+        res.send("<script>alert('Gmail change failed'); window.location='/settings';</script>");
+    }
+});
 
 module.exports = router;
