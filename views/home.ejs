@@ -353,8 +353,39 @@ function createSeparator() {
   return hr;
 }
 
+//date group
+function createDateGroup(dateStr) {
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'date-group';
+  wrapper.dataset.date = dateStr;
+
+  const title = document.createElement('div');
+  title.style.opacity = "0.8";
+  title.style.fontSize = "12px";
+  title.style.margin = "6px 0";
+
+  const formatted = formatDate(dateStr);
+  title.innerText = formatted;
+
+  const hr = document.createElement('div');
+  hr.style.height = "1px";
+  hr.style.backgroundColor = "#7C7B7B";
+  hr.style.marginBottom = "6px";
+
+  const container = document.createElement('div');
+  container.className = "date-task-container";
+
+  wrapper.appendChild(title);
+  wrapper.appendChild(hr);
+  wrapper.appendChild(container);
+
+  return wrapper;
+}
+
 // ===== INIT SECTIONS WITH DATE GROUPING =====
 function initSections() {
+
   const sections = {
     'TASK': document.getElementById('task-section'),
     'CHANGES': document.getElementById('change-section'),
@@ -371,55 +402,117 @@ function initSections() {
     'COMPLETED': []
   };
 
+  // ===== Separate tasks by section =====
   tasks.forEach(task => {
-    const targetSection = task.status === 'COMPLETED' ? 'COMPLETED' : (task.section || 'TASK');
+    const targetSection =
+      task.status === 'COMPLETED'
+        ? 'COMPLETED'
+        : (task.section || 'TASK');
+
     sectionTasks[targetSection].push(task);
   });
 
-  ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
+  // ======================================================
+  // 🔥 TASK SECTION (NEW DYNAMIC DATE GROUP LOGIC)
+  // ======================================================
+
+  const taskSection = sections['TASK'];
+  const taskList = sectionTasks['TASK'];
+
+  let uniqueDates = new Set();
+
+  taskList.forEach(task => {
+    if (task.due_date) {
+      const d = new Date(task.due_date)
+        .toISOString()
+        .split('T')[0];
+      uniqueDates.add(d);
+    }
+  });
+
+  // Always add Today & Tomorrow
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  uniqueDates.add(today.toISOString().split('T')[0]);
+  uniqueDates.add(tomorrow.toISOString().split('T')[0]);
+
+  const sortedDates = Array.from(uniqueDates)
+    .sort((a, b) => new Date(a) - new Date(b));
+
+  sortedDates.forEach(dateStr => {
+
+    const group = createDateGroup(dateStr);
+    const container = group.querySelector('.date-task-container');
+
+    taskList.forEach(task => {
+      const taskDate = task.due_date
+        ? new Date(task.due_date).toISOString().split('T')[0]
+        : null;
+
+      if (taskDate === dateStr) {
+        const el = createTaskElement(task);
+        container.appendChild(el);
+      }
+    });
+
+    taskSection.appendChild(group);
+  });
+
+  // ======================================================
+  // 🔥 OTHER SECTIONS (OLD LOGIC UNCHANGED)
+  // ======================================================
+
+  ['CHANGES', 'UPDATE', 'OTHERS'].forEach(sec => {
 
     const taskList = sectionTasks[sec];
     if (!taskList.length) return;
 
     const taskGroups = {};
     const noDateTasks = [];
+
     taskList.forEach(task => {
-      const dateKey = task.due_date ? new Date(task.due_date).toDateString() : null;
-      if (!dateKey) noDateTasks.push(task);
-      else {
-        if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
+      const dateKey = task.due_date
+        ? new Date(task.due_date).toDateString()
+        : null;
+
+      if (!dateKey) {
+        noDateTasks.push(task);
+      } else {
+        if (!taskGroups[dateKey]) {
+          taskGroups[dateKey] = [];
+        }
         taskGroups[dateKey].push(task);
       }
     });
 
-    const sortedDates = Object.keys(taskGroups).sort((a,b)=> new Date(a)-new Date(b));
-
-    const todayStr = new Date().toDateString();
-    if (taskGroups[todayStr]) {
-      appendTasksToContainer(sections[sec], taskGroups[todayStr]);
-      delete taskGroups[todayStr];
-    }
-
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate()+1);
-    const tomorrowStr = tomorrow.toDateString();
-    if (taskGroups[tomorrowStr]) {
-      appendTasksToContainer(sections[sec], taskGroups[tomorrowStr]);
-      delete taskGroups[tomorrowStr];
-    }
+    const sortedDates = Object.keys(taskGroups)
+      .sort((a, b) => new Date(a) - new Date(b));
 
     sortedDates.forEach(dateStr => {
-      if(dateStr !== todayStr && dateStr !== tomorrowStr) appendTasksToContainer(sections[sec], taskGroups[dateStr]);
+      appendTasksToContainer(
+        sections[sec],
+        taskGroups[dateStr]
+      );
     });
 
-    appendTasksToContainer(sections[sec], noDateTasks);
+    appendTasksToContainer(
+      sections[sec],
+      noDateTasks
+    );
+
   });
 
-  // Completed section
+  // ======================================================
+  // 🔥 COMPLETED SECTION
+  // ======================================================
+
   sectionTasks['COMPLETED'].forEach(task => {
     const el = createTaskElement(task);
     sections['COMPLETED'].appendChild(el);
   });
+
 }
 
 // ===== APPEND TASK ARRAY TO CONTAINER =====
@@ -433,11 +526,47 @@ function appendTasksToContainer(container, taskArray) {
 
 // ===== DRAG & DROP =====
 function enableDragAndDrop() {
-  const containers = {
-    'task-section': 'TASK',
-    'change-section': 'CHANGES',
-    'update-section': 'UPDATE'
-  };
+
+  document.querySelectorAll('.task-item').forEach(item => {
+    item.addEventListener('dragstart', () => {
+      item.classList.add('dragging');
+    });
+
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+    });
+  });
+
+  document.querySelectorAll('.date-group').forEach(group => {
+
+    group.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    group.addEventListener('drop', async (e) => {
+      e.preventDefault();
+
+      const dragging = document.querySelector('.dragging');
+      if (!dragging) return;
+
+      const taskId = dragging.dataset.id;
+      const newDate = group.dataset.date;
+
+      const res = await fetch('/update-task-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: taskId, due_date: newDate })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        window.location.reload();
+      }
+    });
+
+  });
+}
 
   document.querySelectorAll('.task-item').forEach(item => {
     if(item.draggable) {
