@@ -4,6 +4,8 @@ const con = require('../config/db');
 
 router.post('/', async (req, res) => {
   try {
+     if (!req.session.role) return res.redirect('/');
+     
     const { title, description, date, priority, assignedTo } = req.body;
 
     if (!req.session.adminId && !req.session.userId) {

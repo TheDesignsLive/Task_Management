@@ -5,6 +5,7 @@ const con = require('../config/db'); // mysql2 promise pool
 // DELETE ROLE
 router.get('/delete-role/:id', async (req, res) => {
   try {
+     if (!req.session.role) return res.redirect('/');
     const roleId = req.params.id;
 
     if (!roleId) {

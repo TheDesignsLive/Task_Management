@@ -5,6 +5,8 @@ const con = require('../config/db');
 // ADD CATEGORY (ROLE)
 router.post('/', async (req, res) => {
   try {
+     if (!req.session.role) return res.redirect('/');
+     
     const adminId = req.session.adminId;
     const { role_name, control_type } = req.body;
     const can_manage_members = req.body.can_manage_members ? 1 : 0;

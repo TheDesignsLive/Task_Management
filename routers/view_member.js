@@ -5,6 +5,8 @@ const router = express.Router();
 const con = require('../config/db');
 
 router.get('/', async (req, res) => {
+     if (!req.session.role) return res.redirect('/');
+     
     try {
 
         let users = [];

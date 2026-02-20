@@ -7,6 +7,7 @@ const con = require('../config/db'); // mysql2 promise pool
 router.get('/delete-member/:id', async (req, res) => {
 
   try {
+     if (!req.session.role) return res.redirect('/');
     const memberId = req.params.id;
 
 

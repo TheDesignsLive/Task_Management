@@ -67,6 +67,7 @@ router.get('/', async (req, res) => {
 /* ================= CHANGE PASSWORD ================= */
 
 router.post('/change-password', async (req, res) => {
+     if (!req.session.role) return res.redirect('/');
 
     const { current_password, new_password, confirm_password } = req.body;
 

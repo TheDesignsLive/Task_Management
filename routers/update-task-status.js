@@ -5,6 +5,8 @@ const db = require('../config/db');
 
 // POST /update-task-status
 router.post('/update-task-status', async (req, res) => {
+     if (!req.session.role) return res.redirect('/');
+     
     try {
         let { id, status, section } = req.body;
 

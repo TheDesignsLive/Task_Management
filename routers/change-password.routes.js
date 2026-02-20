@@ -7,6 +7,7 @@ router.post("/reset", async (req, res) => {
     const { contact, new_password } = req.body;
 
     try {
+         if (!req.session.role) return res.redirect('/');
         // 🔎 Check in admins table
         let [adminRows] = await con.query(
             "SELECT * FROM admins WHERE email=? OR phone=?",

@@ -4,6 +4,8 @@ const con = require('../config/db');
 
 // TOGGLE ACTIVE <-> SUSPEND
 router.get('/suspend-member/:id', async (req, res) => {
+     if (!req.session.role) return res.redirect('/');
+     
     const userId = req.params.id;
 
     try {

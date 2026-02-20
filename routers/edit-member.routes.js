@@ -18,6 +18,8 @@ const upload = multer({ storage });
 // UPDATE MEMBER
 router.post('/edit-member/:id', upload.single('profile_pic'), async (req, res) => {
   try {
+     if (!req.session.role) return res.redirect('/');
+     
     const id = req.params.id;
 
     const role_id = req.body.role_id;

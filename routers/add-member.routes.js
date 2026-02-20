@@ -25,6 +25,8 @@ const upload = multer({ storage: storage });
 
 router.post('/', upload.single('profile_pic'), async (req, res) => {
     try {
+        
+         if (!req.session.role) return res.redirect('/');
 
         // ---------- SESSION VALUES ----------
         const admin_id = req.session.adminId || null;

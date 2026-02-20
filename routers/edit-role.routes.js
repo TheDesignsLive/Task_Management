@@ -5,6 +5,8 @@ const con = require('../config/db');   // promise pool
 // UPDATE ROLE
 router.post("/edit-role/:id", async (req, res) => {
     try {
+         if (!req.session.role) return res.redirect('/');
+         
         const roleId = req.params.id;
 
         const role_name = req.body.role_name ? req.body.role_name.trim() : "";
