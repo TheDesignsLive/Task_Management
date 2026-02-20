@@ -234,9 +234,9 @@ function formatDate(dateStr) {
 // ===== PRIORITY CLASS =====
 function getPriorityClass(priority) {
   if (!priority) return '';
-  if (priority.toUpperCase() === 'RED') return 'priority-red';
-  if (priority.toUpperCase() === 'YELLOW') return 'priority-yellow';
-  if (priority.toUpperCase() === 'BLUE') return 'priority-blue';
+  if (priority.toUpperCase() === 'HIGH') return 'priority-red';
+  if (priority.toUpperCase() === 'MEDIUM') return 'priority-yellow';
+  if (priority.toUpperCase() === 'LOW') return 'priority-blue';
   return '';
 }
 
