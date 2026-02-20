@@ -16,12 +16,12 @@ router.post("/check", async (req, res) => {
         return res.json({ status: "not_found" });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    req.session.otp = otp;
+    //const otp = Math.floor(100000 + Math.random() * 900000);
+    //req.session.otp = otp;
     req.session.contact = contact;
 
     // Here you can send OTP via email/SMS in production
-    console.log("Generated OTP:", otp); 
+    //console.log("Generated OTP:", otp); 
 
     return res.json({ status: "found" });
   } catch(err){
