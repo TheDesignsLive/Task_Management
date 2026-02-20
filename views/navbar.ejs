@@ -175,6 +175,8 @@ select{
     <!-- Right side user/admin display -->
   <div class="user-display" style="margin-left:auto; font-weight:bold; color:#fff; font-size:14px;">
 
+
+
 Welcome <%= (typeof session !== "undefined" && (session.userName || session.adminName)) ? (session.userName || session.adminName) : "Guest" %>
 </div>
   </div>
