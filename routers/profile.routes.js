@@ -140,14 +140,14 @@ router.post('/update-profile', upload.single('profile_pic'), async (req, res) =>
                 }
 
                 await con.query(
-                    "UPDATE admins SET name=?,email=?,phone=?,company_name=?,profile_pic=? WHERE id=?",
-                    [name, email, phone, company, newPic, req.session.adminId]
+                    "UPDATE admins SET name=?,phone=?,company_name=?,profile_pic=? WHERE id=?",
+                    [name, phone, company, newPic, req.session.adminId]
                 );
 
             } else {
                 await con.query(
-                    "UPDATE admins SET name=?,email=?,phone=?,company_name=? WHERE id=?",
-                    [name, email, phone, company, req.session.adminId]
+                    "UPDATE admins SET name=?,phone=?,company_name=? WHERE id=?",
+                    [name, phone, company, req.session.adminId]
                 );
             }
         }
@@ -167,14 +167,14 @@ router.post('/update-profile', upload.single('profile_pic'), async (req, res) =>
                 }
 
                 await con.query(
-                    "UPDATE users SET name=?,email=?,phone=?,profile_pic=? WHERE id=?",
-                    [name, email, phone, newPic, req.session.userId]
+                    "UPDATE users SET name=?,phone=?,profile_pic=? WHERE id=?",
+                    [name, phone, newPic, req.session.userId]
                 );
 
             } else {
                 await con.query(
-                    "UPDATE users SET name=?,email=?,phone=? WHERE id=?",
-                    [name, email, phone, req.session.userId]
+                    "UPDATE users SET name=?,phone=? WHERE id=?",
+                    [name, phone, req.session.userId]
                 );
             }
         }
