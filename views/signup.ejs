@@ -71,6 +71,7 @@ body{
 
 .input-group{
     margin-bottom:15px;
+        position: relative;
 }
 
 .input-group input,
@@ -86,6 +87,15 @@ body{
 .input-group select:focus{
     border-color:#14b8a6;
     box-shadow:0 0 5px rgba(20,184,166,0.4);
+}
+
+.input-group i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
 }
 
 button{
@@ -276,14 +286,10 @@ button:hover{
         </div>
 
       
-
-<div class="input-group" style="position:relative;">
+<div class="input-group">
     <input type="password" id="loginPassword" placeholder="Password" name="password" required>
-    <i class="fa-solid fa-eye" id="toggleLoginPassword"
-       style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
-       cursor:pointer; color:#999;"></i>
+    <i class="fa-solid fa-eye" id="toggleLoginPassword"></i>
 </div>
-
 
 
         <button type="submit">Login</button>
@@ -336,17 +342,15 @@ button:hover{
       <input type="text" id="phone" placeholder="Phone">
     </div>
 
-    <div class="input-group" style="position:relative;">
-      <input type="password" id="signupPassword" placeholder="Password" required>
-      <i class="fa-solid fa-eye" id="toggleSignupPassword"
-         style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#999;"></i>
-    </div>
+  <div class="input-group">
+    <input type="password" id="signupPassword" placeholder="Password" required>
+    <i class="fa-solid fa-eye" id="toggleSignupPassword"></i>
+</div>
 
-    <div class="input-group" style="position:relative;">
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-      <i class="fa-solid fa-eye" id="toggleConfirmPassword"
-         style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#999;"></i>
-    </div>
+<div class="input-group">
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+    <i class="fa-solid fa-eye" id="toggleConfirmPassword"></i>
+</div>
 
     <div class="input-group">
     <input type="file" id="profilePic" accept="image/*">
@@ -563,30 +567,49 @@ function prevStep(step){
 
 
 // Password toggle reusable function
+// Reusable Password Toggle Function
 function togglePassword(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
 
-    if(input.type === "password") {
+    if (!input || !icon) return; // safety check
+
+    if (input.type === "password") {
         input.type = "text";
-        icon.classList.add("fa-eye-slash");
         icon.classList.remove("fa-eye");
-        
+        icon.classList.add("fa-eye-slash");
     } else {
         input.type = "password";
-         icon.classList.add("fa-eye");
         icon.classList.remove("fa-eye-slash");
-       
+        icon.classList.add("fa-eye");
     }
 }
 
-// Add event listeners for Step 3 password toggles
-document.addEventListener("DOMContentLoaded", function(){
-    document.getElementById("toggleSignupPassword").addEventListener("click", ()=>togglePassword("signupPassword","toggleSignupPassword"));
-    document.getElementById("toggleConfirmPassword").addEventListener("click", ()=>togglePassword("confirmPassword","toggleConfirmPassword"));
-        // 🔥 ADD THIS
-    document.getElementById("toggleLoginPassword")
-        .addEventListener("click", ()=>togglePassword("loginPassword","toggleLoginPassword"));
+// Wait until page loads
+document.addEventListener("DOMContentLoaded", function () {
+
+    const loginToggle = document.getElementById("toggleLoginPassword");
+    const signupToggle = document.getElementById("toggleSignupPassword");
+    const confirmToggle = document.getElementById("toggleConfirmPassword");
+
+    if (loginToggle) {
+        loginToggle.addEventListener("click", function () {
+            togglePassword("loginPassword", "toggleLoginPassword");
+        });
+    }
+
+    if (signupToggle) {
+        signupToggle.addEventListener("click", function () {
+            togglePassword("signupPassword", "toggleSignupPassword");
+        });
+    }
+
+    if (confirmToggle) {
+        confirmToggle.addEventListener("click", function () {
+            togglePassword("confirmPassword", "toggleConfirmPassword");
+        });
+    }
+
 });
 
 
