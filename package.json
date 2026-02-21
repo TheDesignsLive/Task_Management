@@ -1,18 +1,23 @@
 {
   "name": "task-management",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Task Management System for thedesigns.live",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon app.js"
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jaykatakiyajadav69-blip/Task-Management.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "express",
+    "mysql",
+    "ejs",
+    "task-management"
+  ],
+  "author": "Jay",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
@@ -20,20 +25,16 @@
   },
   "homepage": "https://github.com/jaykatakiyajadav69-blip/Task-Management#readme",
   "dependencies": {
-    "body-parser": "^2.2.2",
-    "cors": "^2.8.6",
-    "cros": "^1.1.0",
-    "dotenv": "^17.2.4",
-    "ejs": "^4.0.1",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0",
-    "multer": "^2.0.2",
-    "mysql": "^2.18.1",
-    "mysql2": "^3.16.3",
-    "nodemailer": "^8.0.1",
-    "pg": "^8.18.0"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.9.7",
+    "nodemailer": "^6.9.13"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.0"
   }
 }

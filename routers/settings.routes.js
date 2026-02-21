@@ -126,4 +126,30 @@ router.post('/change-email', async (req, res) => {
     }
 });
 
+/* ================= DELETE PROFILE ================= */
+router.get('/delete-profile', async (req, res) => {
+    if (!req.session.role) return res.redirect('/');
+
+    // PREVENT NORMAL USERS FROM DELETING THEMSELVES
+    if (req.session.role !== "admin") {
+        return res.send("<script>alert('You cannot delete your account. Please contact your admin.'); window.location='/settings';</script>");
+    }
+
+    try {
+        let adminId = req.session.adminId;
+
+        // Because your DB has FOREIGN KEY ... ON DELETE CASCADE set up,
+        // deleting the Admin automatically deletes all their roles, users, and tasks!
+        await con.query(`DELETE FROM admins WHERE id=?`, [adminId]);
+        
+        // Destroy the session and redirect to login
+        req.session.destroy();
+        res.send("<script>alert('Account and all associated employee data successfully deleted.'); window.location='/';</script>");
+
+    } catch (err) {
+        console.log(err);
+        res.send("<script>alert('Failed to delete profile. Please try again.'); window.location='/settings';</script>");
+    }
+});
+
 module.exports = router;
