@@ -30,6 +30,7 @@ const settings = require('./routers/settings.routes');
 const forgotPasswordRoutes = require('./routers/forgot-password.routes');
 const SentMailRoutes = require('./routers/sent-mail.routes');
 const changePassword = require("./routers/change-password.routes");
+const updateTaskDate = require('./routers/update-task-date.routes');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -76,6 +77,7 @@ app.use('/assign_by_me', AssignByMe);
 app.use('/', notification);
 app.use('/profile', profile);
 app.use('/settings', settings);
+app.use('/', updateTaskDate);
 
 // Forgot Password Workflow
 app.get("/forgot-password", (req, res) => {

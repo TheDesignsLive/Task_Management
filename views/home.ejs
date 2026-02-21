@@ -100,7 +100,7 @@
   }
   /* ===== TASK BOX ===== */
 .task-item {
-  font-size: 12px;
+  font-size: 13px;
   padding: 4px;
   
   margin: 6px 0;
@@ -159,6 +159,7 @@
 .task-date {
   min-width: 60px;
   text-align: right;
+/*  margin-right: auto;*/
   font-size: 11px;    
   opacity: 0.8;        
 }
@@ -448,13 +449,30 @@ function enableDragAndDrop() {
   Object.keys(containers).forEach(containerId => {
     const container = document.getElementById(containerId);
     container.addEventListener('dragover', e=> e.preventDefault());
-    container.addEventListener('drop', e=> {
-      e.preventDefault();
-      const dragging = document.querySelector('.dragging');
-      if(!dragging) return;
-      container.appendChild(dragging);
-      updateTaskSection(dragging.dataset.id, containers[containerId]);
-    });
+container.addEventListener('drop', async (e)=> {
+  e.preventDefault();
+
+  const dragging = document.querySelector('.dragging');
+  if(!dragging) return;
+
+  container.appendChild(dragging);
+
+  // update DB
+  const res = await fetch('/update-task-section', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: dragging.dataset.id,
+      section: containers[containerId]
+    })
+  });
+
+  const data = await res.json();
+
+  if(data.success){
+    window.location.reload();   // 🔥 ADD THIS LINE
+  }
+});
   });
 }
 

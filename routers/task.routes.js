@@ -59,43 +59,5 @@ router.post('/', async (req, res) => {
 });
 
 
-// Drag and drop task in task container and its date change in db
 
-// router.post("/update-task-date", async (req, res) => {
-//     const { id, due_date } = req.body;
-
-//     if (!id) {
-//         return res.json({ success: false });
-//     }
-
-//     try {
-//         await con.query(
-//             "UPDATE tasks SET due_date=? WHERE id=?",
-//             [due_date || null, id]
-//         );
-
-//         res.json({ success: true });
-
-//     } catch (err) {
-//         console.error(err);
-//         res.json({ success: false });
-//     }
-// });
-
-// router.post("/update-task-date", async (req, res) => {
-//     const { id, due_date } = req.body;
-
-//     try {
-//         await con.query(
-//             "UPDATE tasks SET due_date=? WHERE id=?",
-//             [due_date || null, id]
-//         );
-
-//         res.json({ success: true });
-
-//     } catch (err) {
-//         console.error(err);
-//         res.json({ success: false });
-//     }
-// });
 module.exports = router;
