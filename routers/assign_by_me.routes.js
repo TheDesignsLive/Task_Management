@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
-router.get('/', async (req, res) => { // Assuming route is /assign-by-me based on context
+router.get('/', async (req, res) => {
 
     if (!req.session.role) {
         return res.redirect('/');
@@ -36,7 +36,6 @@ router.get('/', async (req, res) => { // Assuming route is /assign-by-me based o
             if (aRows.length > 0) adminName = aRows[0].name;
 
             // FETCH ALL TASKS ASSIGNED BY ADMIN
-            // Added due_date to selection
             const [rows] = await con.query(`
                 SELECT 
                     t.id,
@@ -45,9 +44,10 @@ router.get('/', async (req, res) => { // Assuming route is /assign-by-me based o
                     t.status,
                     t.due_date,
                     t.created_at,
-                    u.name AS assigned_to
+                    COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to
                 FROM tasks t
-                JOIN users u ON u.id = t.assigned_to
+                LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0
+                LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0
                 WHERE t.who_assigned='admin' 
                 AND t.assigned_by=?
                 ORDER BY t.due_date ASC
@@ -87,8 +87,14 @@ router.get('/', async (req, res) => { // Assuming route is /assign-by-me based o
                 }
             }
 
-            // FETCH USER ASSIGNED TASKS
-            // Added due_date to selection
+            // admin name 
+            const [aRows] = await con.query(
+                "SELECT name FROM admins WHERE id=?",
+                [req.session.adminId]
+            );
+            if (aRows.length > 0) adminName = aRows[0].name;
+
+            // FETCH USER ASSIGNED TASKS (ADDED ' (Admin)' text)
             const [rows] = await con.query(`
                 SELECT 
                     t.id,
@@ -97,9 +103,10 @@ router.get('/', async (req, res) => { // Assuming route is /assign-by-me based o
                     t.status,
                     t.due_date,
                     t.created_at,
-                    u.name AS assigned_to
+                    COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to
                 FROM tasks t
-                JOIN users u ON u.id = t.assigned_to
+                LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0
+                LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0
                 WHERE t.who_assigned='user' 
                 AND t.assigned_by=?
                 ORDER BY t.due_date ASC
