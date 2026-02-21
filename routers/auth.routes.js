@@ -54,7 +54,7 @@ router.post("/signup", upload.single("profile_pic"), async (req, res) => {
             res.send("Email already exists ❌");
         } else {
             console.error(err);
-            res.send("Something went wrong ❌",err);
+            res.send("Something went wrong ❌");
         }
     }
 });
