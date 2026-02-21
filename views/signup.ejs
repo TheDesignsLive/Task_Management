@@ -580,13 +580,30 @@ function togglePassword(inputId, iconId) {
 
 // Add event listeners for Step 3 password toggles
 document.addEventListener("DOMContentLoaded", function(){
-    document.getElementById("toggleSignupPassword").addEventListener("click", ()=>togglePassword("signupPassword","toggleSignupPassword"));
-    document.getElementById("toggleConfirmPassword").addEventListener("click", ()=>togglePassword("confirmPassword","toggleConfirmPassword"));
-        // 🔥 ADD THIS
-    document.getElementById("toggleLoginPassword")
-        .addEventListener("click", ()=>togglePassword("loginPassword","toggleLoginPassword"));
-});
 
+    const loginToggle = document.getElementById("toggleLoginPassword");
+    const signupToggle = document.getElementById("toggleSignupPassword");
+    const confirmToggle = document.getElementById("toggleConfirmPassword");
+
+    if(loginToggle){
+        loginToggle.addEventListener("click", function(){
+            togglePassword("loginPassword","toggleLoginPassword");
+        });
+    }
+
+    if(signupToggle){
+        signupToggle.addEventListener("click", function(){
+            togglePassword("signupPassword","toggleSignupPassword");
+        });
+    }
+
+    if(confirmToggle){
+        confirmToggle.addEventListener("click", function(){
+            togglePassword("confirmPassword","toggleConfirmPassword");
+        });
+    }
+
+});
 
 
 
