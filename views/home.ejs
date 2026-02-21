@@ -116,12 +116,7 @@
   cursor: default;
 }
 
-/* Layout row */
-.task-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+
 
 /* Checkbox base style */
 /* Checkbox base */
@@ -134,6 +129,7 @@
   background: transparent;
   cursor: pointer;
   position: relative;
+    flex-shrink: 0;  
 }
 
 /* Checked style: keep border same, show white tick */
@@ -156,14 +152,37 @@
 .priority-yellow { border-color: #ffd633; }
 .priority-blue { border-color: #4da6ff; }
 
-.task-date {
-  min-width: 60px;
-  text-align: right;
-/*  margin-right: auto;*/
-  font-size: 11px;    
-  opacity: 0.8;        
+
+.task-row span {
+  word-break: break-word;
 }
 
+.task-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.task-title {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.task-name {
+  flex: 0 1 auto;     /* allow wrapping */
+  font-size: 12px;
+  opacity: 0.8;
+  word-break: break-word;
+  max-width: 90px;    /* limit width so it wraps */
+}
+
+.task-date {
+  flex: 0 0 auto;
+  font-size: 11px;
+  opacity: 0.8;
+  white-space: nowrap;
+}
 </style>
 </head>
 
@@ -271,24 +290,24 @@ function createTaskElement(task) {
   const priorityClass = getPriorityClass(task.priority);
 
   div.innerHTML = `
-    <div class="task-row">
-      <input type="checkbox"
-        class="task-checkbox ${priorityClass}"
-        ${task.status === 'COMPLETED' ? 'checked' : ''} />
+  <div class="task-row">
+    <input type="checkbox"
+      class="task-checkbox ${priorityClass}"
+      ${task.status === 'COMPLETED' ? 'checked' : ''} />
 
-<span style="flex:1;">
-  &nbsp;${task.title}${task.assigned_by_name ? '&emsp;&emsp;' + task.assigned_by_name : ''}
-</span>
-
-
-
-      <span class="task-date">
-
-        ${formatDate(task.due_date)}
-      </span>
+    <div class="task-title">
+      ${task.title}
     </div>
-  `;
 
+    <div class="task-name">
+      ${task.assigned_by_name || ''}
+    </div>
+
+    <div class="task-date">
+      ${formatDate(task.due_date)}
+    </div>
+  </div>
+`;
   // Only allow drag if task is not completed
   if (task.status !== 'COMPLETED') div.draggable = true;
 
@@ -470,7 +489,7 @@ container.addEventListener('drop', async (e)=> {
   const data = await res.json();
 
   if(data.success){
-    window.location.reload();   //For Refresh Page
+    window.location.reload();   //  For Refresh
   }
 });
   });
