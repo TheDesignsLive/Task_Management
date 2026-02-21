@@ -5,7 +5,7 @@ const session = require('express-session');
 const con = require('./config/db');
 
 const app = express();
-const PORT = 3000;
+//const PORT = 3000;
 
 // ================= ROUTES IMPORT =================
 const authRoutes = require('./routers/auth.routes');
@@ -92,6 +92,7 @@ app.get('/reset-password', (req, res) => {
 });
 
 // ================= START SERVER =================
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log("Server running on port " + PORT);
 });
