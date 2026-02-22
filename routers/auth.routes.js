@@ -8,7 +8,7 @@ const path = require('path');
 // ================= MULTER (PROFILE PIC) ====================
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads');   // make sure uploads folder exists
+        cb(null, path.join(__dirname, '../public/uploads'));// make sure uploads folder exists
     },
     filename: function (req, file, cb) {
         const uniqueName = Date.now() + path.extname(file.originalname);
