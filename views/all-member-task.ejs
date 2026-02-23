@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Task Management</title>
+
+    
+<!-- ===== CSS ===== -->
+<style>
+
+.layout {
+  display: flex;
+}
+
+.main_content-wrapper {
+  flex: 1;
+  padding: 20px;
+  background: #2e2e2e;
+  min-height: 100vh;
+}
+
+/* ===== Control Bar ===== */
+
+.tasks_control-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.employee_select-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.select_label {
+  font-size: 12px;
+  color: #ccc;
+  margin-bottom: 5px;
+}
+
+.employee_select-dropdown {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #095959;
+  color: white;
+  font-weight: 500;
+  min-width: 200px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.employee_select-dropdown:hover {
+  background-color: #00a896;
+}
+
+/* ===== Board Layout ===== */
+
+.tasks_board-wrapper {
+  display: flex;
+  background: #3a3a3a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.board_column {
+  flex: 1;
+  border-right: 1px solid #555;
+  display: flex;
+  flex-direction: column;
+}
+
+.board_column:last-child {
+  border-right: none;
+}
+
+.column_header {
+  background: #a8caca;
+  color: #000;
+  text-align: center;
+  padding: 12px;
+  font-weight: 600;
+}
+
+.column_body {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+/* ===== Task Card ===== */
+
+.task_card {
+  background: #4a4a4a;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  transition: 0.3s ease;
+}
+
+.task_card:hover {
+  background: #5a5a5a;
+}
+
+.task_card small {
+  color: #ccc;
+}
+
+</style>
+</head>
+<body>
+
+
+<%- include('navbar') %>
+
+<div class="layout">
+
+  <div class="sidebar-container">
+    <% if (session.show_sidebar === 'sidebar') { %>
+      <%- include('sidebar') %>
+    <% } else if (session.show_sidebar === 'partial_sidebar') { %>
+      <%- include('partial_sidebar') %>
+    <% } else if (session.show_sidebar === 'user_sidebar') { %>
+      <%- include('user_sidebar') %>
+    <% } %>
+  </div>
+
+  <!-- ===== Main Content ===== -->
+  <div class="main_content-wrapper">
+
+    <!-- ===== Top Control Bar ===== -->
+    <div class="tasks_control-bar">
+
+      <div class="employee_select-wrapper">
+        <label class="select_label">Select Employee</label>
+
+        <select class="employee_select-dropdown" id="employee_filter">
+          <option value="all">All Employees</option>
+
+          <% users.forEach(function(user){ %>
+            <option value="<%= user.id %>"
+              <%= selected_user == user.id ? 'selected' : '' %>>
+              <%= user.name %>
+            </option>
+          <% }) %>
+
+        </select>
+      </div>
+
+    </div>
+
+
+    <!-- ===== Task Board ===== -->
+    <div class="tasks_board-wrapper">
+
+      <!-- Task Column -->
+      <div class="board_column task_column">
+        <div class="column_header">Task</div>
+        <div class="column_body">
+          <% tasks.forEach(function(task){ %>
+            <% if(task.status === 'task'){ %>
+              <div class="task_card">
+                <span><%= task.title %></span>
+                <small><%= task.due_date %></small>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Change Column -->
+      <div class="board_column change_column">
+        <div class="column_header">Change</div>
+        <div class="column_body">
+          <% tasks.forEach(function(task){ %>
+            <% if(task.status === 'change'){ %>
+              <div class="task_card">
+                <span><%= task.title %></span>
+                <small><%= task.due_date %></small>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Update Column -->
+      <div class="board_column update_column">
+        <div class="column_header">Update</div>
+        <div class="column_body">
+          <% tasks.forEach(function(task){ %>
+            <% if(task.status === 'update'){ %>
+              <div class="task_card">
+                <span><%= task.title %></span>
+                <small><%= task.due_date %></small>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Others Column -->
+      <div class="board_column others_column">
+        <div class="column_header">Others</div>
+        <div class="column_body">
+          <% tasks.forEach(function(task){ %>
+            <% if(task.status === 'others'){ %>
+              <div class="task_card">
+                <span><%= task.title %></span>
+                <small><%= task.due_date %></small>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- ===== Script ===== -->
+<script>
+  document.getElementById('employee_filter')
+    .addEventListener('change', function () {
+      const userId = this.value;
+      window.location.href = `/all-member-task?user_id=${userId}`;
+    });
+</script>
+
+</body>
+</html>

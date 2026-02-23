@@ -4,7 +4,10 @@
   "description": "Task Management System for thedesigns.live",
   "main": "app.js",
   "scripts": {
+
     "start": "nodemon app.js",
+
+   "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

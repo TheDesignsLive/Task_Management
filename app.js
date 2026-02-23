@@ -31,6 +31,7 @@ const forgotPasswordRoutes = require('./routers/forgot-password.routes');
 const SentMailRoutes = require('./routers/sent-mail.routes');
 const changePassword = require("./routers/change-password.routes");
 const updateTaskDate = require('./routers/update-task-date.routes');
+const allMemberTask=require('./routers/all-member-task.routes');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -65,6 +66,9 @@ app.use('/', delete_member);
 app.use('/', suspendmember);
 app.use('/', memberRequest);
 
+
+
+
 // Roles Management
 app.use('/view-roles', viewrole);
 app.use('/add-role', addrole);
@@ -78,6 +82,7 @@ app.use('/', notification);
 app.use('/profile', profile);
 app.use('/settings', settings);
 app.use('/', updateTaskDate);
+app.use('/',allMemberTask);
 
 // Forgot Password Workflow
 app.get("/forgot-password", (req, res) => {
