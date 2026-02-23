@@ -9,12 +9,11 @@ router.post('/', async (req, res) => {
      
     const adminId = req.session.adminId;
     const { role_name, control_type } = req.body;
-    const can_manage_members = req.body.can_manage_members ? 1 : 0;
 
     await con.execute(
-      `INSERT INTO roles (admin_id, role_name, control_type, can_manage_members)
-       VALUES (?, ?, ?, ?)`,
-      [adminId, role_name, control_type, can_manage_members]
+      `INSERT INTO roles (admin_id, role_name, control_type)
+       VALUES (?, ?, ?)`,
+      [adminId, role_name, control_type]
     );
 
     res.redirect('/view-roles'); // back to pages

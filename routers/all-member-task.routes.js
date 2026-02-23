@@ -17,86 +17,27 @@ router.get('/all-member-task', async (req, res) => {
         let tasks = [];
 
         const selectedUser = req.query.user_id || 'all';
+        const adminId = req.session.adminId;
 
-        // ===============================
-        // 1️⃣ ADMIN LOGIN
-        // ===============================
+        // ================= ADMIN =================
         if (req.session.role === 'admin') {
 
-            const adminId = req.session.adminId;
-
-            // Get Admin Name
+            // Admin name
             const [adminRows] = await con.query(
                 "SELECT name FROM admins WHERE id=?",
                 [adminId]
             );
-
             if (adminRows.length > 0) {
                 adminName = adminRows[0].name;
             }
 
-            // Users table (if needed)
-            const [adminUsers] = await con.query(
-                "SELECT id, name FROM users WHERE admin_id=?",
-                [adminId]
-            );
-            users = adminUsers;
-
-            // Members dropdown (navbar use)
-            const [memberRows] = await con.query(
+            // Users list
+            const [userRows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
                 [adminId]
             );
-            members = memberRows;
-
-            // Roles (if navbar needs)
-            const [roleRows] = await con.query(
-                "SELECT id, role_name FROM roles WHERE admin_id=?",
-                [adminId]
-            );
-            roles = roleRows;
-
-            // Tasks
-            let taskQuery = `
-                SELECT *
-                FROM tasks
-                WHERE admin_id = ?
-            `;
-
-            let params = [adminId];
-
-            if (selectedUser !== 'all') {
-                taskQuery += " AND assigned_to = ?";
-                params.push(selectedUser);
-            }
-
-            const [taskRows] = await con.query(taskQuery, params);
-            tasks = taskRows;
-        }
-
-        // ===============================
-        // 2️⃣ USER LOGIN
-        // ===============================
-        else if (req.session.role === 'user') {
-
-            const adminId = req.session.adminId;
-
-            // Get Admin Name
-            const [adminRows] = await con.query(
-                "SELECT name FROM admins WHERE id=?",
-                [adminId]
-            );
-
-            if (adminRows.length > 0) {
-                adminName = adminRows[0].name;
-            }
-
-            // Members dropdown (exclude himself)
-            const [memberRows] = await con.query(
-                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id!=?",
-                [adminId, req.session.userId]
-            );
-            members = memberRows;
+            users = userRows;
+            members = userRows;
 
             // Roles
             const [roleRows] = await con.query(
@@ -105,25 +46,22 @@ router.get('/all-member-task', async (req, res) => {
             );
             roles = roleRows;
 
-            // Users list
-            const [companyUsers] = await con.query(
-                "SELECT id, name FROM users WHERE admin_id=?",
-                [adminId]
-            );
-            users = companyUsers;
-
-            // Tasks (only assigned to him)
+            // ===== TASK QUERY WITH JOIN =====
             let taskQuery = `
-                SELECT *
-                FROM tasks
-                WHERE admin_id = ?
-                AND assigned_to = ?
+                SELECT 
+                    t.*,
+                    u1.name AS assigned_to_name,
+                    u2.name AS assigned_by_name
+                FROM tasks t
+                JOIN users u1 ON t.assigned_to = u1.id
+                JOIN users u2 ON t.assigned_by = u2.id
+                WHERE t.admin_id = ?
             `;
 
-            let params = [adminId, req.session.userId];
+            let params = [adminId];
 
             if (selectedUser !== 'all') {
-                taskQuery += " AND assigned_to = ?";
+                taskQuery += " AND t.assigned_to = ?";
                 params.push(selectedUser);
             }
 
@@ -131,15 +69,54 @@ router.get('/all-member-task', async (req, res) => {
             tasks = taskRows;
         }
 
-        // ===============================
-        // 3️⃣ RENDER
-        // ===============================
+        // ================= USER =================
+        else if (req.session.role === 'user') {
+
+            const userId = req.session.userId;
+
+            const [adminRows] = await con.query(
+                "SELECT name FROM admins WHERE id=?",
+                [adminId]
+            );
+            if (adminRows.length > 0) {
+                adminName = adminRows[0].name;
+            }
+
+            const [userRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
+                [adminId]
+            );
+            users = userRows;
+            members = userRows;
+
+            const [roleRows] = await con.query(
+                "SELECT id, role_name FROM roles WHERE admin_id=?",
+                [adminId]
+            );
+            roles = roleRows;
+
+            let taskQuery = `
+                SELECT 
+                    t.*,
+                    u1.name AS assigned_to_name,
+                    u2.name AS assigned_by_name
+                FROM tasks t
+                JOIN users u1 ON t.assigned_to = u1.id
+                JOIN users u2 ON t.assigned_by = u2.id
+                WHERE t.admin_id = ?
+                AND t.assigned_to = ?
+            `;
+
+            const [taskRows] = await con.query(taskQuery, [adminId, userId]);
+            tasks = taskRows;
+        }
+
         res.render('all-member-task', {
             session: req.session,
             users,
-            members,     // ✅ IMPORTANT
-            roles,       // ✅ IMPORTANT
-            adminName,   // ✅ IMPORTANT
+            members,
+            roles,
+            adminName,
             tasks,
             selected_user: selectedUser
         });
@@ -148,7 +125,6 @@ router.get('/all-member-task', async (req, res) => {
         console.error(err);
         res.send("Database Error");
     }
-
 });
 
 module.exports = router;

@@ -200,10 +200,8 @@ table th {
             <th>ID</th>
             <th>Role Name</th>
             <th>Control Type</th>
-            <th>Manage Members</th>
             <th>Created</th>
-            <th>Actions</th> <!-- ADDED -->
-          </tr>
+            <th>Actions</th> </tr>
         </thead>
 
         <tbody>
@@ -212,16 +210,14 @@ table th {
              <td><%= index + 1 %></td>
             <td><%= r.role_name %></td>
             <td><%= r.control_type %></td>
-            <td><%= r.can_manage_members ? 'YES' : 'NO' %></td>
           <td><%= new Date(r.created_at).toLocaleDateString() %></td>
 
 
-            <!-- ACTION COLUMN ADDED -->
             <td>
               <div class="actions-container">
 
                 <a href="javascript:void(0)" 
-   onclick="openEditDialog('<%= r.id %>','<%= r.role_name %>','<%= r.control_type %>','<%= r.can_manage_members %>')" 
+   onclick="openEditDialog('<%= r.id %>','<%= r.role_name %>','<%= r.control_type %>')" 
    class="action-icon edit-icon">
                   <svg viewBox="0 0 24 24" width="20" height="20">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/>
@@ -249,7 +245,6 @@ table th {
   </div>
 </div>
 
-<!-- ===== ADD ROLE DIALOG ===== -->
 <div class="dialog-overlay" id="categoryDialog">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeCategoryDialog()">✖</span>
@@ -258,11 +253,6 @@ table th {
 
       <label>Role Name</label>
       <input type="text" name="role_name" placeholder="Enter role name" required>
-
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <label>Can Manage Members</label>
-        <input type="checkbox" name="can_manage_members" value="1" style="width:18px; height:18px;">
-      </div>
 
       <select name="control_type" required>
         <option value="">Select Control Type</option>
@@ -275,7 +265,6 @@ table th {
     </form>
   </div>
 </div>
-<!-- ===== EDIT ROLE DIALOG ===== -->
 <div class="dialog-overlay" id="editRoleDialog">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeEditDialog()">✖</span>
@@ -284,11 +273,6 @@ table th {
 
       <label>Role Name</label>
       <input type="text" name="role_name" id="edit_role_name"  required>
-
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <label>Can Manage Members</label>
-        <input type="checkbox" name="can_manage_members" value="1" id="edit_can_manage" style="width:18px; height:18px;">
-      </div>
 
       <select name="control_type" id="edit_control_type" required>
         <option value="ADMIN">ADMIN</option>
@@ -310,12 +294,11 @@ function closeCategoryDialog() {
   document.getElementById("categoryDialog").style.display = "none";
 }
 
-function openEditDialog(id, name, control, canManage) {
+function openEditDialog(id, name, control) {
   document.getElementById("editRoleDialog").style.display = "flex";
 
   document.getElementById("edit_role_name").value = name;
   document.getElementById("edit_control_type").value = control;
-  document.getElementById("edit_can_manage").checked = (canManage == 1);
 
   document.getElementById("editRoleForm").action = "/edit-role/" + id;
 }

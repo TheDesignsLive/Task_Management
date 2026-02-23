@@ -8,7 +8,6 @@ router.get('/', async (req, res) => {
         return res.redirect('/');
     }
 
-    let show_sidebar = "Usersidebar";
     let members = [];
     let adminName = null;
     let openTasks = [];
@@ -18,8 +17,6 @@ router.get('/', async (req, res) => {
 
         // ================= ADMIN =================
         if (req.session.role === "admin") {
-
-            show_sidebar = "sidebar";
 
             // members for navbar dropdown
             const [mRows] = await con.query(
@@ -72,22 +69,6 @@ router.get('/', async (req, res) => {
                 [req.session.userId]
             );
 
-            if (uRows.length > 0) {
-
-                const roleId = uRows[0].role_id;
-
-                const [rRows] = await con.query(
-                    "SELECT can_manage_members FROM roles WHERE id=?",
-                    [roleId]
-                );
-
-                if (rRows.length > 0 && rRows[0].can_manage_members == 1) {
-                    show_sidebar = "sidebar";
-                } else {
-                    show_sidebar = "Usersidebar";
-                }
-            }
-
             // admin name 
             const [aRows] = await con.query(
                 "SELECT name FROM admins WHERE id=?",
@@ -127,7 +108,6 @@ router.get('/', async (req, res) => {
         res.render('assign_by_me', {
             members,
             adminName,
-            show_sidebar,
             openTasks,
             completedTasks,
             session: req.session
