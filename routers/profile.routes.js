@@ -3,8 +3,6 @@ const router = express.Router();
 const con = require('../config/db');
 const multer = require('multer');
 const fs = require('fs');
-const session = require('express-session');
-
 
 // ================= FILE UPLOAD =================
 const storage = multer.diskStorage({
@@ -17,26 +15,25 @@ const upload = multer({ storage });
 // ================= PROFILE PAGE =================
 router.get('/', async (req, res) => {
     
-    let r="user";
-    if(req.session.role=="admin"){
-        r="admin";
-    }
     if (!req.session.role) return res.redirect('/');
 
-    let show_sidebar = "Usersidebar";
+    let r = "user";
+    if (req.session.role == "admin") {
+        r = "admin";
+    }
+
     let members = [];
     let adminName = null;
     let adminId = null;
     let profilePic = null;
 
-    let name="", email="", phone="", company="", role="";
+    let name = "", email = "", phone = "", company = "", role = "";
 
     try {
 
         // ================= ADMIN =================
         if (req.session.role === "admin") {
 
-            show_sidebar = "sidebar";
             adminId = req.session.adminId;
             role = "Admin";
 
@@ -83,21 +80,12 @@ router.get('/', async (req, res) => {
                     [uRows[0].admin_id]
                 );
                 if (cRows.length) company = cRows[0].company_name;
-
-                const [rRows] = await con.query(
-                    "SELECT can_manage_members FROM roles WHERE id=?",
-                    [uRows[0].role_id]
-                );
-
-                if (rRows.length && rRows[0].can_manage_members == 1)
-                    show_sidebar = "sidebar";
             }
         }
 
         res.render('profile', {
             members,
             adminName,
-            show_sidebar,
             profilePic,
             session: req.session,
             name,

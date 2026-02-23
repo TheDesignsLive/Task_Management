@@ -47,17 +47,6 @@ router.get('/', async (req, res) => {
             if (userRows.length > 0) {
 
                 adminId = userRows[0].admin_id;
-                const role_id = userRows[0].role_id;
-
-                // check permission
-                const [roleRows] = await con.query(
-                    "SELECT can_manage_members FROM roles WHERE id=?",
-                    [role_id]
-                );
-
-                if (roleRows.length > 0 && roleRows[0].can_manage_members == 1) {
-                    show_sidebar = "sidebar";
-                }
 
                 // members
                 const [mRows] = await con.query(
@@ -78,7 +67,6 @@ router.get('/', async (req, res) => {
         res.render('view_role', {
             roles,
             members,
-            show_sidebar,
             session: req.session
         });
 

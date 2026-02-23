@@ -8,7 +8,6 @@ router.get('/notifications', async (req, res) => {
         return res.redirect('/');
     }
 
-    let show_sidebar = "Usersidebar";
     let members = [];
     let adminName = null;
     let adminId = null;
@@ -19,7 +18,6 @@ router.get('/notifications', async (req, res) => {
         // ================= ADMIN =================
         if (req.session.role === "admin") {
 
-            show_sidebar = "sidebar";
             adminId = req.session.adminId;
 
             // members
@@ -36,7 +34,7 @@ router.get('/notifications', async (req, res) => {
             );
             if (aRows.length > 0) adminName = aRows[0].name;
 
-            //  UPDATED FETCH WITH JOINS
+            // FETCH WITH JOINS
             const [reqRows] = await con.query(`
                 SELECT 
                     mr.id,
@@ -59,35 +57,20 @@ router.get('/notifications', async (req, res) => {
 
         // ================= USER =================
         else if (req.session.role === "user") {
-           // get role_id of current user
+            // get admin_id of current user
             const [uRows] = await con.query(
-                "SELECT role_id, admin_id FROM users WHERE id=?",
+                "SELECT admin_id FROM users WHERE id=?",
                 [req.session.userId]
             );
 
             if (uRows.length > 0) {
-
                 adminId = uRows[0].admin_id;
-                const roleId = uRows[0].role_id;
-
-                // check permission from roles table
-                const [rRows] = await con.query(
-                    "SELECT can_manage_members FROM roles WHERE id=?",
-                    [roleId]
-                );
-
-                if (rRows.length > 0 && rRows[0].can_manage_members == 1) {
-                    show_sidebar = "sidebar";       // show admin sidebar
-                } else {
-                    show_sidebar = "Usersidebar";   // show user sidebar
-                }
             }
         }
 
         res.render('notifications', {
             members,
             adminName,
-            show_sidebar,
             memberRequests,
             session: req.session
         });
