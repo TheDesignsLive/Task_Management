@@ -16,7 +16,7 @@ const pool = mysql.createPool({
 //   user:"root",
 //   password:"",
 //   database:"task_management"
-//
+
 // });
 
 pool.getConnection((err, conn) => {
