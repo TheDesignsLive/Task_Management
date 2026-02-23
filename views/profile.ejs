@@ -6,14 +6,14 @@
 <title>Profile</title>
 
 <style>
-/* UPDATED CSS TO FILL 1 PAGE WITHOUT SCROLL */
+/* FILL 1 PAGE WITHOUT SCROLL */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, sans-serif;
   background: #3C3A3A;
-  overflow: hidden; /* No scroll on main body */
+  overflow: hidden; 
 }
 .layout {
   display: flex;
@@ -29,7 +29,7 @@ html, body {
   background: #f4f6f9;
   display: flex;
   justify-content: center;
-  align-items: center; /* Center vertically to fill space nicely */
+  align-items: center; 
   overflow: hidden;
 }
 .profile-card {
@@ -42,7 +42,7 @@ html, body {
 }
 .profile-header {
   background: linear-gradient(135deg, #095959, #00a896);
-  padding: 25px 20px 50px;
+  padding: 30px 20px 45px; /* Thoda kam padding */
   color: white;
   position: relative;
 }
@@ -55,16 +55,18 @@ html, body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: -50px;
+  bottom: -50px; /* Image aadhi bahar */
   background: #ddd;
+  z-index: 10;
 }
 .profile-body {
-  padding: 60px 25px 20px;
+  padding: 65px 25px 20px; /* Text ko image se niche dhakela */
 }
 .profile-name {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: #333;
+  margin-bottom: 2px;
 }
 .profile-role {
   font-size: 13px;
@@ -130,7 +132,7 @@ html, body {
 
   <div class="profile-card">
     <div class="profile-header">
-      <h3 style="margin:0;">My Profile</h3>
+      <h3 style="margin:0; padding-bottom: 10px;">My Profile</h3>
       <img src="<%= profilePic ? '/uploads/' + profilePic : '/default-profile.png' %>" class="profile-img">
     </div>
 
