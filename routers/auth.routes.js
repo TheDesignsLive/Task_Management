@@ -139,7 +139,7 @@ router.post("/login", async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.send(err);
+        res.send("Database error ❌");
     }
 });
 
