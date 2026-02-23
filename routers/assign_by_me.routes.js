@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
             );
             if (aRows.length > 0) adminName = aRows[0].name;
 
-            // FETCH ALL TASKS ASSIGNED BY ADMIN
+            // FETCH ALL TASKS ASSIGNED BY ADMIN (Excluding Self-Assigned)
             const [rows] = await con.query(`
                 SELECT 
                     t.id,
@@ -50,6 +50,7 @@ router.get('/', async (req, res) => {
                 LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0
                 WHERE t.who_assigned='admin' 
                 AND t.assigned_by=?
+                AND t.assigned_to != 0
                 ORDER BY t.due_date ASC
             `, [req.session.adminId]);
 
@@ -94,7 +95,7 @@ router.get('/', async (req, res) => {
             );
             if (aRows.length > 0) adminName = aRows[0].name;
 
-            // FETCH USER ASSIGNED TASKS (ADDED ' (Admin)' text)
+            // FETCH USER ASSIGNED TASKS (Excluding Self-Assigned)
             const [rows] = await con.query(`
                 SELECT 
                     t.id,
@@ -109,8 +110,9 @@ router.get('/', async (req, res) => {
                 LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0
                 WHERE t.who_assigned='user' 
                 AND t.assigned_by=?
+                AND t.assigned_to != ?
                 ORDER BY t.due_date ASC
-            `, [req.session.userId]);
+            `, [req.session.userId, req.session.userId]);
 
             // SPLIT OPEN & COMPLETED
             rows.forEach(task => {
