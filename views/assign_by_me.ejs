@@ -127,9 +127,9 @@
 
   <div class="sidebar-container">
     <% if (show_sidebar === 'sidebar') { %>
-      <%- include('sidebar') %>
-    <% } else if (show_sidebar === 'Usersidebar') { %>
-      <%- include('user_sidebar') %>
+        <%- include('sidebar') %>
+    <% } else { %>
+        <%- include('user_sidebar') %>
     <% } %>
   </div>
 
