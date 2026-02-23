@@ -54,12 +54,14 @@ button:hover{background:#0b7373;}
 
 <div class="layout">
 
-<div class="sidebar-container">
-<% if (show_sidebar === 'sidebar') { %>
-<%- include('sidebar') %>
-<% } else { %>
-<%- include('user_sidebar') %>
-<% } %>
+ <div class="sidebar-container">
+  <% if (session.show_sidebar === 'sidebar') { %>
+    <%- include('sidebar') %>
+  <% } else if (session.show_sidebar === 'partial_sidebar') { %>
+    <%- include('partial_sidebar') %>
+  <% } else if (session.show_sidebar === 'user_sidebar') { %>
+    <%- include('user_sidebar') %>
+  <% } %>
 </div>
 
 <div class="main-content">

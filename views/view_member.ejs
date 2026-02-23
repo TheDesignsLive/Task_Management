@@ -203,8 +203,14 @@
 
 <div class="layout">
   <div class="sidebar-container">
+  <% if (session.show_sidebar === 'sidebar') { %>
     <%- include('sidebar') %>
-  </div>
+  <% } else if (session.show_sidebar === 'partial_sidebar') { %>
+    <%- include('partial_sidebar') %>
+  <% } else if (session.show_sidebar === 'user_sidebar') { %>
+    <%- include('user_sidebar') %>
+  <% } %>
+</div>
 
   <div class="main-content">
     <div class="sub-header">
