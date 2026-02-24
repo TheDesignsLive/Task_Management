@@ -140,7 +140,11 @@ html,body{
 <div class="layout">
 
 <div class="sidebar-container">
+<<<<<<< HEAD
  <%- include('sidebar') %>
+=======
+  <%- include('sidebar') %>
+>>>>>>> c0c233623d9291cd3d3d906fe2f9c9806bc4a313
 </div>
 
 <div class="main-content">
@@ -187,6 +191,7 @@ html,body{
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
   <div class="task-row">
     <input type="checkbox"
+  disabled
       class="task-checkbox 
       <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
       <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
@@ -218,6 +223,7 @@ html,body{
 
   <div class="task-row">
     <input type="checkbox"
+      disabled
       class="task-checkbox 
       <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
       <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
@@ -255,6 +261,7 @@ html,body{
 
   <div class="task-row">
     <input type="checkbox"
+      disabled
       class="task-checkbox 
       <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
       <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
@@ -285,6 +292,7 @@ html,body{
     <div class="task-row">
 
       <input type="checkbox"
+        disabled
         class="task-checkbox 
         <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
         <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
@@ -331,6 +339,7 @@ html,body{
     <!-- ✅ Checked + Priority Color -->
     <input type="checkbox"
       checked
+      disabled
       class="task-checkbox 
       <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
       <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
