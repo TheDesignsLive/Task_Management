@@ -69,15 +69,38 @@ html,body{
   align-items:center;
   gap:6px;
 }
-.task-checkbox{
-  width:14px;
-  height:14px;
-  appearance:none;
-  border:2px solid white;
-  border-radius:3px;
-  background:transparent;
-  cursor:pointer;
+
+
+.task-date{
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: normal;
+  white-space: nowrap;
+  margin-left: auto;   /* pushes date to right */
+  text-align: right;
 }
+  /* Checkbox base */
+  .task-checkbox {
+    width: 12px;
+    height: 12px;
+    appearance: none;
+    border: 2px solid white; 
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;  
+  }
+
+  .task-checkbox:checked::after {
+    content: "✔";                
+    position: absolute;
+    top: 0;
+    left: 1px;
+    font-size: 7px;
+    color: white;                
+  }
+
 
 .checkbox-red{
   border-color:red;
@@ -168,7 +191,7 @@ html,body{
       <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
       <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
       <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>">
-    <b><%= task.title %></b>
+    <%= task.title %>
   </div>
   <div class="task-date"><%= taskDate %></div>
 </div>
@@ -179,23 +202,72 @@ html,body{
 
 <!-- CHANGE -->
 <div class="task-box task-change">
-<% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN')
-.forEach(task=>{ %>
+<% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
+
+<%
+  let taskDate = '';
+  if(task.due_date){
+    const d = new Date(task.due_date);
+    const day = ("0"+d.getDate()).slice(-2);
+    const month = d.toLocaleString('en-GB',{month:'short'});
+    taskDate = `${day} ${month}`;
+  }
+%>
+
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
-<b><%= task.title %></b>
+
+  <div class="task-row">
+    <input type="checkbox"
+      class="task-checkbox 
+      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
+      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
+      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
+      onchange="markCompleted(<%= task.id %>)">
+
+    <%= task.title %>
+  </div>
+
+  <div class="task-date"><%= taskDate %></div>
+
 </div>
+
 <% }) %>
 </div>
+
 
 <div class="vertical-line"></div>
 
 <!-- UPDATE -->
 <div class="task-box task-update">
-<% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN')
-.forEach(task=>{ %>
+<% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
+
+<%
+  let taskDate = '';
+  if(task.due_date){
+    const d = new Date(task.due_date);
+    const day = ("0"+d.getDate()).slice(-2);
+    const month = d.toLocaleString('en-GB',{month:'short'});
+    taskDate = `${day} ${month}`;
+  }
+%>
+
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
-<b><%= task.title %></b>
+
+  <div class="task-row">
+    <input type="checkbox"
+      class="task-checkbox 
+      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
+      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
+      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
+      onchange="markCompleted(<%= task.id %>)">
+
+    <%= task.title %>
+  </div>
+
+  <div class="task-date"><%= taskDate %></div>
+
 </div>
+
 <% }) %>
 </div>
 
@@ -203,30 +275,96 @@ html,body{
 
 <!-- OTHERS -->
 <div class="task-box task-other">
-<% tasks.filter(t=>t.section==='OTHERS' && t.status==='OPEN')
-.forEach(task=>{ %>
-<div class="task-card priority-<%= task.priority.toLowerCase() %>">
-<b><%= task.title %></b>
+
+<% tasks
+   .filter(t => t.section === 'OTHERS' && t.status === 'OPEN')
+   .forEach(task => { %>
+
+  <div class="task-card priority-<%= (task.priority || '').toLowerCase() %>">
+    
+    <div class="task-row">
+
+      <input type="checkbox"
+        class="task-checkbox 
+        <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
+        <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
+        <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
+        onchange="markCompleted(<%= task.id %>)">
+
+    <%= task.title %>
+
+    </div>
+
+ <div style="font-size:11px; opacity:0.7;">
+    <% if (selected_user === 'all') { %>
+        <%= task.assigned_by_name %> → <%= task.assigned_to_name %>
+    <% } else { %>
+      <%= task.assigned_by_name %>
+    <% } %>
 </div>
+
+  </div>
+
 <% }) %>
+
 </div>
+
 
 </div>
 
 <div class="completed-header">Completed Tasks</div>
-
 <div class="completed-section">
-<% tasks.filter(t=>t.status==='COMPLETED')
-.forEach(task=>{ %>
-<div class="task-card">
-✔ <%= task.title %> ( <%= task.assigned_to_name %> )
+<% tasks.filter(t=>t.status==='COMPLETED').forEach(task=>{ %>
+
+<%
+  let taskDate = '';
+  if(task.due_date){
+    const d = new Date(task.due_date);
+    const day = ("0"+d.getDate()).slice(-2);
+    const month = d.toLocaleString('en-GB',{month:'short'});
+    taskDate = `${day} ${month}`;
+  }
+%>
+<div class="task-card priority-<%= task.priority.toLowerCase() %>">
+  <div class="task-row">
+    
+    <!-- ✅ Checked + Priority Color -->
+    <input type="checkbox"
+      checked
+      class="task-checkbox 
+      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
+      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
+      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
+      onchange="markOpen(<%= task.id %>)">
+
+    <span>
+      <%= task.title %> - <%= task.assigned_to_name %> 
+    </span>
+   
+
+  </div>
+     <div class="task-date"><%= taskDate %></div>
 </div>
+
 <% }) %>
 </div>
 
 </div>
 </div>
 </div>
+
+// ✅ Mark task as completed via fetch
+function markCompleted(taskId){
+  fetch(`/complete-task/${taskId}`, { method:'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success){
+        location.reload(); // simple way to reload tasks
+      } else {
+        alert('Error completing task');
+      }
+    });
+}
 
 </body>
 </html>
