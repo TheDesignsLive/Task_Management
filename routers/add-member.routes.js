@@ -3,6 +3,7 @@ const router = express.Router();
 const con = require('../config/db'); // mysql2 pool
 const multer = require('multer');
 const path = require('path');
+const bcrypt = require('bcryptjs'); // ✅ ADDED
 
 
 // ================= MULTER CONFIG =================
@@ -41,7 +42,7 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
         const password = req.body.password;
 
         // =====================================================
-        // 🔥 CHECK EMAIL ALREADY EXISTS (ADDED ONLY THIS PART)
+        // 🔥 CHECK EMAIL ALREADY EXISTS
         // =====================================================
 
         const [emailCheck] = await con.execute(
@@ -62,6 +63,11 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
         }
 
         // =====================================================
+        // ✅ HASH PASSWORD (ADDED ONLY THIS)
+        // =====================================================
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // =====================================================
         // 🔥 ROLE BASED INSERT
         // =====================================================
 
@@ -80,7 +86,7 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
                 name,
                 email,
                 phone,
-                password,
+                hashedPassword, // ✅ CHANGED
                 profile_pic,
                 admin_id
             ];
@@ -108,7 +114,7 @@ router.post('/', upload.single('profile_pic'), async (req, res) => {
                 name,
                 email,
                 phone,
-                password,
+                hashedPassword, // ✅ CHANGED
                 profile_pic,
                 role
             ];
