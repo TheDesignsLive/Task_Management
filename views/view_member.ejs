@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <title>Members</title>
   <style>
     /* ====== Body ====== */
@@ -195,6 +196,11 @@
     }
 
     .close-btn:hover { color:red; }
+
+    /* For Eye Icon Position */
+    .input-group {
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -215,7 +221,7 @@
   <div class="main-content">
     <div class="sub-header">
       <input type="text" placeholder="Search member..." id="searchMember">
-      <button onclick="location.href='/view-roles'">View Roles</button>
+      <button onclick="location.href='/view-roles'">Roles Panel</button>
 
       <button onclick="openDialog()">Add Member</button>
     </div>
@@ -283,7 +289,7 @@
 <div class="dialog-overlay" id="dialogBox">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeDialog()">✖</span>
-
+    <h3 style="margin-top: 0;">Add Member</h3>
     <form action="/add-member" method="POST" enctype="multipart/form-data">
 
       <label>Role</label>
@@ -297,7 +303,12 @@
       <input type="text" name="name" placeholder="Name" required>
       <input type="email" name="email" placeholder="Email" required>
       <input type="text" name="phone" placeholder="Phone">
-      <input type="password" name="password" placeholder="Password" required>
+      
+      <div class="input-group">
+        <input type="password" id="addPassword" name="password" placeholder="Password" required>
+        <i class="fa-solid fa-eye-slash" id="toggleAddPassword"
+           style="position:absolute; right:12px; top:12px; cursor:pointer; color:#999;"></i>
+      </div>
 
       <label>Profile Picture (optional)</label>
       <input type="file" name="profile_pic">
@@ -310,7 +321,7 @@
 <div class="dialog-overlay" id="editDialogBox">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeEditDialog()">✖</span>
-
+    <h3 style="margin-top: 0;">Edit Member</h3>
     <form id="editMemberForm" method="POST" enctype="multipart/form-data">
 
       <label>Role</label>
@@ -324,7 +335,12 @@
       <input type="text" name="name" id="edit_name" placeholder="Name" required>
       <input type="email" name="email" id="edit_email" placeholder="Email" required>
       <input type="text" name="phone" id="edit_phone" placeholder="Phone">
-      <input type="password" name="password" placeholder="New Password (optional)">
+      
+      <div class="input-group">
+        <input type="password" id="editPassword" name="password" placeholder="New Password (optional)">
+        <i class="fa-solid fa-eye-slash" id="toggleEditPassword"
+           style="position:absolute; right:12px; top:12px; cursor:pointer; color:#999;"></i>
+      </div>
 
       <label>Profile Picture (optional)</label>
       <input type="file" name="profile_pic">
@@ -394,6 +410,27 @@ function openEditDialog(id, roleId, name, email, phone) {
 function closeEditDialog() {
   document.getElementById("editDialogBox").style.display = "none";
 }
+
+// Password toggle reusable function
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("toggleAddPassword").addEventListener("click", () => togglePassword("addPassword", "toggleAddPassword"));
+    document.getElementById("toggleEditPassword").addEventListener("click", () => togglePassword("editPassword", "toggleEditPassword"));
+});
 
 // === SUSPEND LOGIC ===
 let selectedUserId = null;
