@@ -4,11 +4,12 @@ const con = require('../config/db');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
+const bcrypt = require('bcrypt'); // ✅ ADDED
 
 // ================= MULTER (PROFILE PIC) ====================
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../public/uploads'));// make sure uploads folder exists
+        cb(null, path.join(__dirname, '../public/uploads'));
     },
     filename: function (req, file, cb) {
         const uniqueName = Date.now() + path.extname(file.originalname);
@@ -32,23 +33,25 @@ router.post("/signup", upload.single("profile_pic"), async (req, res) => {
         return res.send("Please fill all required fields ❌");
     }
 
-    // 🔹 PROFILE PIC FILENAME
     let profilePic = null;
     if (req.file) {
         profilePic = req.file.filename;
     }
 
-    const sql = "INSERT INTO admins (name, company_name, email, phone, password, profile_pic) VALUES (?,?,?,?,?,?)";
-
     try {
-        const [result] = await con.query(sql, [name, company_name, email, phone, password, profilePic]);
+        // ✅ HASH PASSWORD
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // ✅ STORE SESSION (SAME AS LOGIN)
+        const sql = "INSERT INTO admins (name, company_name, email, phone, password, profile_pic) VALUES (?,?,?,?,?,?)";
+
+        const [result] = await con.query(sql, [name, company_name, email, phone, hashedPassword, profilePic]);
+
         req.session.adminId = result.insertId;
         req.session.role = "admin";
-        req.session.email = email;   // 🔹 ADDED (IMPORTANT)
+        req.session.email = email;
 
         return res.redirect("/home");
+
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             res.send("Email already exists ❌");
@@ -59,9 +62,7 @@ router.post("/signup", upload.single("profile_pic"), async (req, res) => {
     }
 });
 
-
-// check admins email exist or not in admins table
-
+// ================= CHECK EMAIL ====================
 router.post("/check-email", async (req, res) => {
     const { email } = req.body;
 
@@ -95,18 +96,26 @@ router.post("/login", async (req, res) => {
         // ADMIN LOGIN
         if (login_type === "admin") {
             const [rows] = await con.query(
-                "SELECT * FROM admins WHERE email=? AND password=?",
-                [email, password]
+                "SELECT * FROM admins WHERE email=?",
+                [email]
             );
 
             if (rows.length > 0) {
 
+                // ✅ COMPARE HASHED PASSWORD
+                const match = await bcrypt.compare(password, rows[0].password);
+
+                if (!match) {
+                    return res.send("Invalid Admin Email or Password ❌");
+                }
+
                 req.session.adminId = rows[0].id;
                 req.session.role = "admin";
-                req.session.email = rows[0].email; 
-                req.session.adminName = rows[0].name; 
+                req.session.email = rows[0].email;
+                req.session.adminName = rows[0].name;
 
                 return res.redirect("/home");
+
             } else {
                 return res.send("Invalid Admin Email or Password ❌");
             }
@@ -115,21 +124,29 @@ router.post("/login", async (req, res) => {
         // USER LOGIN
         if (login_type === "user") {
             const [rows] = await con.query(
-                "SELECT * FROM users WHERE email=? AND password=? AND status='ACTIVE'",
-                [email, password]
+                "SELECT * FROM users WHERE email=? AND status='ACTIVE'",
+                [email]
             );
 
             if (rows.length > 0) {
 
+                // ✅ COMPARE HASHED PASSWORD
+                const match = await bcrypt.compare(password, rows[0].password);
+
+                if (!match) {
+                    return res.send("Invalid User Email or Password ❌");
+                }
+
                 req.session.userId = rows[0].id;
                 req.session.role = "user";
-                req.session.email = rows[0].email; 
+                req.session.email = rows[0].email;
 
                 req.session.adminId = rows[0].admin_id;
                 req.session.role_id = rows[0].role_id;
-                req.session.userName = rows[0].name; 
+                req.session.userName = rows[0].name;
 
                 return res.redirect("/home");
+
             } else {
                 return res.send("Invalid User Email or Password ❌");
             }
