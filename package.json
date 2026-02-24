@@ -4,7 +4,18 @@
   "description": "Task Management System for thedesigns.live",
   "main": "app.js",
   "scripts": {
+<<<<<<< HEAD
+=======
+
+<<<<<<< HEAD
+   "start": "nodemon app.js",
+
+
+
+=======
+>>>>>>> 0cc88f23df0a7e9d697ae3de69b538150aedeae5
     "start": "nodemon app.js",
+>>>>>>> 080ebe8eaa1ab7a088fb81c357141a34f50c1c7d
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
