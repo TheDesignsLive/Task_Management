@@ -4,7 +4,7 @@ const con = require('../config/db');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
-const bcrypt = require('bcrypt'); // ✅ ADDED
+const bcrypt = require('bcryptjs'); // ✅ ADDED
 
 // ================= MULTER (PROFILE PIC) ====================
 const storage = multer.diskStorage({

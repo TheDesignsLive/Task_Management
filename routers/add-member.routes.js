@@ -3,7 +3,7 @@ const router = express.Router();
 const con = require('../config/db'); // mysql2 pool
 const multer = require('multer');
 const path = require('path');
-const bcrypt = require('bcrypt'); // ✅ ADDED
+const bcrypt = require('bcryptjs'); // ✅ ADDED
 
 
 // ================= MULTER CONFIG =================
