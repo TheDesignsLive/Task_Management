@@ -8,7 +8,6 @@ const con = require('../config/db');
 router.get('/home', async (req, res) => {
     if (!req.session.role) return res.redirect('/');
 
-    let show_sidebar = "user_sidebar";
     let members = [];
     let adminName = null;
     let tasks = [];
@@ -20,8 +19,8 @@ router.get('/home', async (req, res) => {
            ADMIN LOGIN
         ============================ */
         if (req.session.role === "admin") {
-            show_sidebar = "sidebar";
             adminId = req.session.adminId;
+            req.session.control_type = 'ADMIN'; // Set control_type for Admin
 
             // Admin Name
             const [adminRows] = await con.query(
@@ -96,15 +95,8 @@ router.get('/home', async (req, res) => {
                 );
                 
                 if (roleRows.length > 0) {
-                    const type = roleRows[0].control_type;
-                    
-                    if (type === 'ADMIN') {
-                        show_sidebar = "sidebar";
-                    } else if (type === 'PARTIAL') {
-                        show_sidebar = "partial_sidebar";
-                    } else {
-                        show_sidebar = "user_sidebar";
-                    }
+                    // Store control_type in session
+                    req.session.control_type = roleRows[0].control_type;
                 }
             }
 
@@ -167,7 +159,6 @@ router.get('/home', async (req, res) => {
             //  MERGE USER TASKS + ADMIN TASKS + OTHER USERS TASKS
             tasks = [...userTasksRows, ...adminTasksRows, ...otherUserTasksRows];
         }
-           req.session.show_sidebar=show_sidebar;
         // Render home
         res.render("home", {
             members,
