@@ -46,7 +46,7 @@ router.get('/all-member-task', async (req, res) => {
             );
             roles = roleRows;
 
-            // ===== TASK QUERY WITH JOIN =====
+            // ===== ORIGINAL TASK QUERY =====
             let taskQuery = `
                 SELECT 
                     t.*,
@@ -67,8 +67,64 @@ router.get('/all-member-task', async (req, res) => {
 
             const [taskRows] = await con.query(taskQuery, params);
             tasks = taskRows;
-        }
 
+            /* ===============================
+               ADD OTHERS SECTION HERE
+            =============================== */
+
+            let otherUserTasks;
+
+               if (selectedUser === 'all') {
+
+                const [rows] = await con.query(
+                    `SELECT 
+                        t.*,
+                        'OTHERS' AS section,
+                        u1.name AS assigned_to_name,
+                        CASE 
+                            WHEN t.who_assigned = 'admin' THEN a.name
+                            ELSE u2.name
+                        END AS assigned_by_name
+                     FROM tasks t
+                     JOIN users u1 ON t.assigned_to = u1.id
+                     LEFT JOIN users u2 ON t.assigned_by = u2.id
+                     LEFT JOIN admins a ON t.assigned_by = a.id
+                     WHERE t.admin_id = ?
+                       AND t.assigned_to != t.assigned_by
+                     ORDER BY t.due_date ASC`,
+                    [adminId]
+                );
+
+                otherUserTasks = rows;
+
+            } else {
+
+                const [rows] = await con.query(
+                    `SELECT 
+                        t.*,
+                        'OTHERS' AS section,
+                        u1.name AS assigned_to_name,
+                        CASE 
+                            WHEN t.who_assigned = 'admin' THEN a.name
+                            ELSE u2.name
+                        END AS assigned_by_name
+                     FROM tasks t
+                     JOIN users u1 ON t.assigned_to = u1.id
+                     LEFT JOIN users u2 ON t.assigned_by = u2.id
+                     LEFT JOIN admins a ON t.assigned_by = a.id
+                     WHERE t.admin_id = ?
+                       AND t.assigned_to = ?
+                       AND t.assigned_to != t.assigned_by
+                     ORDER BY t.due_date ASC`,
+                    [adminId, selectedUser]
+                );
+
+                otherUserTasks = rows;
+            }
+
+            // 🔥 MERGE OTHERS INTO MAIN TASKS
+            tasks = [...tasks, ...otherUserTasks];
+        }
         // ================= USER =================
         else if (req.session.role === 'user') {
 
