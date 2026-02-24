@@ -11,19 +11,18 @@
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow: hidden;   /* Prevent page scroll */
+    overflow: hidden;
     font-family: Arial, sans-serif;
     background-color: #3C3A3A;
   }
 
   .layout {
     display: flex;
-    height: calc(100% - 60px); /* Adjust based on navbar height */
+    height: calc(100% - 60px);
   }
 
   .sidebar-container {
     width: 55px;
-    
   }
 
   .main-content {
@@ -45,20 +44,10 @@
     font-size: 14px;
   }
 
-  /* Header Columns - Flex Ratios */
-  .col-title { flex: 2; padding-left: 10px; }
-  .col-desc { flex: 3; }
-  .col-assign { flex: 1.5; text-align: center; }
-  .col-date { flex: 1; text-align: right; padding-right: 10px; }  
-
-  
-  
-/* Header Columns - Flex Ratios (header only) */
-.sub-header .col-title { flex: 2; padding-left: 40px; }   /* move right */
-.sub-header .col-desc { flex: 3; padding-left: 20px; }
-.sub-header .col-assign { flex: 1.5; text-align: center; }
-.sub-header .col-date { flex: 1; text-align: right; padding-right: 20px; }
-
+  .sub-header .col-title { flex: 2; padding-left: 40px; }
+  .sub-header .col-desc { flex: 3; padding-left: 20px; }
+  .sub-header .col-assign { flex: 1.5; text-align: center; }
+  .sub-header .col-date { flex: 1; text-align: right; padding-right: 20px; }
 
   /* ===== CONTENT WRAPPER ===== */
   .content-wrapper {
@@ -68,19 +57,17 @@
     overflow: hidden;
   }
 
-  /* ===== TASK LIST SECTION ===== */
   .task-list-container {
     flex: 1;
     overflow-y: auto;
     padding: 10px;
   }
 
-  /* Task Item Card */
   .task-item {
     font-size: 13px;
     display: flex;
     align-items: center;
-    padding: 12px 10px;
+    padding: 8px 10px;
     margin: 6px 0;
     background-color: #444;
     color: #fff;
@@ -93,10 +80,38 @@
     background-color: #2E2D2D;
   }
 
+  /* Checkbox & Priority Styles */
+  .task-checkbox {
+    width: 14px;
+    height: 14px;
+    appearance: none;
+    border: 2px solid white;
+    border-radius: 3px;
+    background: transparent;
+    cursor: default; /* Not clickable here */
+    flex-shrink: 0;
+  }
+  .priority-HIGH { border-color: #ff4d4d; }
+  .priority-MEDIUM { border-color: #ffd633; }
+  .priority-LOW { border-color: #4da6ff; }
+
   .task-text {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  .col-title { flex: 2; }
+  .col-desc { flex: 3; }
+  .col-assign { flex: 1.5; text-align: center; }
+  .col-date { flex: 1; text-align: right; }
+
+  /* ===== SEPARATOR ===== */
+  .day-separator {
+    height: 1px;
+    background-color: #7C7B7B;
+    margin: 10px 5px;
+    opacity: 0.5;
   }
 
   /* ===== COMPLETED SECTION ===== */
@@ -125,19 +140,17 @@
 <%- include('navbar') %>
 
 <div class="layout">
-
- <div class="sidebar-container">
-  <% if (session.show_sidebar === 'sidebar') { %>
-    <%- include('sidebar') %>
-  <% } else if (session.show_sidebar === 'partial_sidebar') { %>
-    <%- include('partial_sidebar') %>
-  <% } else if (session.show_sidebar === 'user_sidebar') { %>
-    <%- include('user_sidebar') %>
-  <% } %>
-</div>
+  <div class="sidebar-container">
+    <% if (session.show_sidebar === 'sidebar') { %>
+      <%- include('sidebar') %>
+    <% } else if (session.show_sidebar === 'partial_sidebar') { %>
+      <%- include('partial_sidebar') %>
+    <% } else if (session.show_sidebar === 'user_sidebar') { %>
+      <%- include('user_sidebar') %>
+    <% } %>
+  </div>
 
   <div class="main-content">
-
     <div class="sub-header">
       <div class="col-title">Task</div>
       <div class="col-desc">Description</div>
@@ -146,54 +159,38 @@
     </div>
 
     <div class="content-wrapper">
-
-      <div class="task-list-container">
-        <% if (openTasks.length > 0) { %>
-          <% openTasks.forEach(task => { %>
-            <div class="task-item">
-              <div class="col-title task-text" title="<%= task.title %>"><%= task.title %></div>
-              <div class="col-desc task-text" title="<%= task.description %>"><%= task.description %></div>
-              <div class="col-assign task-text"><%= task.assigned_to %></div>
-              <div class="col-date date-display" data-date="<%= task.due_date %>"></div>
-            </div>
-          <% }) %>
-        <% } else { %>
-          <div style="color: #aaa; padding: 20px; text-align: center;">No open tasks assigned by you.</div>
-        <% } %>
-      </div>
+      <div class="task-list-container" id="open-task-list">
+        </div>
 
       <div class="completed-header">Completed Tasks</div>
       <div class="completed-section">
         <% if (completedTasks.length > 0) { %>
           <% completedTasks.forEach(task => { %>
             <div class="task-item completed-task">
+              <div class="task-checkbox priority-<%= task.priority %>"></div>
               <div class="col-title task-text" title="<%= task.title %>"><%= task.title %></div>
               <div class="col-desc task-text" title="<%= task.description %>"><%= task.description %></div>
               <div class="col-assign task-text"><%= task.assigned_to %></div>
-              <div class="col-date date-display" data-date="<%= task.due_date %>"></div>
+              <div class="col-date date-display"><%= task.due_date %></div>
             </div>
           <% }) %>
         <% } else { %>
           <div style="color: #888; padding: 10px; text-align: center;">No completed tasks.</div>
         <% } %>
       </div>
-
     </div>
-
   </div>
 </div>
 
 <script>
-// ===== DATE FORMAT FUNCTION =====
+const openTasks = <%- JSON.stringify(openTasks) %>;
+
 function formatDate(dateStr) {
   if (!dateStr || dateStr === 'null') return '';
-
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
-
   const taskDate = new Date(dateStr);
-
   today.setHours(0,0,0,0);
   tomorrow.setHours(0,0,0,0);
   taskDate.setHours(0,0,0,0);
@@ -203,12 +200,51 @@ function formatDate(dateStr) {
   else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
-// ===== APPLY DATE FORMATTING ON LOAD =====
+function renderOpenTasks() {
+  const container = document.getElementById('open-task-list');
+  if (openTasks.length === 0) {
+    container.innerHTML = '<div style="color: #aaa; padding: 20px; text-align: center;">No open tasks assigned by you.</div>';
+    return;
+  }
+
+  // Group tasks by date string
+  const grouped = {};
+  openTasks.forEach(task => {
+    const d = task.due_date ? new Date(task.due_date).toDateString() : 'No Date';
+    if (!grouped[d]) grouped[d] = [];
+    grouped[d].push(task);
+  });
+
+  const dates = Object.keys(grouped);
+
+  dates.forEach((date, index) => {
+    grouped[date].forEach(task => {
+      const item = document.createElement('div');
+      item.className = 'task-item';
+      item.innerHTML = `
+        <div class="task-checkbox priority-${task.priority}"></div>
+        <div class="col-title task-text" title="${task.title}">${task.title}</div>
+        <div class="col-desc task-text" title="${task.description}">${task.description}</div>
+        <div class="col-assign task-text">${task.assigned_to}</div>
+        <div class="col-date">${formatDate(task.due_date)}</div>
+      `;
+      container.appendChild(item);
+    });
+
+    // Add horizontal line after each date group (except the last one)
+    if (index < dates.length - 1) {
+      const hr = document.createElement('div');
+      hr.className = 'day-separator';
+      container.appendChild(hr);
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  const dateElements = document.querySelectorAll('.date-display');
-  dateElements.forEach(el => {
-    const rawDate = el.getAttribute('data-date');
-    el.innerText = formatDate(rawDate);
+  renderOpenTasks();
+  // Format dates for completed section
+  document.querySelectorAll('.completed-section .date-display').forEach(el => {
+    el.innerText = formatDate(el.innerText);
   });
 });
 </script>
