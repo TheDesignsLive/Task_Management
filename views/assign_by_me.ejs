@@ -32,7 +32,6 @@
     overflow: hidden;
   }
 
-  /* ===== HEADERS ===== */
   .sub-header {
     display: flex;
     background-color: #CDF4F4;
@@ -80,7 +79,7 @@
     background-color: #2E2D2D;
   }
 
-  /* Checkbox & Priority Styles */
+  /* Checkbox Styles */
   .task-checkbox {
     width: 14px;
     height: 14px;
@@ -88,9 +87,20 @@
     border: 2px solid white;
     border-radius: 3px;
     background: transparent;
-    cursor: default; /* Not clickable here */
+    cursor: pointer;
     flex-shrink: 0;
+    position: relative;
   }
+
+  .task-checkbox:checked::after {
+    content: "✔";
+    position: absolute;
+    top: -2px;
+    left: 1px;
+    font-size: 10px;
+    color: white;
+  }
+
   .priority-HIGH { border-color: #ff4d4d; }
   .priority-MEDIUM { border-color: #ffd633; }
   .priority-LOW { border-color: #4da6ff; }
@@ -103,7 +113,8 @@
 
   .col-title { flex: 2; }
   .col-desc { flex: 3; }
-  .col-assign { flex: 1.5; text-align: center; }
+  .col-assign { flex: 1.5; text-align: center; cursor: pointer;  }
+  .col-assign select { background: #555; color: white; border: none; font-size: 12px; border-radius: 3px; width: 90%; }
   .col-date { flex: 1; text-align: right; }
 
   /* ===== SEPARATOR ===== */
@@ -111,7 +122,7 @@
     height: 1px;
     background-color: #7C7B7B;
     margin: 10px 5px;
-    opacity: 0.5;
+    opacity: 0.3;
   }
 
   /* ===== COMPLETED SECTION ===== */
@@ -159,15 +170,14 @@
     </div>
 
     <div class="content-wrapper">
-      <div class="task-list-container" id="open-task-list">
-        </div>
+      <div class="task-list-container" id="open-task-list"></div>
 
       <div class="completed-header">Completed Tasks</div>
       <div class="completed-section">
         <% if (completedTasks.length > 0) { %>
           <% completedTasks.forEach(task => { %>
             <div class="task-item completed-task">
-              <div class="task-checkbox priority-<%= task.priority %>"></div>
+              <input type="checkbox" class="task-checkbox priority-<%= task.priority %>" checked onchange="toggleStatus('<%= task.id %>', 'OPEN')">
               <div class="col-title task-text" title="<%= task.title %>"><%= task.title %></div>
               <div class="col-desc task-text" title="<%= task.description %>"><%= task.description %></div>
               <div class="col-assign task-text"><%= task.assigned_to %></div>
@@ -184,6 +194,7 @@
 
 <script>
 const openTasks = <%- JSON.stringify(openTasks) %>;
+const members = <%- JSON.stringify(members) %>;
 
 function formatDate(dateStr) {
   if (!dateStr || dateStr === 'null') return '';
@@ -191,13 +202,29 @@ function formatDate(dateStr) {
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
   const taskDate = new Date(dateStr);
-  today.setHours(0,0,0,0);
-  tomorrow.setHours(0,0,0,0);
-  taskDate.setHours(0,0,0,0);
+  today.setHours(0,0,0,0); tomorrow.setHours(0,0,0,0); taskDate.setHours(0,0,0,0);
 
   if (taskDate.getTime() === today.getTime()) return "Today";
   else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
   else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+}
+
+async function toggleStatus(id, status) {
+  const res = await fetch('/update-task-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, status })
+  });
+  if (res.ok) window.location.reload();
+}
+
+async function changeAssignee(taskId, newAssigneeId) {
+  const res = await fetch('/assign_by_me/update-assignee', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ taskId, newAssigneeId })
+  });
+  if (res.ok) window.location.reload();
 }
 
 function renderOpenTasks() {
@@ -207,7 +234,6 @@ function renderOpenTasks() {
     return;
   }
 
-  // Group tasks by date string
   const grouped = {};
   openTasks.forEach(task => {
     const d = task.due_date ? new Date(task.due_date).toDateString() : 'No Date';
@@ -216,22 +242,27 @@ function renderOpenTasks() {
   });
 
   const dates = Object.keys(grouped);
-
   dates.forEach((date, index) => {
     grouped[date].forEach(task => {
       const item = document.createElement('div');
       item.className = 'task-item';
+      
+      let memberOptions = members.map(m => `<option value="${m.id}" ${m.id == task.assignee_id ? 'selected' : ''}>${m.name}</option>`).join('');
+
       item.innerHTML = `
-        <div class="task-checkbox priority-${task.priority}"></div>
+        <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleStatus('${task.id}', 'COMPLETED')">
         <div class="col-title task-text" title="${task.title}">${task.title}</div>
         <div class="col-desc task-text" title="${task.description}">${task.description}</div>
-        <div class="col-assign task-text">${task.assigned_to}</div>
+        <div class="col-assign">
+            <select onchange="changeAssignee('${task.id}', this.value)">
+                ${memberOptions}
+            </select>
+        </div>
         <div class="col-date">${formatDate(task.due_date)}</div>
       `;
       container.appendChild(item);
     });
 
-    // Add horizontal line after each date group (except the last one)
     if (index < dates.length - 1) {
       const hr = document.createElement('div');
       hr.className = 'day-separator';
@@ -242,7 +273,6 @@ function renderOpenTasks() {
 
 document.addEventListener('DOMContentLoaded', () => {
   renderOpenTasks();
-  // Format dates for completed section
   document.querySelectorAll('.completed-section .date-display').forEach(el => {
     el.innerText = formatDate(el.innerText);
   });
