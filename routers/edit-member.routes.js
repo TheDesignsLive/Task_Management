@@ -3,70 +3,57 @@ const router = express.Router();
 const con = require('../config/db');
 const multer = require('multer');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
-// upload config
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+    destination: (req, file, cb) => cb(null, 'public/images/'),
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-const upload = multer({ storage });
 
-// UPDATE MEMBER
-router.post('/edit-member/:id', upload.single('profile_pic'), async (req, res) => {
-  try {
-     if (!req.session.role) return res.redirect('/');
-     
-    const id = req.params.id;
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) return cb(null, true);
+    cb(new Error('Only images are allowed (jpeg, jpg, png, gif, webp)'));
+};
 
-    const role_id = req.body.role_id;
-    const name = req.body.name;
-    const email = req.body.email;
-    const phone = req.body.phone;
-    const password = req.body.password;
+const upload = multer({ storage, fileFilter }).single('profile_pic');
 
-    let sql, values;
+router.post('/edit-member/:id', (req, res) => {
+    upload(req, res, async (err) => {
+        if (err) {
+            return res.send(`<script>alert('${err.message}'); window.location=document.referrer;</script>`);
+        }
 
-    if (req.file) {
-      const profile_pic =  req.file.filename;
+        try {
+            if (!req.session.role) return res.redirect('/');
+            const id = req.params.id;
+            const { role_id, name, email, phone, password } = req.body;
 
-      if (password) {
-        sql = `UPDATE users SET role_id=?, name=?, email=?, phone=?, password=?, profile_pic=? WHERE id=?`;
-        values = [role_id, name, email, phone, password, profile_pic, id];
-      } else {
-        sql = `UPDATE users SET role_id=?, name=?, email=?, phone=?, profile_pic=? WHERE id=?`;
-        values = [role_id, name, email, phone, profile_pic, id];
-      }
-    } else {
-      if (password) {
-        sql = `UPDATE users SET role_id=?, name=?, email=?, phone=?, password=? WHERE id=?`;
-        values = [role_id, name, email, phone, password, id];
-      } else {
-        sql = `UPDATE users SET role_id=?, name=?, email=?, phone=? WHERE id=?`;
-        values = [role_id, name, email, phone, id];
-      }
-    }
+            let sql, values;
+            const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
-    await con.query(sql, values);
+            if (req.file) {
+                const profile_pic = req.file.filename;
+                sql = password 
+                    ? `UPDATE users SET role_id=?, name=?, email=?, phone=?, password=?, profile_pic=? WHERE id=?`
+                    : `UPDATE users SET role_id=?, name=?, email=?, phone=?, profile_pic=? WHERE id=?`;
+                values = password ? [role_id, name, email, phone, hashedPassword, profile_pic, id] : [role_id, name, email, phone, profile_pic, id];
+            } else {
+                sql = password 
+                    ? `UPDATE users SET role_id=?, name=?, email=?, phone=?, password=? WHERE id=?`
+                    : `UPDATE users SET role_id=?, name=?, email=?, phone=? WHERE id=?`;
+                values = password ? [role_id, name, email, phone, hashedPassword, id] : [role_id, name, email, phone, id];
+            }
 
-    res.send(`
-      <script>
-        window.location='/view_member';
-      </script>
-    `);
-
-  } catch (err) {
-    console.log(err);
-    res.send(`
-      <script>
-        alert('Database Error');
-        window.location='/view_member';
-      </script>
-    `);
-  }
+            await con.query(sql, values);
+            res.send("<script>window.location='/view_member';</script>");
+        } catch (dbErr) {
+            console.log(dbErr);
+            res.send("<script>alert('Database Error'); window.location='/view_member';</script>");
+        }
+    });
 });
 
 module.exports = router;
