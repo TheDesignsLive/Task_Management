@@ -34,6 +34,28 @@ router.post('/', async (req, res) => {
       finalAssignedTo = 0;
     }
 
+
+    //
+      // ===============================
+          // ✅ CHANGE STARTS HERE
+          // If date is null → insert system today date
+          // Format: YYYY-MM-DD 00:00:00
+          // ===============================
+
+          let finalDate;
+
+          if (!date) {
+            const today = new Date();
+
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+
+            finalDate = `${year}-${month}-${day} 00:00:00`;
+          } else {
+            finalDate = date;
+          }
+          //
     await con.execute(
       `INSERT INTO tasks 
        (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status) 
@@ -43,7 +65,7 @@ router.post('/', async (req, res) => {
         title,
         description || null,
         priority.toUpperCase(),
-        date || null,
+        finalDate,
         finalAssignedTo,
         assigned_by,
         who_assigned
