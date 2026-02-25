@@ -31,7 +31,7 @@ router.post('/edit-member/:id', upload.single('profile_pic'), async (req, res) =
     let sql, values;
 
     if (req.file) {
-      const profile_pic = '/uploads/' + req.file.filename;
+      const profile_pic =  req.file.filename;
 
       if (password) {
         sql = `UPDATE users SET role_id=?, name=?, email=?, phone=?, password=?, profile_pic=? WHERE id=?`;
