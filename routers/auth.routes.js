@@ -9,14 +9,31 @@ const bcrypt = require('bcryptjs'); // ✅ ADDED
 // ================= MULTER (PROFILE PIC) ====================
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../public/uploads'));
+        cb(null, path.join(__dirname, '../public/images')); // Store in public/images
     },
     filename: function (req, file, cb) {
         const uniqueName = Date.now() + path.extname(file.originalname);
         cb(null, uniqueName);
     }
 });
-const upload = multer({ storage: storage });
+
+// 🔥 IMAGE ONLY FILTER
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+        return cb(null, true);
+    } else {
+        cb(new Error('Only images are allowed (jpeg, jpg, png, gif, webp)'));
+    }
+};
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter 
+});
 
 // ================= SESSION ====================
 router.use(session({
@@ -26,40 +43,46 @@ router.use(session({
 }));
 
 // ================= SIGNUP ====================
-router.post("/signup", upload.single("profile_pic"), async (req, res) => {
-    const { name, company_name, email, phone, password } = req.body;
-
-    if (!name || !email || !password) {
-        return res.send("Please fill all required fields ❌");
-    }
-
-    let profilePic = null;
-    if (req.file) {
-        profilePic = req.file.filename;
-    }
-
-    try {
-        // ✅ HASH PASSWORD
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const sql = "INSERT INTO admins (name, company_name, email, phone, password, profile_pic) VALUES (?,?,?,?,?,?)";
-
-        const [result] = await con.query(sql, [name, company_name, email, phone, hashedPassword, profilePic]);
-
-        req.session.adminId = result.insertId;
-        req.session.role = "admin";
-        req.session.email = email;
-
-        return res.redirect("/home");
-
-    } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-            res.send("Email already exists ❌");
-        } else {
-            console.error(err);
-            res.send("Something went wrong ❌");
+router.post("/signup", (req, res) => {
+    upload.single("profile_pic")(req, res, async (err) => {
+        if (err) {
+            return res.send(`<script>alert('${err.message}'); window.location=document.referrer;</script>`);
         }
-    }
+
+        const { name, company_name, email, phone, password } = req.body;
+
+        if (!name || !email || !password) {
+            return res.send("Please fill all required fields ❌");
+        }
+
+        let profilePic = null;
+        if (req.file) {
+            profilePic = req.file.filename;
+        }
+
+        try {
+            // ✅ HASH PASSWORD
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const sql = "INSERT INTO admins (name, company_name, email, phone, password, profile_pic) VALUES (?,?,?,?,?,?)";
+
+            const [result] = await con.query(sql, [name, company_name, email, phone, hashedPassword, profilePic]);
+
+            req.session.adminId = result.insertId;
+            req.session.role = "admin";
+            req.session.email = email;
+
+            return res.redirect("/home");
+
+        } catch (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                res.send("Email already exists ❌");
+            } else {
+                console.error(err);
+                res.send("Something went wrong ❌");
+            }
+        }
+    });
 });
 
 // ================= CHECK EMAIL ====================

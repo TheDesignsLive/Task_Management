@@ -145,7 +145,17 @@
   .priority-red { border-color: #ff4d4d; }
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
+      .eye-icon {
+        width: 12px;           /* smaller size */
+        height: 12px;
+        stroke: #888888;       /* grey color */
+        flex-shrink: 0;
+        margin-left: 8px;      /* small gap from name/date */
+        vertical-align: middle;
 
+          margin-left: auto;  /* pushes icon to the right */
+ 
+      }
   .task-row {
     display: flex;
     align-items: center;
@@ -169,10 +179,11 @@
   }
 
   .task-date {
-    flex: 0 0 auto;
+     flex: 0 0 50px; 
     font-size: 11px;
     opacity: 0.8;
     white-space: nowrap;
+      text-align: center; 
   }
 
   /* ===== EXPANDABLE DESCRIPTION ===== */
@@ -303,8 +314,13 @@ function createTaskElement(task) {
       <input type="checkbox" class="task-checkbox ${priorityClass}" ${task.status === 'COMPLETED' ? 'checked' : ''} />
       <div class="task-title">${task.title}</div>
       <div class="task-name">${task.assigned_by_name || ''}</div>
+        <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
       <div class="task-date">${formatDate(task.due_date)}</div>
     </div>
+    
     <div class="task-details">
       <div class="task-desc-text">${task.description || 'No description provided.'}</div>
       <a href="/edit-task/${task.id}" class="edit-icon-btn">
@@ -320,11 +336,12 @@ function createTaskElement(task) {
   if (task.status !== 'COMPLETED') div.draggable = true;
 
   // Toggle expand/collapse
-  div.addEventListener('click', (e) => {
-    // Don't expand if clicking checkbox or edit button
-    if (e.target.type === 'checkbox' || e.target.closest('.edit-icon-btn')) return;
-    div.classList.toggle('expanded');
-  });
+// Toggle expand/collapse only when clicking the eye icon
+const eyeIcon = div.querySelector('.eye-icon');
+eyeIcon.addEventListener('click', (e) => {
+  e.stopPropagation();  // Prevent parent click events
+  div.classList.toggle('expanded');
+});
 
   const checkbox = div.querySelector('input.task-checkbox');
   checkbox.addEventListener('change', async (e) => {

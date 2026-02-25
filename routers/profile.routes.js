@@ -6,7 +6,7 @@ const fs = require('fs');
 
 // ================= FILE UPLOAD =================
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/uploads'),
+    destination: (req, file, cb) => cb(null, 'public/images'), // Updated to public/images
     filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname)
 });
 const upload = multer({ storage });
@@ -123,7 +123,7 @@ router.post('/update-profile', upload.single('profile_pic'), async (req, res) =>
                 );
 
                 if (old.length && old[0].profile_pic) {
-                    const path = "public/uploads/" + old[0].profile_pic;
+                    const path = "public/images/" + old[0].profile_pic; // Updated path
                     if (fs.existsSync(path)) fs.unlinkSync(path);
                 }
 
@@ -150,7 +150,7 @@ router.post('/update-profile', upload.single('profile_pic'), async (req, res) =>
                 );
 
                 if (old.length && old[0].profile_pic) {
-                    const path = "public/uploads/" + old[0].profile_pic;
+                    const path = "public/images/" + old[0].profile_pic; // Updated path
                     if (fs.existsSync(path)) fs.unlinkSync(path);
                 }
 
