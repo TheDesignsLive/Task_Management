@@ -113,7 +113,7 @@ router.post("/login", async (req, res) => {
                 req.session.role = "admin";
                 req.session.email = rows[0].email;
                 req.session.adminName = rows[0].name;
-                req.session.control_type1 = 'ADMIN';
+                
 
                 return res.redirect("/home");
 
