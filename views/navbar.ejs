@@ -188,6 +188,21 @@ Welcome <%= (typeof session !== "undefined" && (session.userName || session.admi
 <script>
 const textarea = document.getElementById("taskInput");
 
+const dateInput = document.getElementById("datePicker");
+
+
+// =====================================================
+// ✅ CHANGE: Prevent Past Date Selection
+// Sets minimum selectable date to today
+// Format: YYYY-MM-DD (required for input type="date")
+// =====================================================
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+const day = String(today.getDate()).padStart(2, '0');
+dateInput.min = `${year}-${month}-${day}`;
+// =====================================================
+
 textarea.addEventListener("keydown", function(e){
   if(e.key === "Enter" && !e.shiftKey){
     e.preventDefault();
