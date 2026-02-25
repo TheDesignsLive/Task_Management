@@ -1,83 +1,115 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const multer = require('multer');
+const path = require('path');
+
+// Multer Config for Attachments
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'public/uploads'),
+    filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname)
+});
+const upload = multer({ storage });
 
 router.get('/notifications', async (req, res) => {
-
-    if (!req.session.role) {
-        return res.redirect('/');
-    }
+    if (!req.session.role) return res.redirect('/');
 
     let members = [];
     let adminName = null;
-    let adminId = null;
+    let adminId = req.session.adminId;
     let memberRequests = [];
+    let roles = [];
+    let announcements = [];
 
     try {
+        const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
+        if (aRows.length > 0) adminName = aRows[0].name;
 
-        // ================= ADMIN =================
-        if (req.session.role === "admin") {
+        const [rRows] = await con.query("SELECT id, role_name FROM roles WHERE admin_id=?", [adminId]);
+        roles = rRows;
 
-            adminId = req.session.adminId;
+        const isControlAdmin = req.session.control_type === 'ADMIN';
 
-            // members
-            const [mRows] = await con.query(
-                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
-                [adminId]
-            );
+        if (req.session.role === "admin" || isControlAdmin) {
+            const [mRows] = await con.query("SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", [adminId]);
             members = mRows;
 
-            // admin name
-            const [aRows] = await con.query(
-                "SELECT name FROM admins WHERE id=?",
-                [adminId]
-            );
-            if (aRows.length > 0) adminName = aRows[0].name;
-
-            // FETCH WITH JOINS
-            const [reqRows] = await con.query(`
-                SELECT 
-                    mr.id,
-                    mr.name,
-                    mr.email,
-                    mr.phone,
-                    mr.profile_pic,
-                    mr.created_at,
-                    r.role_name,
-                    u.name AS requested_by_name
-                FROM member_requests mr
-                JOIN roles r ON r.id = mr.role_id
-                JOIN users u ON u.id = mr.requested_by
-                WHERE mr.admin_id=? AND mr.status='PENDING'
-                ORDER BY mr.created_at 
-            `, [adminId]);
-
-            memberRequests = reqRows;
-        }
-
-        // ================= USER =================
-        else if (req.session.role === "user") {
-            // get admin_id of current user
-            const [uRows] = await con.query(
-                "SELECT admin_id FROM users WHERE id=?",
-                [req.session.userId]
-            );
-
-            if (uRows.length > 0) {
-                adminId = uRows[0].admin_id;
+            if (req.session.role === "admin") {
+                const [reqRows] = await con.query(`
+                    SELECT mr.*, r.role_name, u.name AS requested_by_name
+                    FROM member_requests mr
+                    JOIN roles r ON r.id = mr.role_id
+                    JOIN users u ON u.id = mr.requested_by
+                    WHERE mr.admin_id=? AND mr.status='PENDING' ORDER BY mr.created_at DESC
+                `, [adminId]);
+                memberRequests = reqRows;
             }
+
+            // Fetch ALL Announcements with (Admin) tag for primary admin
+            const [annRows] = await con.query(`
+                SELECT a.*, 
+                IF(a.role_id = 0, 'All', r.role_name) AS target_role,
+                CASE 
+                    WHEN a.who_added = 'ADMIN' THEN CONCAT(adm.name, ' (Admin)')
+                    ELSE usr.name 
+                END AS added_by_name
+                FROM announcements a
+                LEFT JOIN roles r ON a.role_id = r.id
+                LEFT JOIN admins adm ON a.added_by = adm.id AND a.who_added = 'ADMIN'
+                LEFT JOIN users usr ON a.added_by = usr.id AND a.who_added = 'USER'
+                WHERE a.admin_id=? ORDER BY a.created_at DESC
+            `, [adminId]);
+            announcements = annRows;
+
+        } else if (req.session.role === "user") {
+            const [annRows] = await con.query(`
+                SELECT a.*, 
+                CASE 
+                    WHEN a.who_added = 'ADMIN' THEN CONCAT(adm.name, ' (Admin)')
+                    ELSE usr.name 
+                END AS added_by_name
+                FROM announcements a
+                LEFT JOIN admins adm ON a.added_by = adm.id AND a.who_added = 'ADMIN'
+                LEFT JOIN users usr ON a.added_by = usr.id AND a.who_added = 'USER'
+                WHERE a.admin_id=? AND (a.role_id = ? OR a.role_id = 0)
+                ORDER BY a.created_at DESC
+            `, [adminId, req.session.role_id]);
+            announcements = annRows;
         }
 
         res.render('notifications', {
             members,
             adminName,
             memberRequests,
+            roles,
+            announcements,
             session: req.session
         });
 
     } catch (err) {
         console.error(err);
         res.send("Error loading notifications");
+    }
+});
+
+// POST ROUTE: ADD ANNOUNCEMENT
+router.post('/add-announcement', upload.single('attachment'), async (req, res) => {
+    try {
+        const { title, description, role_id } = req.body;
+        const attachment = req.file ? req.file.filename : null;
+        
+        const adminId = req.session.adminId;
+        const addedBy = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
+        const whoAdded = req.session.role.toUpperCase();
+
+        await con.query(
+            "INSERT INTO announcements (admin_id, added_by, who_added, role_id, title, description, attachment) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [adminId, addedBy, whoAdded, role_id, title, description, attachment]
+        );
+        res.redirect('/notifications');
+    } catch (err) {
+        console.error(err);
+        res.send("Error adding announcement");
     }
 });
 

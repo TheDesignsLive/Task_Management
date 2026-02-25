@@ -8,18 +8,19 @@ router.get('/', async (req, res) => {
         return res.redirect('/');
     }
 
-    let show_sidebar = "Usersidebar";
     let members = [];
     let roles = [];
     let adminId = null;
+    let adminName = null; // ✅ Added to prevent EJS error
 
     try {
-
         // ================= ADMIN =================
         if (req.session.role === "admin") {
-
-            show_sidebar = "sidebar";
             adminId = req.session.adminId;
+
+            // Get admin name
+            const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
+            if (aRows.length > 0) adminName = aRows[0].name;
 
             // get members
             const [mRows] = await con.query(
@@ -38,15 +39,17 @@ router.get('/', async (req, res) => {
 
         // ================= USER =================
         else if (req.session.role === "user") {
-
             const [userRows] = await con.query(
                 "SELECT role_id, admin_id FROM users WHERE id=?",
                 [req.session.userId]
             );
 
             if (userRows.length > 0) {
-
                 adminId = userRows[0].admin_id;
+
+                // ✅ Get Admin name for the user's navbar
+                const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
+                if (aRows.length > 0) adminName = aRows[0].name;
 
                 // members
                 const [mRows] = await con.query(
@@ -67,6 +70,7 @@ router.get('/', async (req, res) => {
         res.render('view_role', {
             roles,
             members,
+            adminName, // ✅ Now passed to EJS
             session: req.session
         });
 
