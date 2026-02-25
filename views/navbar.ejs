@@ -1,6 +1,6 @@
 <!-- TRUE LOGO: Flatpickr CSS added -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 :root{
   --teal1:#0f9d9a;
@@ -88,6 +88,12 @@ select{
   position:relative;
   display:flex;
   align-items:center;
+  .calendar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 24px;   /* keeps layout same */
+}
 }
 
 /* keep icon position SAME */
@@ -112,7 +118,7 @@ select{
 
 /* Make calendar open below icon */
 .flatpickr-calendar {
-  margin-top: 10px !important;
+  margin-top: 20px !important;
     width: 330px !important;
 }
 
@@ -233,12 +239,20 @@ select{
     
     <textarea id="taskInput" placeholder="Add Task here"></textarea>
 
-    <div class="calendar-wrapper">
-      <button class="icon-btn" onclick="openDate()">📅</button>
+ <div class="calendar-wrapper">
+  <input type="text" id="datePicker">
 
-      <!-- CHANGED: hidden input -->
-      <input type="text" id="datePicker">
-    </div>
+  <i class="fa-regular fa-calendar"
+     onclick="openDate()"
+     style="position:absolute;
+            right:15px;
+            top:50%;
+            transform:translateY(-50%);
+            cursor:pointer;
+            color:#14b8a6;
+            font-size:16px;">
+  </i>
+</div>
 
     <select id="flag">
       <option class="flag-red">High</option>
