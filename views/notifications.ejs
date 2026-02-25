@@ -116,7 +116,7 @@ th{ background:#CDF4F4; }
                 <td><%= i + 1 %></td>
                 <td>
                   <% if (r.profile_pic) { %>
-                    <img src="/uploads/<%= r.profile_pic %>" width="40" height="40"
+                    <img src="/images/<%= r.profile_pic %>" width="40" height="40"
                          style="border-radius:50%; object-fit: cover;">
                   <% } else { %>
                     <div class="avatar-circle"><%= r.name.charAt(0) %></div>
