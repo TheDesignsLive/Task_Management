@@ -11,8 +11,6 @@ router.post("/edit-role/:id", async (req, res) => {
 
         const role_name = req.body.role_name ? req.body.role_name.trim() : "";
         const control_type = req.body.control_type;
-        const can_manage_members = req.body.can_manage_members ? 1 : 0;
-
         if (!role_name || !control_type) {
             return res.send(`
                 <script>
@@ -24,11 +22,11 @@ router.post("/edit-role/:id", async (req, res) => {
 
         const sql = `
             UPDATE roles 
-            SET role_name = ?, control_type = ?, can_manage_members = ?
+            SET role_name = ?, control_type = ?
             WHERE id = ?
         `;
 
-       await con.query(sql, [role_name, control_type, can_manage_members, roleId]);
+       await con.query(sql, [role_name, control_type, roleId]);
 
         res.send(`
             <script>
