@@ -21,6 +21,7 @@ router.get('/home', async (req, res) => {
         if (req.session.role === "admin") {
             adminId = req.session.adminId;
             req.session.control_type = 'ADMIN'; // Set control_type for Admin
+          
 
             // Admin Name
             const [adminRows] = await con.query(
@@ -41,7 +42,13 @@ router.get('/home', async (req, res) => {
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
                  WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin'
-                 ORDER BY due_date ASC`,
+                 ORDER BY due_date ASC,
+  CASE priority
+    WHEN 'HIGH' THEN 1
+    WHEN 'MEDIUM' THEN 2
+    WHEN 'LOW' THEN 3
+    ELSE 4
+  END ASC`,
                 [adminId]
             );
 

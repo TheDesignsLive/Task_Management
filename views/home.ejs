@@ -306,6 +306,11 @@
   font-size: 12px !important;
 }
 
+.past-date {
+  color: #ff4d4d !important;   /* 🔴 red color */
+  font-weight:500;
+}
+
 </style>
 </head>
 
@@ -407,7 +412,11 @@ function createTaskElement(task) {
         <line x1="12" y1="11" x2="12" y2="16"></line>   <!-- body of i -->
       </svg>
 
-      <div class="task-date">${formatDate(task.due_date)}</div>
+<div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
+  ${formatDate(task.due_date)}
+</div>
+ 
+</div>
     </div>
 
     <div class="task-details">
@@ -620,6 +629,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
   enableDragAndDrop();
   attachDateEvents(); 
 });
+
+// past date text color red
+/* ================= CHECK PAST DATE (ADDED) ================= */
+function isPastDate(dateStr) {
+  if (!dateStr) return false;
+
+  const today = new Date();
+  const taskDate = new Date(dateStr);
+
+  today.setHours(0,0,0,0);
+  taskDate.setHours(0,0,0,0);
+
+  return taskDate < today;  // true if past
+}
+//
 </script>
 </body>
 </html>
