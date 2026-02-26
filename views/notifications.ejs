@@ -9,11 +9,20 @@
 body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 .layout{ display:flex; flex: 1; overflow: hidden; } 
 .sidebar-container{ width:55px; background: #095959; height: 100%; }
+
+/* Container for the scrollable content */
 .main-content{ flex:1; padding:20px; background:#f4f4f4; overflow-y: auto; height: 100%; } 
-.box{ background:white; padding:20px; border-radius:8px; margin-bottom: 20px; }
-table{ width:100%; border-collapse:collapse; margin-top:15px; }
-th, td{ border:1px solid #ccc; padding:10px; text-align:center; }
-th{ background:#CDF4F4; }
+
+/* Horizontal wrapper for Admin sections */
+.admin-horizontal-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Individual boxes */
+.box{ background:white; padding:20px; border-radius:8px; margin-bottom: 20px; flex: 1; min-width: 0; }
+
 .action-btn{ padding:6px 10px; border:none; cursor:pointer; border-radius:4px; font-weight:bold; }
 .accept-btn{ background:#2ecc71; color:white; }
 .reject-btn{ background:#e74c3c; color:white; }
@@ -25,15 +34,14 @@ th{ background:#CDF4F4; }
   justify-content: center; font-weight: bold; font-size: 16px; text-transform: uppercase;
 }
 
+/* Modal Style */
 .modal {
   display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
   justify-content:center; align-items:center; z-index:1000;
 }
-
 .modal-content {
   background:white; padding:25px; border-radius:8px; width:420px; box-sizing:border-box;
 }
-
 .modal-content h3{ text-align:center; margin-top:0; margin-bottom:20px; }
 .modal-content label{ display:block; margin-top:15px; font-weight:bold; text-align:left; }
 .modal-content input, .modal-content select {
@@ -43,9 +51,32 @@ th{ background:#CDF4F4; }
   width:100%; height:120px; resize:none; margin-top:6px; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;
 }
 
+/* Announcement Card */
 .announcement-card {
     border-left: 5px solid #095959; background: #fff; padding: 15px;
     margin-top: 10px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Member Request Box Style */
+.request-card {
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #fafafa;
+}
+.request-info { flex: 1; }
+.request-info h4 { margin: 0; color: #333; font-size: 16px; }
+.request-info p { margin: 2px 0; color: #666; font-size: 13px; }
+.request-actions { display: flex; flex-direction: column; gap: 5px; }
+
+/* Responsive adjustment */
+@media (max-width: 1024px) {
+    .admin-horizontal-layout { flex-direction: column; }
+    .box { width: 100%; }
 }
 </style>
 </head>
@@ -60,88 +91,78 @@ th{ background:#CDF4F4; }
   </div>
 
   <div class="main-content">
+    
+    <div class="<%= session.role === 'admin' ? 'admin-horizontal-layout' : '' %>">
+        
+        <div class="box">
+          <div style="overflow: hidden;">
+            <h2 style="display:inline-block;">Announcements</h2>
+            <% if (session.role === 'admin' || session.control_type === 'ADMIN') { %>
+                <button class="action-btn announce-btn" onclick="openAnnounce()">+ Add Announcement</button>
+            <% } %>
+          </div>
 
-    <div class="box">
-      <div style="overflow: hidden;">
-        <h2 style="display:inline-block;">Announcements</h2>
-        <% if (session.role === 'admin' || session.control_type === 'ADMIN') { %>
-            <button class="action-btn announce-btn" onclick="openAnnounce()">+ Add Announcement</button>
+          <div id="announcement-list">
+            <% if (announcements.length > 0) { %>
+                <% announcements.forEach(a => { %>
+                    <div class="announcement-card">
+                        <h3 style="margin:0;"><%= a.title %></h3>
+                        <p style="color:#666; font-size: 12px; margin-top: 5px;">
+                          By: <strong><%= a.added_by_name %></strong> | 
+                          To: <strong><%= a.target_role || (a.role_id == 0 ? 'All' : 'Your Role') %></strong> |
+                          <%= new Date(a.created_at).toLocaleString() %>
+                        </p>
+                        <p><%= a.description %></p>
+                        <% if (a.attachment) { %>
+                            <a href="/uploads/<%= a.attachment %>" target="_blank"
+                               style="font-size:13px; color:#095959; font-weight: bold; text-decoration: none;">📎 View Attachment</a>
+                        <% } %>
+                    </div>
+                <% }) %>
+            <% if (announcements.length > 3) { %>
+               <p style="text-align: center; color: #095959; font-size: 13px; cursor: pointer;">View All Announcements</p>
+            <% } %>
+            <% } else { %>
+                <p style="color:#888;">No announcements found.</p>
+            <% } %>
+          </div>
+        </div>
+
+        <% if (session.role === 'admin') { %>
+        <div class="box">
+          <h2>Member Requests</h2>
+
+          <div id="request-list">
+          <% if (memberRequests.length > 0) { %>
+                <% memberRequests.forEach((r) => { %>
+                  <div class="request-card">
+                    <div class="request-profile">
+                      <% if (r.profile_pic) { %>
+                        <img src="/images/<%= r.profile_pic %>" width="50" height="50" style="border-radius:50%; object-fit: cover;">
+                      <% } else { %>
+                        <div class="avatar-circle" style="width: 50px; height: 50px; font-size: 20px;"><%= r.name.charAt(0) %></div>
+                      <% } %>
+                    </div>
+                    <div class="request-info">
+                      <h4><%= r.name %></h4>
+                      <p><strong>Email:</strong> <%= r.email %></p>
+                      <p><strong>Role:</strong> <%= r.role_name %></p>
+                      <p style="font-size: 11px; color: #999;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <div class="request-actions">
+                      <button class="action-btn accept-btn" onclick="location.href='/approve-member/<%= r.id %>'">Accept</button>
+                      <button class="action-btn reject-btn" onclick="location.href='/reject-member/<%= r.id %>'">Reject</button>
+                    </div>
+                  </div>
+                <% }) %>
+          <% } else { %>
+            <p style="color:#888; text-align: center; margin-top: 20px;">No pending member requests.</p>
+          <% } %>
+          </div>
+        </div>
         <% } %>
-      </div>
 
-      <div id="announcement-list">
-        <% if (announcements.length > 0) { %>
-            <% announcements.forEach(a => { %>
-                <div class="announcement-card">
-                    <h3 style="margin:0;"><%= a.title %></h3>
-                    <p style="color:#666; font-size: 12px; margin-top: 5px;">
-                      By: <strong><%= a.added_by_name %></strong> | 
-                      To: <strong><%= a.target_role || (a.role_id == 0 ? 'All' : 'Your Role') %></strong> |
-                      <%= new Date(a.created_at).toLocaleString() %>
-                    </p>
-                    <p><%= a.description %></p>
-                    <% if (a.attachment) { %>
-                        <a href="/uploads/<%= a.attachment %>" target="_blank"
-                           style="font-size:13px; color:#095959; font-weight: bold; text-decoration: none;">📎 View Attachment</a>
-                    <% } %>
-                </div>
-            <% }) %>
-        <% } else { %>
-            <p style="color:#888;">No announcements found.</p>
-        <% } %>
-      </div>
     </div>
-
-    <% if (session.role === 'admin') { %>
-    <div class="box">
-      <h2>Member Requests</h2>
-
-      <% if (memberRequests.length > 0) { %>
-        <table>
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Profile</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Requested By</th>
-              <th>Date</th>
-              <th>ACTION</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% memberRequests.forEach((r, i) => { %>
-              <tr>
-                <td><%= i + 1 %></td>
-                <td>
-                  <% if (r.profile_pic) { %>
-                    <img src="/images/<%= r.profile_pic %>" width="40" height="40"
-                         style="border-radius:50%; object-fit: cover;">
-                  <% } else { %>
-                    <div class="avatar-circle"><%= r.name.charAt(0) %></div>
-                  <% } %>
-                </td>
-                <td><%= r.name %></td>
-                <td><%= r.email %></td>
-                <td><%= r.role_name %></td>
-                <td><%= r.requested_by_name %></td>
-                <td><%= new Date(r.created_at).toLocaleDateString() %></td>
-                <td>
-                  <button class="action-btn accept-btn"
-                    onclick="location.href='/approve-member/<%= r.id %>'">Accept</button>
-                  <button class="action-btn reject-btn"
-                    onclick="location.href='/reject-member/<%= r.id %>'">Reject</button>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } else { %>
-        <p>No pending member requests.</p>
-      <% } %>
-    </div>
-    <% } %>
 
   </div>
 </div>
