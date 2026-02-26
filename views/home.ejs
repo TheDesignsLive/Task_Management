@@ -6,6 +6,9 @@
 <title>Home</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <style>
   /* ===== PREVENT FULL PAGE SCROLL ===== */
@@ -14,14 +17,14 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;   /* Prevent page scroll */
+    overflow: hidden;
     font-family: Arial, sans-serif;
     background-color: #3C3A3A;
   }
 
   .layout {
     display: flex;
-    height: calc(100% - 60px); /* Adjust if navbar is 60px */
+    height: calc(100% - 60px);
   }
 
   .sidebar-container {
@@ -53,19 +56,19 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;  /* important */
+    overflow: hidden;
   }
 
   /* ===== TASK SECTION ===== */
   .task-container {
     flex: 1;
     display: flex;
-    overflow: hidden;   /* prevents extra scroll */
+    overflow: hidden;
   }
 
   .task-box {
     padding: 10px;
-    overflow-y: auto;   /* Scroll only when content overflows */
+    overflow-y: auto;
   }
 
   .task-main { flex: 4; }
@@ -79,7 +82,7 @@
     opacity: 0.8;
   }
 
-  /* ===== COMPLETED SECTION (Fixed height) ===== */
+  /* ===== COMPLETED SECTION ===== */
   .completed-header {
     margin-left: 10px;
     margin-right: 10px;
@@ -93,13 +96,13 @@
 
   .completed-section {
     height: 150px;
-    overflow-y: auto;  /* Optional scroll for completed */
+    overflow-y: auto;
     padding: 10px;
     background-color: #2E2D2D;
     color: white;
   }
 
-  /* ===== TASK BOX ===== */
+  /* ===== TASK ITEM ===== */
   .task-item {
     font-size: 13px;
     padding: 6px;
@@ -107,22 +110,21 @@
     background-color: #444;
     color: #fff;
     border-radius: 4px;
-    cursor: pointer; /* Changed to pointer for click */
+    cursor: pointer;
     transition: background 0.2s;
-    overflow: hidden;
+    overflow: visible; 
+    position: relative;
   }
 
   .task-item:hover {
     background-color: #555;
   }
 
-  /* Completed Task */
   .completed-task {
     opacity: 0.6;
     cursor: default;
   }
 
-  /* Checkbox base */
   .task-checkbox {
     width: 12px;
     height: 12px;
@@ -147,6 +149,13 @@
   .priority-red { border-color: #ff4d4d; }
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
+      
+  .info-icon{
+    width: 14px; height: 14px;
+    stroke: #959494; flex-shrink: 0;
+    margin-left: 8px; vertical-align: middle;
+  }
+      
      
       .info-icon{
           width: 14px;         
@@ -166,61 +175,60 @@
     gap: 6px;
   }
 
-  .task-title {
-    flex: 1;
-    min-width: 0;
-    word-break: break-word;
+  .task-title { flex: 1; min-width: 0; word-break: break-word; }
+  .task-name { flex: 0 1 auto; font-size: 11px; opacity: 0.7; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-date { flex: 0 0 50px; font-size: 11px; opacity: 0.8; white-space: nowrap; text-align: center; }
+
+  /* ===== 3 DOT MENU ===== */
+  .dots-btn { cursor: pointer; padding: 0 5px; color: #959494; font-size: 14px; margin-left: auto; }
+  .dots-btn:hover { color: white; }
+
+  .task-options-menu {
+    display: none;
+    position: absolute;
+    right: 5px; top: 25px;
+    background: white; color: #333;
+    border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000; min-width: 100px;
   }
 
-  .task-name {
-    flex: 0 1 auto;
-    font-size: 11px;
-    opacity: 0.7;
-    max-width: 80px; 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .task-options-menu div:hover { background-color: #f0f0f0; }
 
-  .task-date {
-     flex: 0 0 50px; 
-    font-size: 11px;
-    opacity: 0.8;
-    white-space: nowrap;
-      text-align: center; 
-  }
-
-  /* ===== EXPANDABLE DESCRIPTION ===== */
-  .task-details {
-    display: none; /* Hidden by default */
-    padding-top: 8px;
-    border-top: 1px solid #666;
-    margin-top: 8px;
-    font-size: 12px;
-  }
-
-  .task-desc-text {
-    color: #ccc;
-    line-height: 1.4;
-    margin-bottom: 8px;
-  }
-
-  .edit-icon-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #0F8989;
-    color: white;
-    padding: 4px 8px;
+  /* ===== EDIT BOX ===== */
+  .edit-box {
+    display: none;
+    background: #555;
+    padding: 10px;
     border-radius: 4px;
-    text-decoration: none;
-    font-size: 11px;
+    margin-top: 5px;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  .edit-icon-btn:hover {
-    background: #14aaaa;
+  .edit-box input, .edit-box textarea, .edit-box select {
+    background: #3C3A3A; color: white; border: 1px solid #7C7B7B;
+    padding: 5px; border-radius: 4px; font-size: 12px;
   }
 
+  .edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .save-btn { background: #0F8989; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+  .cancel-btn { background: #7C7B7B; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+
+  /* ===== DESCRIPTION DETAILS ===== */
+  .task-details { display: none; padding-top: 8px; border-top: 1px solid #666; margin-top: 8px; font-size: 12px; }
+  .task-desc-text { color: #ccc; line-height: 1.4; margin-bottom: 8px; }
+  .task-item.expanded .task-details { display: block; }
+
+  /* ===== CALENDAR OVERRIDE ===== */
+  .flatpickr-calendar.open {
+    position: fixed !important;
+    top: 50% !important; left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important; z-index: 10000 !important;
+  }
+
+  .past-date { color: #ff4d4d !important; font-weight: 500; }
   /* Class to show details when active */
   .task-item.expanded .task-details {
     display: block;
@@ -353,12 +361,12 @@ const tasks = <%- JSON.stringify(tasks) %>;
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const today = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(today.getDate() + 1);
   const taskDate = new Date(dateStr);
   today.setHours(0,0,0,0);
-  tomorrow.setHours(0,0,0,0);
   taskDate.setHours(0,0,0,0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
 
   if (taskDate.getTime() === today.getTime()) return "Today";
   else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
@@ -367,9 +375,10 @@ function formatDate(dateStr) {
 
 function getPriorityClass(priority) {
   if (!priority) return '';
-  if (priority.toUpperCase() === 'HIGH') return 'priority-red';
-  if (priority.toUpperCase() === 'MEDIUM') return 'priority-yellow';
-  if (priority.toUpperCase() === 'LOW') return 'priority-blue';
+  const p = priority.toUpperCase();
+  if (p === 'HIGH') return 'priority-red';
+  if (p === 'MEDIUM') return 'priority-yellow';
+  if (p === 'LOW') return 'priority-blue';
   return '';
 }
 
@@ -380,14 +389,6 @@ async function updateTaskStatus(id, status, section=null) {
     body: JSON.stringify({ id, status, section })
   });
   return res.json();
-}
-
-function updateTaskSection(id, section) {
-  fetch('/update-task-section', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, section })
-  });
 }
 
 function createTaskElement(task) {
@@ -404,29 +405,120 @@ function createTaskElement(task) {
       <input type="checkbox" class="task-checkbox ${priorityClass}" ${task.status === 'COMPLETED' ? 'checked' : ''} />
       <div class="task-title">${task.title}</div>
       <div class="task-name">${task.assigned_by_name || ''}</div>
+      
+      <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="8.5"></line>
+        <line x1="12" y1="11" x2="12" y2="16"></line>
       <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="8.5"></line>
         <line x1="12" y1="11" x2="12" y2="16"></line>
       </svg>
+
+      <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
+        ${formatDate(task.due_date)}
+      </div>
+
+      <div class="dots-btn">
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </div>
+
+      <div class="task-options-menu">
+        <div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>
+        <div class="delete-opt" style="color:red"><i class="fa-solid fa-trash"></i> Delete</div>
+      </div>
+    </div>
+
+    <div class="edit-box">
+      <input type="text" class="edit-title" value="${task.title}" placeholder="Title">
+      <textarea class="edit-desc" placeholder="Description">${task.description || ''}</textarea>
+      <div style="display:flex; gap:5px;">
+        <select class="edit-priority">
+          <option value="HIGH" ${task.priority === 'HIGH' ? 'selected' : ''}>High</option>
+          <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
+          <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
+        </select>
+        <input type="text" class="edit-date" value="${task.due_date ? task.due_date.split('T')[0] : ''}" placeholder="Due Date">
+      </div>
+      <div class="edit-actions">
+        <button class="save-btn">Save</button>
+        <button class="cancel-btn">Cancel</button>
+      </div>
       <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
         ${formatDate(task.due_date)}
       </div>
     </div>
+
     <div class="task-details">
       <div class="task-desc-text">${task.description || 'No description provided.'}</div>
-      <a href="/edit-task/${task.id}" class="edit-icon-btn">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-        Edit
-      </a>
     </div>
   `;
 
   if (task.status !== 'COMPLETED') div.draggable = true;
 
+  // Toggle Edit Box on Double Click
+  div.addEventListener('dblclick', () => {
+    if(task.status === 'COMPLETED') return;
+    const editBox = div.querySelector('.edit-box');
+    editBox.style.display = 'flex';
+    // Init local datepicker
+    flatpickr(editBox.querySelector('.edit-date'), { dateFormat: "Y-m-d", minDate: "today" });
+  });
+
+  // Dots Menu logic
+  const dotsBtn = div.querySelector('.dots-btn');
+  const menu = div.querySelector('.task-options-menu');
+  dotsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.task-options-menu').forEach(m => m.style.display = 'none');
+    menu.style.display = 'block';
+  });
+
+  div.querySelector('.edit-opt').addEventListener('click', () => {
+    div.dispatchEvent(new Event('dblclick'));
+    menu.style.display = 'none';
+  });
+
+  div.querySelector('.cancel-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    div.querySelector('.edit-box').style.display = 'none';
+  });
+
+  div.querySelector('.save-btn').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const title = div.querySelector('.edit-title').value;
+    const description = div.querySelector('.edit-desc').value;
+    const priority = div.querySelector('.edit-priority').value;
+    const due_date = div.querySelector('.edit-date').value;
+
+    const res = await fetch('/update-task-details', { // Create this endpoint in backend
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: task.id, title, description, priority, due_date })
+    });
+    if(res.ok) window.location.reload();
+  });
+
+  div.querySelector('.delete-opt').addEventListener('click', async () => {
+    if(confirm("Delete this task?")) {
+      const res = await fetch(`/delete-task/${task.id}`, { method: 'POST' });
+      if(res.ok) window.location.reload();
+    }
+  });
+
+  // Info icon toggle
+  div.querySelector('.info-icon').addEventListener('click', (e) => {
+    e.stopPropagation();
+    div.classList.toggle('expanded');
+  });
+
+  // Checkbox toggle
+  div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
+    const status = e.target.checked ? 'COMPLETED' : 'OPEN';
+    const section = e.target.checked ? 'COMPLETED' : 'TASK';
+    const res = await updateTaskStatus(task.id, status, section);
+    if(res.success) window.location.reload();
   const infoIcon = div.querySelector('.info-icon');
   if (infoIcon) {
     infoIcon.addEventListener('click', (e) => {
@@ -450,13 +542,17 @@ function createTaskElement(task) {
   return div;
 }
 
-function createSeparator() {
-  const hr = document.createElement('div');
-  hr.style.height = '1px';
-  hr.style.backgroundColor = '#7C7B7B';
-  hr.style.margin = '6px 0';
-  hr.style.opacity = '0.5';
-  return hr;
+document.addEventListener('click', () => {
+  document.querySelectorAll('.task-options-menu').forEach(m => m.style.display = 'none');
+});
+
+function isPastDate(dateStr) {
+  if (!dateStr) return false;
+  const today = new Date();
+  const taskDate = new Date(dateStr);
+  today.setHours(0,0,0,0);
+  taskDate.setHours(0,0,0,0);
+  return taskDate < today;
 }
 
 // TRUE LOGO: UPDATED INIT SECTIONS TO SORT DATE FIRST, THEN PRIORITY
@@ -476,6 +572,13 @@ function initSections() {
     if (sectionTasks[targetSection]) sectionTasks[targetSection].push(task);
   });
 
+  Object.keys(sections).forEach(sec => {
+    const container = sections[sec];
+    if(!container) return;
+    sectionTasks[sec].forEach(task => {
+      container.appendChild(createTaskElement(task));
+    });
+  });
   ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
     const taskList = sectionTasks[sec];
     if (!taskList.length) return;
@@ -516,16 +619,13 @@ function appendTasksToContainer(container, taskArray) {
 
 function enableDragAndDrop() {
   const containers = { 'task-section': 'TASK', 'change-section': 'CHANGES', 'update-section': 'UPDATE' };
-
-  document.querySelectorAll('.task-item').forEach(item => {
-    if(item.draggable) {
-      item.addEventListener('dragstart', ()=> item.classList.add('dragging'));
-      item.addEventListener('dragend', ()=> item.classList.remove('dragging'));
-    }
-  });
-
   Object.keys(containers).forEach(containerId => {
     const container = document.getElementById(containerId);
+    container.addEventListener('dragover', e => e.preventDefault());
+    container.addEventListener('drop', async (e) => {
+      const draggingId = e.dataTransfer.getData('text/plain');
+      if(!draggingId) return;
+      await fetch('/update-task-section', {
     container.addEventListener('dragover', e=> e.preventDefault());
     container.addEventListener('drop', async (e)=> {
       e.preventDefault();
@@ -535,10 +635,9 @@ function enableDragAndDrop() {
       const res = await fetch('/update-task-section', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: dragging.dataset.id, section: containers[containerId] })
+        body: JSON.stringify({ id: draggingId, section: containers[containerId] })
       });
-      const data = await res.json();
-      if(data.success) window.location.reload();
+      window.location.reload();
     });
   });
 }
@@ -602,10 +701,17 @@ function attachDateEvents() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', () => {
   initSections();
   enableDragAndDrop();
   attachDateEvents();
+});
+
+// Drag support
+document.addEventListener('dragstart', (e) => {
+  if(e.target.classList.contains('task-item')) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+  }
 });
 </script>
 </body>
