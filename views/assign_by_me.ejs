@@ -6,150 +6,150 @@
 <title>Assign By Me</title>
 
 <style>
-  /* ===== PREVENT FULL PAGE SCROLL ===== */
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background-color: #3C3A3A;
-  }
-
-  .layout {
-    display: flex;
-    height: calc(100% - 60px);
-  }
-
-  .sidebar-container {
-    width: 55px;
-  }
-
-  .main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .sub-header {
-    display: flex;
-    background-color: #CDF4F4;
-    padding: 10px;
-    gap: 10px;
-    align-items: center;
-    font-weight: bold;
-    color: #333;
-    font-size: 14px;
-  }
-
-  .sub-header .col-title { flex: 2; padding-left: 40px; }
-  .sub-header .col-desc { flex: 3; padding-left: 20px; }
-  .sub-header .col-assign { flex: 1.5; text-align: center; }
-  .sub-header .col-date { flex: 1; text-align: right; padding-right: 20px; }
-
-  /* ===== CONTENT WRAPPER ===== */
-  .content-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .task-list-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
-.col-date{
-   flex: 0 0 auto;
-    font-size: 12px;
-    opacity: 0.8;
-    white-space: nowrap;
+/* ===== PREVENT FULL PAGE SCROLL ===== */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background-color: #3C3A3A;
 }
-  .task-item {
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    padding: 8px 10px;
-    margin: 6px 0;
-    background-color: #444;
-    color: #fff;
-    border-radius: 4px;
-    gap: 10px;
-  }
 
-  .task-item.completed-task {
-    opacity: 0.6;
-    background-color: #2E2D2D;
-  }
+.layout { display: flex; height: calc(100% - 60px); }
+.sidebar-container { width: 55px; }
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* Checkbox Styles */
-  .task-checkbox {
-    width: 12px;
-    height: 12px;
-    appearance: none;
-    border: 2px solid white;
-    border-radius: 3px;
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    position: relative;
-  }
+.sub-header {
+  display: flex;
+  background-color: #CDF4F4;
+  padding: 6px;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+}
 
-  .task-checkbox:checked::after {
-    content: "✔";
-    position: absolute;
-    top: -2px;
-    left: 1px;
-    font-size: 10px;
-    color: white;
-  }
-  
+.sub-header .col-title { flex: 2; padding-left: 40px; }
+.sub-header .col-desc { flex: 3; padding-left: 20px; }
+.sub-header .col-assign { flex: 1.5; text-align: center; }
+.sub-header .col-date { flex: 1; text-align: right; padding-right: 20px; }
 
-  .priority-HIGH { border-color: #ff4d4d; }
-  .priority-MEDIUM { border-color: #ffd633; }
-  .priority-LOW { border-color: #4da6ff; }
+/* ===== HORIZONTAL CONTENT WRAPPER ===== */
+.content-wrapper {
+  flex: 1;
+  display: flex; /* Changed to horizontal */
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+}
 
-  .task-text {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
+/* Common container style for both sides */
+.task-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
 
-  .col-title { flex: 2; }
-  .col-desc { flex: 3; }
-  .col-assign { flex: 1.5; text-align: center; cursor: pointer;  }
-  .col-assign select { background: #555; color: white; border: none; font-size: 12px; border-radius: 3px; width: 90%; }
-  .col-date { flex: 1; text-align: right; }
+.task-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px 10px;
+}
 
-  /* ===== SEPARATOR ===== */
-  .day-separator {
-    height: 1px;
-    background-color: #7C7B7B;
-    margin: 10px 5px;
-    opacity: 0.3;
-  }
+/* ===== TASK ITEM STYLE ===== */
+.task-item {
+  font-size: 13px;
+  padding: 6px;
+  margin: 6px 0;
+  background-color: #444;
+  color: #fff;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
 
-  /* ===== COMPLETED SECTION ===== */
-  .completed-header {
-    margin: 0 10px;
-    border-radius: 100px;
-    background-color: #0F8989;
-    padding: 8px 20px;
-    font-weight: bold;
-    color: white;
-    margin-top: 10px;
-  }
+.task-item:hover { background-color: #555; }
 
-  .completed-section {
-    height: 150px;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: #2E2D2D;
-    color: white;
-  }
+.completed-task {
+  opacity: 0.6;
+  background-color: #2E2D2D;
+}
 
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-title { flex: 1.5; min-width: 0; word-break: break-word; }
+.task-desc { flex: 2; min-width: 0; word-break: break-word; font-size: 11px; opacity: 0.8; }
+.task-assign { flex: 1; text-align: center; }
+.task-date { flex: 0.8; font-size: 10px; opacity: 0.7; text-align: right; white-space: nowrap; }
+
+.task-checkbox {
+  width: 12px;
+  height: 12px;
+  appearance: none;
+  border: 2px solid white;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.task-checkbox:checked::after {
+  content: "✔";
+  position: absolute;
+  top: 0;
+  left: 1px;
+  font-size: 7px;
+  color: white;
+}
+
+.priority-HIGH { border-color: #ff4d4d; }
+.priority-MEDIUM { border-color: #ffd633; }
+.priority-LOW { border-color: #4da6ff; }
+
+/* DROPDOWN STYLE */
+.task-assign select {
+  background-color: #555;
+  color: white;
+  border: 1px solid #666;
+  border-radius: 16px;
+  padding: 2px 15px 2px 8px; 
+  cursor: pointer;
+  font-size: 11px;
+  width: 100%;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 5px) center;
+  background-size: 8px;
+}
+
+/* ===== HEADERS FOR COLUMNS ===== */
+.column-header {
+  border-radius: 100px;
+  background-color: #0F8989;
+  padding: 6px 15px;
+  font-weight: bold;
+  color: white;
+  font-size: 13px;
+  margin: 5px;
+  text-align: center;
+}
+
+.day-separator {
+  height: 1px;
+  background-color: #7C7B7B;
+  margin: 6px 0;
+  opacity: 0.5;
+}
 </style>
 </head>
 
@@ -157,39 +157,54 @@
 <%- include('navbar') %>
 
 <div class="layout">
-  <div class="sidebar-container">
-     <%- include('sidebar') %>
+<div class="sidebar-container">
+<%- include('sidebar') %>
+</div>
+
+<div class="main-content">
+
+<div class="sub-header">
+<div class="col-title">Task</div>
+<div class="col-desc">Description</div>
+<div class="col-assign">Assigned To</div>
+<div class="col-date">Date</div>
+</div>
+
+<div class="content-wrapper">
+
+  <div class="task-column">
+    <div class="column-header">Pending Tasks</div>
+    <div class="task-list-container" id="open-task-list"></div>
   </div>
 
-  <div class="main-content">
-    <div class="sub-header">
-      <div class="col-title">Task</div>
-      <div class="col-desc">Description</div>
-      <div class="col-assign">Assigned To</div>
-      <div class="col-date">Date</div>
-    </div>
-
-    <div class="content-wrapper">
-      <div class="task-list-container" id="open-task-list"></div>
-
-      <div class="completed-header">Completed Tasks</div>
-      <div class="completed-section">
-        <% if (completedTasks.length > 0) { %>
-          <% completedTasks.forEach(task => { %>
-            <div class="task-item completed-task">
-              <input type="checkbox" class="task-checkbox priority-<%= task.priority %>" checked onchange="toggleStatus('<%= task.id %>', 'OPEN')">
-              <div class="col-title task-text" title="<%= task.title %>"><%= task.title %></div>
-              <div class="col-desc task-text" title="<%= task.description %>"><%= task.description %></div>
-              <div class="col-assign task-text"><%= task.assigned_to %></div>
-              <div class="col-date date-display"><%= task.due_date %></div>
+  <div class="task-column">
+    <div class="column-header">Completed Tasks</div>
+    <div class="task-list-container">
+      <% if (completedTasks.length > 0) { %>
+        <% completedTasks.forEach(task => { %>
+          <div class="task-item completed-task">
+            <div class="task-row">
+              <input type="checkbox"
+                class="task-checkbox priority-<%= task.priority %>"
+                checked
+                onchange="toggleStatus('<%= task.id %>', 'OPEN')">
+              <div class="task-title"><%= task.title %></div>
+              <div class="task-desc">
+                <%= (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description %>
+              </div>
+              <div class="task-assign" style="font-size: 11px;"><%= task.assigned_to %></div>
+              <div class="task-date date-display"><%= task.due_date %></div>
             </div>
-          <% }) %>
-        <% } else { %>
-          <div style="color: #888; padding: 10px; text-align: center;">No completed tasks.</div>
-        <% } %>
-      </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div style="color:#888; padding:10px; text-align:center; font-size: 12px;">No completed tasks.</div>
+      <% } %>
     </div>
   </div>
+
+</div>
+</div>
 </div>
 
 <script>
@@ -197,85 +212,86 @@ const openTasks = <%- JSON.stringify(openTasks) %>;
 const members = <%- JSON.stringify(members) %>;
 
 function formatDate(dateStr) {
-  if (!dateStr || dateStr === 'null') return '';
-  const today = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(today.getDate() + 1);
-  const taskDate = new Date(dateStr);
-  today.setHours(0,0,0,0); tomorrow.setHours(0,0,0,0); taskDate.setHours(0,0,0,0);
+if (!dateStr || dateStr === 'null') return '';
+const today = new Date();
+const tomorrow = new Date();
+tomorrow.setDate(today.getDate() + 1);
+const taskDate = new Date(dateStr);
+today.setHours(0,0,0,0);
+tomorrow.setHours(0,0,0,0);
+taskDate.setHours(0,0,0,0);
 
-  if (taskDate.getTime() === today.getTime()) return "Today";
-  else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
-  else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+if (taskDate.getTime() === today.getTime()) return "Today";
+else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
+else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
 async function toggleStatus(id, status) {
-  const res = await fetch('/update-task-status', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, status })
-  });
-  if (res.ok) window.location.reload();
+const res = await fetch('/update-task-status', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ id, status })
+});
+if (res.ok) window.location.reload();
 }
 
 async function changeAssignee(taskId, newAssigneeId) {
-  const res = await fetch('/assign_by_me/update-assignee', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ taskId, newAssigneeId })
-  });
-  if (res.ok) window.location.reload();
+const res = await fetch('/assign_by_me/update-assignee', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ taskId, newAssigneeId })
+});
+if (res.ok) window.location.reload();
 }
 
 function renderOpenTasks() {
-  const container = document.getElementById('open-task-list');
-  if (openTasks.length === 0) {
-    container.innerHTML = '<div style="color: #aaa; padding: 20px; text-align: center;">No open tasks assigned by you.</div>';
-    return;
-  }
+const container = document.getElementById('open-task-list');
 
-  const grouped = {};
-  openTasks.forEach(task => {
-    const d = task.due_date ? new Date(task.due_date).toDateString() : 'No Date';
-    if (!grouped[d]) grouped[d] = [];
-    grouped[d].push(task);
-  });
+if (openTasks.length === 0) {
+container.innerHTML = '<div style="color:#aaa; padding:20px; text-align:center; font-size: 12px;">No open tasks assigned by you.</div>';
+return;
+}
 
-  const dates = Object.keys(grouped);
-  dates.forEach((date, index) => {
-    grouped[date].forEach(task => {
-      const item = document.createElement('div');
-      item.className = 'task-item';
-      
-      let memberOptions = members.map(m => `<option value="${m.id}" ${m.id == task.assignee_id ? 'selected' : ''}>${m.name}</option>`).join('');
+openTasks.forEach(task => {
 
-      item.innerHTML = `
-        <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleStatus('${task.id}', 'COMPLETED')">
-        <div class="col-title task-text" title="${task.title}">${task.title}</div>
-        <div class="col-desc task-text" title="${task.description}">${task.description}</div>
-        <div class="col-assign">
-            <select onchange="changeAssignee('${task.id}', this.value)">
-                ${memberOptions}
-            </select>
-        </div>
-        <div class="col-date">${formatDate(task.due_date)}</div>
-      `;
-      container.appendChild(item);
-    });
+let memberOptions = members.map(m =>
+`<option value="${m.id}" ${m.id == task.assignee_id ? 'selected' : ''}>${m.name}</option>`
+).join('');
 
-    if (index < dates.length - 1) {
-      const hr = document.createElement('div');
-      hr.className = 'day-separator';
-      container.appendChild(hr);
-    }
-  });
+const displayDesc = (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description;
+
+const item = document.createElement('div');
+item.className = 'task-item';
+
+item.innerHTML = `
+<div class="task-row">
+<input type="checkbox"
+class="task-checkbox priority-${task.priority}"
+onchange="toggleStatus('${task.id}', 'COMPLETED')">
+
+<div class="task-title">${task.title}</div>
+
+<div class="task-desc">${displayDesc}</div>
+
+<div class="task-assign">
+<select onchange="changeAssignee('${task.id}', this.value)">
+${memberOptions}
+</select>
+</div>
+
+<div class="task-date">${formatDate(task.due_date)}</div>
+</div>
+`;
+
+container.appendChild(item);
+});
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderOpenTasks();
-  document.querySelectorAll('.completed-section .date-display').forEach(el => {
-    el.innerText = formatDate(el.innerText);
-  });
+renderOpenTasks();
+document.querySelectorAll('.date-display').forEach(el => {
+el.innerText = formatDate(el.innerText);
+});
 });
 </script>
 

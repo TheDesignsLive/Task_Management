@@ -26,7 +26,18 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 .action-btn{ padding:6px 10px; border:none; cursor:pointer; border-radius:4px; font-weight:bold; }
 .accept-btn{ background:#2ecc71; color:white; }
 .reject-btn{ background:#e74c3c; color:white; }
-.announce-btn{ background:#095959; color:white; float: right; padding: 10px 15px; }
+
+/* Updated Button Styling to match "Roles Panel" and "Add Member" */
+.announce-btn {
+    padding: 13px 18px;
+    border: none;
+    cursor: pointer;
+    background-color: #209595;
+    color: white;
+    border-radius: 100px;
+    font-weight: bold;
+    float: right;
+}
 
 .avatar-circle {
   width: 40px; height: 40px; background-color: #095959; color: white;
@@ -98,7 +109,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
           <div style="overflow: hidden;">
             <h2 style="display:inline-block;">Announcements</h2>
             <% if (session.role === 'admin' || session.control_type === 'ADMIN') { %>
-                <button class="action-btn announce-btn" onclick="openAnnounce()">+ Add Announcement</button>
+                <button class="announce-btn" onclick="openAnnounce()">Add Announcement</button>
             <% } %>
           </div>
 
