@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Home</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
   /* ===== PREVENT FULL PAGE SCROLL ===== */
@@ -107,7 +110,8 @@
     border-radius: 4px;
     cursor: pointer; /* Changed to pointer for click */
     transition: background 0.2s;
-    overflow: hidden;
+    overflow: visible; /* Changed for 3-dot menu */
+    position: relative;
   }
 
   .task-item:hover {
@@ -145,7 +149,16 @@
   .priority-red { border-color: #ff4d4d; }
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
-
+      
+  .info-icon{
+    width: 14px;         
+    height: 14px;
+    stroke: #959494;       
+    flex-shrink: 0;
+    margin-left: 8px;      
+    vertical-align: middle;
+  }
+      
   .task-row {
     display: flex;
     align-items: center;
@@ -169,11 +182,51 @@
   }
 
   .task-date {
-    flex: 0 0 auto;
+    flex: 0 0 50px; 
     font-size: 11px;
     opacity: 0.8;
     white-space: nowrap;
+    text-align: center; 
   }
+
+  /* ===== 3 DOT MENU ===== */
+  .dots-btn {
+    cursor: pointer;
+    padding: 0 5px;
+    color: #959494;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    margin-left: 5px;
+  }
+
+  .dots-btn:hover { color: white; }
+
+  .task-options-menu {
+    display: none;
+    position: absolute;
+    right: 5px;
+    top: 25px;
+    background: white;
+    color: #333;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    min-width: 100px;
+    overflow: hidden;
+  }
+
+  .task-options-menu div {
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .task-options-menu div:hover { background-color: #f0f0f0; }
+  .delete-opt { color: #ff4d4d; }
 
   /* ===== EXPANDABLE DESCRIPTION ===== */
   .task-details {
@@ -209,6 +262,34 @@
   /* Class to show details when active */
   .task-item.expanded .task-details {
     display: block;
+  }
+  
+  .task-date-picker {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    position: absolute;
+  }
+
+  .flatpickr-calendar.open {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    z-index: 10000 !important;
+  }
+
+  .flatpickr-calendar {
+    width: 250px !important;
+    font-size: 11px !important;
+    border-radius: 16px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+  }
+
+  .past-date {
+    color: #ff4d4d !important;   /* 🔴 red color */
+    font-weight:500;
   }
 </style>
 </head>
@@ -303,8 +384,31 @@ function createTaskElement(task) {
       <input type="checkbox" class="task-checkbox ${priorityClass}" ${task.status === 'COMPLETED' ? 'checked' : ''} />
       <div class="task-title">${task.title}</div>
       <div class="task-name">${task.assigned_by_name || ''}</div>
-      <div class="task-date">${formatDate(task.due_date)}</div>
+      
+      <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="8.5"></line>
+        <line x1="12" y1="11" x2="12" y2="16"></line>
+      </svg>
+
+      <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
+        ${formatDate(task.due_date)}
+      </div>
+
+      <div class="dots-btn">
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </div>
+
+      <div class="task-options-menu">
+        <div onclick="location.href='/edit-task/${task.id}'">
+          <i class="fa-solid fa-pen-to-square"></i> Edit
+        </div>
+        <div class="delete-opt" onclick="deleteTask(${task.id})">
+          <i class="fa-solid fa-trash"></i> Delete
+        </div>
+      </div>
     </div>
+
     <div class="task-details">
       <div class="task-desc-text">${task.description || 'No description provided.'}</div>
       <a href="/edit-task/${task.id}" class="edit-icon-btn">
@@ -319,12 +423,26 @@ function createTaskElement(task) {
 
   if (task.status !== 'COMPLETED') div.draggable = true;
 
-  // Toggle expand/collapse
-  div.addEventListener('click', (e) => {
-    // Don't expand if clicking checkbox or edit button
-    if (e.target.type === 'checkbox' || e.target.closest('.edit-icon-btn')) return;
-    div.classList.toggle('expanded');
-  });
+  const infoIcon = div.querySelector('.info-icon');
+  if (infoIcon) {
+    infoIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      div.classList.toggle('expanded');
+    });
+  }
+
+  const dotsBtn = div.querySelector('.dots-btn');
+  const menu = div.querySelector('.task-options-menu');
+  if(dotsBtn) {
+    dotsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Close all other open menus
+      document.querySelectorAll('.task-options-menu').forEach(m => {
+        if(m !== menu) m.style.display = 'none';
+      });
+      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    });
+  }
 
   const checkbox = div.querySelector('input.task-checkbox');
   checkbox.addEventListener('change', async (e) => {
@@ -339,6 +457,18 @@ function createTaskElement(task) {
   });
 
   return div;
+}
+
+// Global click to close menu
+document.addEventListener('click', () => {
+  document.querySelectorAll('.task-options-menu').forEach(m => m.style.display = 'none');
+});
+
+async function deleteTask(taskId) {
+  if(!confirm("Are you sure you want to delete this task?")) return;
+  const res = await fetch(`/delete-task/${taskId}`, { method: 'POST' });
+  const data = await res.json();
+  if(data.success) window.location.reload();
 }
 
 function createSeparator() {
@@ -437,9 +567,65 @@ function enableDragAndDrop() {
   });
 }
 
+const hiddenInput = document.createElement('input');
+hiddenInput.type = 'text';
+hiddenInput.className = 'task-date-picker';
+document.body.appendChild(hiddenInput);
+
+let currentTaskDiv = null;
+
+const fp = flatpickr(hiddenInput, {
+  dateFormat: "Y-m-d",
+  minDate: "today",
+  clickOpens: false,
+  onOpen: function(selectedDates, dateStr, instance) {
+    const calendar = instance.calendarContainer;
+    calendar.style.top = "50%";
+    calendar.style.left = "50%";
+    calendar.style.transform = "translate(-50%, -50%)";
+  },
+  onChange: function(selectedDates, dateStr) {
+    if (currentTaskDiv && dateStr) {
+      fetch('/update-task-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: currentTaskDiv.dataset.id,
+          due_date: dateStr
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) window.location.reload();
+      });
+    }
+    currentTaskDiv = null;
+  }
+});
+
+function attachDateEvents() {
+  document.querySelectorAll('.task-date').forEach(div => {
+    div.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentTaskDiv = div.closest('.task-item');
+      fp.open();
+    });
+  });
+}
+
+function isPastDate(dateStr) {
+  if (!dateStr) return false;
+  const today = new Date();
+  const taskDate = new Date(dateStr);
+  today.setHours(0,0,0,0);
+  taskDate.setHours(0,0,0,0);
+  return taskDate < today;
+}
+
 document.addEventListener('DOMContentLoaded', ()=>{
   initSections();
   enableDragAndDrop();
+  attachDateEvents(); 
 });
 </script>
 </body>
