@@ -132,7 +132,7 @@
     background: transparent;
     cursor: pointer;
     position: relative;
-    flex-shrink: 0;  
+    flex-shrink: 0;   
   }
 
   .task-checkbox:checked::after {
@@ -294,6 +294,9 @@ function createTaskElement(task) {
   if (task.status === 'COMPLETED') div.classList.add('completed-task');
 
   const priorityClass = getPriorityClass(task.priority);
+  
+  // FIX: Extract date as YYYY-MM-DD string to avoid timezone shift
+  const taskDueDate = task.due_date ? task.due_date.split('T')[0] : '';
 
   div.innerHTML = `
     <div class="task-row">
@@ -330,7 +333,7 @@ function createTaskElement(task) {
           <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
           <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
         </select>
-        <input type="text" class="edit-date" value="${task.due_date ? task.due_date.split('T')[0] : ''}" placeholder="Due Date">
+        <input type="text" class="edit-date" value="${taskDueDate}" placeholder="Due Date">
       </div>
       <div class="edit-actions">
         <button class="save-btn">Save</button>
@@ -380,7 +383,7 @@ function createTaskElement(task) {
     const priority = div.querySelector('.edit-priority').value;
     const due_date = div.querySelector('.edit-date').value;
 
-    const res = await fetch('/update-task-details', { // Create this endpoint in backend
+    const res = await fetch('/edit-task-details', { 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date })
