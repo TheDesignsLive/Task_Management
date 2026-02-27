@@ -425,7 +425,7 @@ function createTaskElement(task) {
           <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
           <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
         </select>
-        <input type="text" class="edit-date" value="${task.due_date ? task.due_date.split('T')[0] : ''}" placeholder="Due Date">
+<input type="text" class="edit-date" placeholder="Due Date" >
       </div>
       <div class="edit-actions">
         <button class="save-btn">Save</button>
@@ -441,14 +441,33 @@ function createTaskElement(task) {
   if (task.status !== 'COMPLETED') div.draggable = true;
 
   // Toggle Edit Box on Double Click
-  div.addEventListener('dblclick', () => {
-    if(task.status === 'COMPLETED') return;
-    const editBox = div.querySelector('.edit-box');
-    editBox.style.display = 'flex';
-    // Init local datepicker
-    flatpickr(editBox.querySelector('.edit-date'), { dateFormat: "Y-m-d", minDate: "today" });
-  });
+div.addEventListener('dblclick', () => {
+  if (task.status === 'COMPLETED') return;
 
+  const editBox = div.querySelector('.edit-box');
+  editBox.style.display = 'flex';
+
+  const dateInput = editBox.querySelector('.edit-date');
+
+  // Destroy old flatpickr if exists
+  if (dateInput._flatpickr) {
+    dateInput._flatpickr.destroy();
+  }
+
+  // ✅ Get date from database (already in task object)
+  let dbDate = task.due_date;
+
+  // If date exists, set it
+  if (dbDate) {
+    dateInput.value = dbDate;  // format must be YYYY-MM-DD
+  }
+
+  // Initialize flatpickr with same date
+  flatpickr(dateInput, {
+    dateFormat: "Y-m-d",
+    defaultDate: dbDate || null
+  });
+});
   // Dots Menu logic
   const dotsBtn = div.querySelector('.dots-btn');
   const menu = div.querySelector('.task-options-menu');
@@ -473,7 +492,10 @@ function createTaskElement(task) {
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
     const priority = div.querySelector('.edit-priority').value;
-    const due_date = div.querySelector('.edit-date').value;
+ let due_date = div.querySelector('.edit-date').value.trim();
+if (due_date === "") {
+  due_date = null;
+}
 
     const res = await fetch('/update-task-details', { // Create this endpoint in backend
       method: 'POST',
