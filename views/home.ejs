@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Home</title>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
   /* ===== PREVENT FULL PAGE SCROLL ===== */
@@ -147,12 +147,20 @@
   .priority-red { border-color: #ff4d4d; }
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
-      
-  .info-icon{
-    width: 14px; height: 14px;
-    stroke: #959494; flex-shrink: 0;
-    margin-left: 8px; vertical-align: middle;
-  }
+     
+
+     
+      .info-icon{
+          width: 14px;         
+        height: 14px;
+        stroke: #959494;       
+        flex-shrink: 0;
+        margin-left: 8px;      
+        vertical-align: middle;
+
+          margin-left: auto; 
+
+      }
       
   .task-row {
     display: flex;
@@ -206,14 +214,101 @@
   .task-item.expanded .task-details { display: block; }
 
   /* ===== CALENDAR OVERRIDE ===== */
-  .flatpickr-calendar.open {
-    position: fixed !important;
-    top: 50% !important; left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    margin: 0 !important; z-index: 10000 !important;
+
+
+  /* Class to show details when active */
+  .task-item.expanded .task-details {
+    display: block;
   }
 
-  .past-date { color: #ff4d4d !important; font-weight: 500; }
+  
+  .task-date-picker {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+/* TRUE LOGO: calendar style for task-date */
+.flatpickr-calendar.task-calendar {
+  margin-top: 0 !important;
+  width: 330px !important;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  font-family: Segoe UI, sans-serif;
+}
+
+
+
+/* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
+.flatpickr-calendar.open {
+  position: fixed !important;
+  top: 190px !important;              /* 🔥 change this to move up/down */
+  left: 60% !important;
+     right: 20px !important; 
+  transform: translateX(-50%) !important;
+  bottom: auto !important;           /* 🔥 VERY IMPORTANT */
+}
+
+
+
+.flatpickr-months .flatpickr-month {
+  height: 32px !important;
+}
+
+.flatpickr-weekdays {
+  font-size: 10px !important;
+}
+
+
+.flatpickr-days {
+  width: 100% !important;
+}
+
+.numInputWrapper input {
+  font-size: 12px !important;
+}
+
+.past-date {
+  color: #ff4d4d !important;   /* 🔴 red color */
+  font-weight:500;
+}
+
+.center-calendar {
+  position: fixed !important;
+  top: 20% !important;          /* change this value */
+  left: 60% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10000 !important;
+}
+
+.flatpickr-calendar {
+  font-size: 12px;              /* overall small text */
+  width: 280px !important;      /* smaller width */
+  border-radius: 12px;
+}
+
+.flatpickr-day {
+  height: 30px;
+  line-height: 30px;
+  font-size: 12px;
+}
+
+.flatpickr-weekday {
+  font-size: 11px;
+}
+
+.flatpickr-current-month {
+  font-size: 13px;
+}
+
+.flatpickr-monthDropdown-months,
+.numInputWrapper {
+  font-size: 12px;
+}
+
+
 </style>
 </head>
 
@@ -425,6 +520,7 @@ function isPastDate(dateStr) {
   return taskDate < today;
 }
 
+// ✅ INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
 function initSections() {
   const sections = {
     'TASK': document.getElementById('task-section'),
@@ -441,13 +537,47 @@ function initSections() {
     if (sectionTasks[targetSection]) sectionTasks[targetSection].push(task);
   });
 
-  Object.keys(sections).forEach(sec => {
-    const container = sections[sec];
-    if(!container) return;
-    sectionTasks[sec].forEach(task => {
-      container.appendChild(createTaskElement(task));
+  ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
+    const taskList = sectionTasks[sec];
+    if (!taskList.length) return;
+
+    const taskGroups = {};
+    const noDateTasks = [];
+    taskList.forEach(task => {
+      const dateKey = task.due_date ? new Date(task.due_date).toDateString() : null;
+      if (!dateKey) noDateTasks.push(task);
+      else {
+        if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
+        taskGroups[dateKey].push(task);
+      }
     });
+
+    // ✅ Today first
+    const todayStr = new Date().toDateString();
+    if (taskGroups[todayStr]) { appendTasksToContainer(sections[sec], sortByPriority(taskGroups[todayStr])); delete taskGroups[todayStr]; }
+
+    // ✅ Tomorrow next
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate()+1);
+    const tomorrowStr = tomorrow.toDateString();
+    if (taskGroups[tomorrowStr]) { appendTasksToContainer(sections[sec], sortByPriority(taskGroups[tomorrowStr])); delete taskGroups[tomorrowStr]; }
+
+    // ✅ Rest of dates sorted ascending
+    const sortedDates = Object.keys(taskGroups).sort((a,b)=> new Date(a)-new Date(b));
+    sortedDates.forEach(dateStr => appendTasksToContainer(sections[sec], sortByPriority(taskGroups[dateStr])));
+
+    // ✅ Tasks without date at the end
+    appendTasksToContainer(sections[sec], sortByPriority(noDateTasks));
   });
+
+  // Completed tasks
+  sectionTasks['COMPLETED'].forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
+}
+
+// Append tasks
+function appendTasksToContainer(container, taskArray) {
+  taskArray.forEach(task => container.appendChild(createTaskElement(task)));
+  if(taskArray.length > 0) container.appendChild(createSeparator());
 }
 
 function enableDragAndDrop() {
@@ -468,16 +598,95 @@ function enableDragAndDrop() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  initSections();
-  enableDragAndDrop();
+
+
+// Separator line
+function createSeparator() {
+  const hr = document.createElement('div');
+  hr.style.height = '1px';
+  hr.style.backgroundColor = '#7C7B7B';
+  hr.style.margin = '6px 0';
+  hr.style.opacity = '0.5';
+  return hr;
+}
+// ✅ PRIORITY SORT FUNCTION
+function sortByPriority(tasks) {
+  const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
+  return tasks.sort((a, b) => {
+    const p1 = priorityOrder[a.priority?.toUpperCase()] || 4;
+    const p2 = priorityOrder[b.priority?.toUpperCase()] || 4;
+    return p1 - p2;
+  });
+}
+
+// ✅ HIDDEN INPUT FOR FLATPICKR CENTER TOP
+const hiddenInput = document.createElement('input');
+hiddenInput.type = 'text';
+hiddenInput.className = 'task-date-picker';
+document.body.appendChild(hiddenInput);
+
+let currentTaskDiv = null;
+
+const fp = flatpickr(hiddenInput, {
+  dateFormat: "Y-m-d",
+  minDate: "today",
+  clickOpens: false,
+  appendTo: document.body,
+  static: false,
+  onReady: function(selectedDates, dateStr, instance) {
+    const calendar = instance.calendarContainer;
+    calendar.style.position = "fixed";
+    calendar.style.top = "-10%";          // vertical center
+    calendar.style.left = "50%";         // horizontal center
+    calendar.style.transform = "translate(-50%, -50%)";
+    calendar.style.margin = "0";
+    calendar.style.zIndex = "10000";
+    calendar.style.width = "90%";        // responsive width
+    calendar.style.maxWidth = "400px";   // optional max width
+  },
+onOpen: function(selectedDates, dateStr, instance) {
+  const calendar = instance.calendarContainer;
+
+  calendar.classList.add("center-calendar");
+},
+  onChange: function(selectedDates, dateStr) {
+    if (currentTaskDiv && dateStr) {
+      fetch('/update-task-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentTaskDiv.dataset.id, due_date: dateStr })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) window.location.reload();
+      });
+    }
+    currentTaskDiv = null;
+  }
 });
 
+// Attach date picker to task-date
+function attachDateEvents() {
+  document.querySelectorAll('.task-date').forEach(div => {
+    div.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentTaskDiv = div.closest('.task-item');
+      fp.open();
+    });
+  });
+}
 // Drag support
 document.addEventListener('dragstart', (e) => {
   if(e.target.classList.contains('task-item')) {
     e.dataTransfer.setData('text/plain', e.target.dataset.id);
   }
+});
+
+// INIT ON LOAD
+document.addEventListener('DOMContentLoaded', ()=>{
+  initSections();
+  enableDragAndDrop();
+  attachDateEvents(); 
 });
 </script>
 </body>
