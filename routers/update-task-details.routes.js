@@ -28,16 +28,16 @@ router.post('/', async (req, res) => {
     }
 });
 
-// POST /delete-task/:id (Bonus: matching the delete button in your menu)
-router.post('/delete-task/:id', async (req, res) => {
-    if (!req.session.role) return res.status(401).send("Unauthorized");
-    try {
-        await db.execute("DELETE FROM tasks WHERE id = ?", [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Error deleting task");
-    }
-});
+// // POST /delete-task/:id (Bonus: matching the delete button in your menu)
+// router.post('/delete-task/:id', async (req, res) => {
+//     if (!req.session.role) return res.status(401).send("Unauthorized");
+//     try {
+//         await db.execute("DELETE FROM tasks WHERE id = ?", [req.params.id]);
+//         res.json({ success: true });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).send("Error deleting task");
+//     }
+// });
 
 module.exports = router;

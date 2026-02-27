@@ -33,7 +33,9 @@ const changePassword = require("./routers/change-password.routes");
 const updateTaskDate = require('./routers/update-task-date.routes');
 const allMemberTask=require('./routers/all-member-task.routes');
 const updatetask=require('./routers/update-task-details.routes');
-const updateDateOfTask=require('./routers/date-update-home.routes');
+
+const deleteTaskRouter = require('./routers/delete-task.routes');
+
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -80,7 +82,8 @@ app.use('/', delete_role);
 // Tasks & Features
 app.use('/add-task', taskRoutes);
 app.use('/update-task-details',updatetask);
-app.use('/', updateDateOfTask);
+
+app.use('/tasks', deleteTaskRouter);
 
 app.use('/assign_by_me', AssignByMe);
 app.use('/', notification);

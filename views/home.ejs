@@ -506,11 +506,28 @@ if (due_date === "") {
   });
 
   div.querySelector('.delete-opt').addEventListener('click', async () => {
-    if(confirm("Delete this task?")) {
-      const res = await fetch(`/delete-task/${task.id}`, { method: 'POST' });
-      if(res.ok) window.location.reload();
+  if(confirm("Delete this task?")) {
+
+    try {
+      const res = await fetch(`/tasks/delete-task/${task.id}`, {
+        method: 'POST'
+      });
+
+      if (!res.ok) {
+        alert("Server error");
+        return;
+      }
+
+      // Skip parsing JSON (simpler)
+      window.location.reload();
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Delete failed");
     }
-  });
+
+  }
+});
 
   // Info icon toggle
   div.querySelector('.info-icon').addEventListener('click', (e) => {

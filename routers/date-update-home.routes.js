@@ -58,17 +58,7 @@ router.post('/update-task-date', (req, res) => {
   );
 });
 
-/* ===============================
-   DELETE TASK
-================================ */
-router.post('/delete-task/:id', (req, res) => {
-  const { id } = req.params;
 
-  con.query("DELETE FROM tasks WHERE id=?", [id], (err) => {
-    if (err) return res.status(500).json({ success: false });
-    res.json({ success: true });
-  });
-});
 
 /* ===============================
    UPDATE TASK STATUS
