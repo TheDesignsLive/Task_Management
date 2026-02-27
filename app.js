@@ -34,6 +34,9 @@ const updateTaskDate = require('./routers/update-task-date.routes');
 const allMemberTask=require('./routers/all-member-task.routes');
 const updatetask=require('./routers/edit-task-details.routes');
 
+const deleteTaskRouter = require('./routers/delete-task.routes');
+
+
 // ================= MIDDLEWARES =================
 app.use(cors());
 app.use(express.json());
@@ -79,6 +82,8 @@ app.use('/', delete_role);
 // Tasks & Features
 app.use('/add-task', taskRoutes);
 app.use('/edit-task-details',updatetask);
+
+app.use('/tasks', deleteTaskRouter);
 
 app.use('/assign_by_me', AssignByMe);
 app.use('/', notification);

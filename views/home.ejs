@@ -425,7 +425,7 @@ function createTaskElement(task) {
           <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
           <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
         </select>
-        <input type="text" class="edit-date" value="${task.due_date ? task.due_date.split('T')[0] : ''}" placeholder="Due Date">
+<input type="text" class="edit-date" placeholder="Due Date" >
       </div>
       <div class="edit-actions">
         <button class="save-btn">Save</button>
@@ -441,14 +441,33 @@ function createTaskElement(task) {
   if (task.status !== 'COMPLETED') div.draggable = true;
 
   // Toggle Edit Box on Double Click
-  div.addEventListener('dblclick', () => {
-    if(task.status === 'COMPLETED') return;
-    const editBox = div.querySelector('.edit-box');
-    editBox.style.display = 'flex';
-    // Init local datepicker
-    flatpickr(editBox.querySelector('.edit-date'), { dateFormat: "Y-m-d", minDate: "today" });
-  });
+div.addEventListener('dblclick', () => {
+  if (task.status === 'COMPLETED') return;
 
+  const editBox = div.querySelector('.edit-box');
+  editBox.style.display = 'flex';
+
+  const dateInput = editBox.querySelector('.edit-date');
+
+  // Destroy old flatpickr if exists
+  if (dateInput._flatpickr) {
+    dateInput._flatpickr.destroy();
+  }
+
+  // ✅ Get date from database (already in task object)
+  let dbDate = task.due_date;
+
+  // If date exists, set it
+  if (dbDate) {
+    dateInput.value = dbDate;  // format must be YYYY-MM-DD
+  }
+
+  // Initialize flatpickr with same date
+  flatpickr(dateInput, {
+    dateFormat: "Y-m-d",
+    defaultDate: dbDate || null
+  });
+});
   // Dots Menu logic
   const dotsBtn = div.querySelector('.dots-btn');
   const menu = div.querySelector('.task-options-menu');
@@ -473,7 +492,10 @@ function createTaskElement(task) {
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
     const priority = div.querySelector('.edit-priority').value;
-    const due_date = div.querySelector('.edit-date').value;
+ let due_date = div.querySelector('.edit-date').value.trim();
+if (due_date === "") {
+  due_date = null;
+}
 
     const res = await fetch('/edit-task-details', { // Create this endpoint in backend
       method: 'POST',
@@ -484,11 +506,28 @@ function createTaskElement(task) {
   });
 
   div.querySelector('.delete-opt').addEventListener('click', async () => {
-    if(confirm("Delete this task?")) {
-      const res = await fetch(`/delete-task/${task.id}`, { method: 'POST' });
-      if(res.ok) window.location.reload();
+  if(confirm("Delete this task?")) {
+
+    try {
+      const res = await fetch(`/tasks/delete-task/${task.id}`, {
+        method: 'POST'
+      });
+
+      if (!res.ok) {
+        alert("Server error");
+        return;
+      }
+
+      // Skip parsing JSON (simpler)
+      window.location.reload();
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Delete failed");
     }
-  });
+
+  }
+});
 
   // Info icon toggle
   div.querySelector('.info-icon').addEventListener('click', (e) => {
@@ -537,38 +576,42 @@ function initSections() {
     if (sectionTasks[targetSection]) sectionTasks[targetSection].push(task);
   });
 
-  ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
-    const taskList = sectionTasks[sec];
-    if (!taskList.length) return;
+ ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
 
-    const taskGroups = {};
-    const noDateTasks = [];
-    taskList.forEach(task => {
-      const dateKey = task.due_date ? new Date(task.due_date).toDateString() : null;
-      if (!dateKey) noDateTasks.push(task);
-      else {
-        if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
-        taskGroups[dateKey].push(task);
-      }
-    });
+  const taskList = sectionTasks[sec];
+  if (!taskList.length) return;
 
-    // ✅ Today first
-    const todayStr = new Date().toDateString();
-    if (taskGroups[todayStr]) { appendTasksToContainer(sections[sec], sortByPriority(taskGroups[todayStr])); delete taskGroups[todayStr]; }
+  const taskGroups = {};
+  const noDateTasks = [];
 
-    // ✅ Tomorrow next
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate()+1);
-    const tomorrowStr = tomorrow.toDateString();
-    if (taskGroups[tomorrowStr]) { appendTasksToContainer(sections[sec], sortByPriority(taskGroups[tomorrowStr])); delete taskGroups[tomorrowStr]; }
+  taskList.forEach(task => {
+    const dateKey = task.due_date ? task.due_date.split('T')[0] : null;
 
-    // ✅ Rest of dates sorted ascending
-    const sortedDates = Object.keys(taskGroups).sort((a,b)=> new Date(a)-new Date(b));
-    sortedDates.forEach(dateStr => appendTasksToContainer(sections[sec], sortByPriority(taskGroups[dateStr])));
-
-    // ✅ Tasks without date at the end
-    appendTasksToContainer(sections[sec], sortByPriority(noDateTasks));
+    if (!dateKey) {
+      noDateTasks.push(task);
+    } else {
+      if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
+      taskGroups[dateKey].push(task);
+    }
   });
+
+  // ✅ Sort dates ascending (YYYY-MM-DD auto sorts correctly)
+  const sortedDates = Object.keys(taskGroups).sort();
+
+  sortedDates.forEach(dateStr => {
+    appendTasksToContainer(
+      sections[sec],
+      sortByPriority(taskGroups[dateStr])
+    );
+  });
+
+  // Tasks without date at end
+  appendTasksToContainer(
+    sections[sec],
+    sortByPriority(noDateTasks)
+  );
+
+});
 
   // Completed tasks
   sectionTasks['COMPLETED'].forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
