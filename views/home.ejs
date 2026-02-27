@@ -498,7 +498,7 @@ if (due_date === "") {
   due_date = null;
 }
 
-    const res = await fetch('/update-task-details', { // Create this endpoint in backend
+    const res = await fetch('/edit-task-details', { // Create this endpoint in backend
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date })

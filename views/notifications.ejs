@@ -84,6 +84,9 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 .request-info p { margin: 2px 0; color: #666; font-size: 13px; }
 .request-actions { display: flex; flex-direction: column; gap: 5px; }
 
+/* Deletion request specific styling */
+.deletion-border { border-left: 5px solid #e74c3c; }
+
 /* Responsive adjustment */
 @media (max-width: 1024px) {
     .admin-horizontal-layout { flex-direction: column; }
@@ -144,6 +147,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
           <h2>Member Requests</h2>
 
           <div id="request-list">
+          <h4 style="color: #209595; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Add Requests</h4>
           <% if (memberRequests.length > 0) { %>
                 <% memberRequests.forEach((r) => { %>
                   <div class="request-card">
@@ -167,7 +171,34 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                   </div>
                 <% }) %>
           <% } else { %>
-            <p style="color:#888; text-align: center; margin-top: 20px;">No pending member requests.</p>
+            <p style="color:#888; font-size: 13px; margin: 10px 0;">No pending add requests.</p>
+          <% } %>
+
+          <h4 style="color: #e74c3c; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px;">Deletion Requests</h4>
+          <% if (deletionRequests.length > 0) { %>
+                <% deletionRequests.forEach((r) => { %>
+                  <div class="request-card deletion-border">
+                    <div class="request-profile">
+                      <% if (r.profile_pic) { %>
+                        <img src="/images/<%= r.profile_pic %>" width="50" height="50" style="border-radius:50%; object-fit: cover;">
+                      <% } else { %>
+                        <div class="avatar-circle" style="width: 50px; height: 50px; font-size: 20px;"><%= r.name.charAt(0) %></div>
+                      <% } %>
+                    </div>
+                    <div class="request-info">
+                      <h4 style="color: #e74c3c;"><%= r.name %> (Delete)</h4>
+                      <p><strong>Email:</strong> <%= r.email %></p>
+                      <p><strong>Role:</strong> <%= r.role_name %></p>
+                      <p style="font-size: 11px; color: #999;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <div class="request-actions">
+                      <button class="action-btn reject-btn" onclick="location.href='/confirm-deletion/<%= r.id %>'">Approve Delete</button>
+                      <button class="action-btn accept-btn" onclick="location.href='/reject-deletion/<%= r.id %>'">Keep Member</button>
+                    </div>
+                  </div>
+                <% }) %>
+          <% } else { %>
+            <p style="color:#888; font-size: 13px; margin: 10px 0;">No pending deletion requests.</p>
           <% } %>
           </div>
         </div>

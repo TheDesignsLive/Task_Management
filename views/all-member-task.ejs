@@ -22,6 +22,9 @@ html,body{
   padding:6px 10px;
   border-radius:4px;
   border:none;
+  max-width: 200px; /* Fixed: Prevents expansion with long names */
+  width: 100%;
+  text-overflow: ellipsis;
 }
 
 .sub-header{
@@ -170,7 +173,6 @@ html,body{
 
 <div class="task-container">
 
-<!-- TASK -->
 <div class="task-box task-main">
  <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
     <% 
@@ -201,7 +203,6 @@ html,body{
 
 <div class="vertical-line"></div>
 
-<!-- CHANGE -->
 <div class="task-box task-change">
 <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
 
@@ -239,7 +240,6 @@ html,body{
 
 <div class="vertical-line"></div>
 
-<!-- UPDATE -->
 <div class="task-box task-update">
 <% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
 
@@ -276,7 +276,6 @@ html,body{
 
 <div class="vertical-line"></div>
 
-<!-- OTHERS -->
 <div class="task-box task-other">
 
 <% tasks
@@ -332,7 +331,6 @@ html,body{
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
   <div class="task-row">
     
-    <!-- ✅ Checked + Priority Color -->
     <input type="checkbox"
       checked
       disabled
@@ -345,7 +343,7 @@ html,body{
     <span>
       <%= task.title %> - <%= task.assigned_to_name %> 
     </span>
-   
+    
 
   </div>
      <div class="task-date"><%= taskDate %></div>
@@ -358,6 +356,7 @@ html,body{
 </div>
 </div>
 
+<script>
 // ✅ Mark task as completed via fetch
 function markCompleted(taskId){
   fetch(`/complete-task/${taskId}`, { method:'POST' })
@@ -370,6 +369,7 @@ function markCompleted(taskId){
       }
     });
 }
+</script>
 
 </body>
 </html>

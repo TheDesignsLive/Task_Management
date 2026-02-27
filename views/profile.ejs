@@ -32,83 +32,104 @@ html, body {
   align-items: center; 
   overflow: hidden;
 }
+
+/* HORIZONTAL CARD DESIGN */
 .profile-card {
-  width: 420px;
+  width: 750px;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  display: flex;
   overflow: hidden;
-  text-align: center;
+  height: 380px;
 }
-.profile-header {
+.profile-left {
+  width: 300px;
   background: linear-gradient(135deg, #095959, #00a896);
-  padding: 30px 20px 45px; /* Thoda kam padding */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   color: white;
-  position: relative;
+  padding: 20px;
 }
 .profile-img, .profile-letter-avatar {
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
-  border: 4px solid white;
+  border: 5px solid rgba(255,255,255,0.3);
   object-fit: cover;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: -50px; /* Image aadhi bahar */
-  z-index: 10;
+  margin-bottom: 15px;
 }
 .profile-letter-avatar {
-  background: #095959;
+  background: rgba(255,255,255,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 60px;
   font-weight: bold;
-  color: white;
+}
+.profile-name-left {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+.profile-role-tag {
+  background: rgba(0,0,0,0.2);
+  padding: 4px 15px;
+  border-radius: 20px;
+  font-size: 12px;
   text-transform: uppercase;
+  letter-spacing: 1px;
 }
-.profile-body {
-  padding: 65px 25px 20px; /* Text ko image se niche dhakela */
-}
-.profile-name {
-  font-size: 22px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 2px;
-}
-.profile-role {
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 15px;
-}
-.info-box {
-  background: #f7f7f7;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 8px;
+
+.profile-right {
+  flex: 1;
+  padding: 40px;
   text-align: left;
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
 }
-.info-box strong {
+.section-title {
+  font-size: 20px;
   color: #095959;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+.info-item label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 3px;
+}
+.info-item span {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
 }
 .profile-btn {
-  margin-top: 10px;
-  width: 100%;
-  padding: 10px;
+  margin-top: auto;
+  padding: 12px;
   border: none;
   border-radius: 6px;
-  background: linear-gradient(135deg, #095959, #00a896);
+  background: #095959;
   color: white;
   font-size: 14px;
   cursor: pointer;
   transition: 0.3s;
 }
 .profile-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background: #00a896;
 }
+
 .modal {
   display: none;
   position: fixed;
@@ -117,6 +138,13 @@ html, body {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+.error-msg {
+    color: red;
+    font-size: 11px;
+    display: none;
+    margin-top: -8px;
+    margin-bottom: 10px;
 }
 </style>
 </head>
@@ -134,28 +162,58 @@ html, body {
 <div class="main-content">
 
   <div class="profile-card">
-    <div class="profile-header">
-      <h3 style="margin:0; padding-bottom: 10px;">My Profile</h3>
-      <% if (profilePic) { %>
-        <img src="/images/<%= profilePic %>" class="profile-img">
-      <% } else { %>
-        <div class="profile-letter-avatar">
-          <%= name.charAt(0) %>
-        </div>
-      <% } %>
+    <div class="profile-left">
+        <% if (profilePic) { %>
+            <img src="/images/<%= profilePic %>" class="profile-img">
+        <% } else { %>
+            <div class="profile-letter-avatar">
+                <%= name.charAt(0) %>
+            </div>
+        <% } %>
+        <div class="profile-name-left"><%= name %></div>
+        <div class="profile-role-tag"><%= role %></div>
     </div>
 
-    <div class="profile-body">
-      <div class="profile-name"><%= name %></div>
-      <div class="profile-role"><%= role %></div>
+    <div class="profile-right">
+        <div class="section-title">Information</div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Company</label>
+                <span><%= company || 'N/A' %></span>
+            </div>
+            <div class="info-item">
+                <label>Email Address</label>
+                <span><%= email %></span>
+            </div>
+            <div class="info-item">
+                <label>Phone Number</label>
+                <span><%= phone %></span>
+            </div>
 
-      <div class="info-box"><strong>Company:</strong> <%= company || 'N/A' %></div>
-      <div class="info-box"><strong>Email:</strong> <%= email %></div>
-      <div class="info-box"><strong>Phone:</strong> <%= phone %></div>
-      <div class="info-box"><strong>Account Type:</strong> <%= role %></div>
-      <div class="info-box"><strong>Status:</strong> Active</div>
+            <% if (session.role === 'admin') { %>
+                <div class="info-item">
+                    <label>Account Type</label>
+                    <span>Admin</span>
+                </div>
+            <% } else { %>
+                <div class="info-item">
+                    <label>Account Type</label>
+                    <span>User</span>
+                </div>
+                <div class="info-item">
+                    <label>Role</label>
+                    <span><%= userRoleName || 'N/A' %></span>
+                </div>
+            <% } %>
 
-      <button class="profile-btn" onclick="openEdit()">Edit Profile</button>
+            <div class="info-item">
+                <label>Account Status</label>
+                <span style="color: green;">● Active</span>
+            </div>
+        </div>
+
+        <button class="profile-btn" onclick="openEdit()">Edit Profile Information</button>
     </div>
   </div>
 
@@ -164,26 +222,27 @@ html, body {
 </div>
 
 <div class="modal" id="editModal">
-  <div style="width:400px; background:white; border-radius:10px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
-    <h3 style="margin-top:0;">Edit Profile</h3>
-    <form action="/profile/update-profile" method="POST" enctype="multipart/form-data">
+  <div style="width:400px; background:white; border-radius:10px; padding:25px; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
+    <h3 style="margin-top:0; color: #095959;">Edit Profile</h3>
+    <form id="editForm" action="/profile/update-profile" method="POST" enctype="multipart/form-data">
       <label style="font-size:12px; color:#666;">Full Name</label>
-      <input type="text" name="name" value="<%= name %>" placeholder="Name" required style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+      <input type="text" name="name" value="<%= name %>" placeholder="Name" required style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
 
-      <label style="font-size:12px; color:#666;">Phone Number</label>
-      <input type="text" name="phone" value="<%= phone %>" placeholder="Phone" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+      <label style="font-size:12px; color:#666;">Phone Number (10 digits)</label>
+      <input type="text" id="phoneInput" name="phone" value="<%= phone %>" placeholder="Phone" maxlength="10" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+      <div id="phoneError" class="error-msg">Please enter a valid 10-digit number.</div>
 
       <% if(r=="admin"){ %>
         <label style="font-size:12px; color:#666;">Company Name</label>
-        <input type="text" name="company" value="<%= company %>" placeholder="Company" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+        <input type="text" name="company" value="<%= company %>" placeholder="Company" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
       <% } %>
 
       <label style="font-size:12px; color:#666;">Profile Picture</label>
-      <input type="file" name="profile_pic" style="margin-bottom:15px; width:100%;" accept="image/*">
+      <input type="file" name="profile_pic" style="margin-bottom:20px; width:100%;" accept="image/*">
 
       <div style="display:flex; gap:10px;">
-        <button style="flex:1; background:#00a896; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer;">Save Changes</button>
-        <button type="button" onclick="closeEdit()" style="flex:1; background:#ddd; border:none; padding:10px; border-radius:4px; cursor:pointer;">Cancel</button>
+        <button type="submit" style="flex:1; background:#00a896; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer; font-weight: 600;">Save Changes</button>
+        <button type="button" onclick="closeEdit()" style="flex:1; background:#ddd; border:none; padding:12px; border-radius:4px; cursor:pointer; font-weight: 600;">Cancel</button>
       </div>
     </form>
   </div>
@@ -192,6 +251,26 @@ html, body {
 <script>
 function openEdit(){document.getElementById('editModal').style.display='flex';}
 function closeEdit(){document.getElementById('editModal').style.display='none';}
+
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    const phone = document.getElementById('phoneInput').value;
+    const error = document.getElementById('phoneError');
+    
+    // Only allow digits and check length
+    const phoneRegex = /^\d{10}$/;
+    
+    if(!phoneRegex.test(phone)) {
+        e.preventDefault();
+        error.style.display = 'block';
+    } else {
+        error.style.display = 'none';
+    }
+});
+
+// Force numeric input only
+document.getElementById('phoneInput').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
 </script>
 
 </body>

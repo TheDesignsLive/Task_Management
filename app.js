@@ -32,7 +32,7 @@ const SentMailRoutes = require('./routers/sent-mail.routes');
 const changePassword = require("./routers/change-password.routes");
 const updateTaskDate = require('./routers/update-task-date.routes');
 const allMemberTask=require('./routers/all-member-task.routes');
-const updatetask=require('./routers/update-task-details.routes');
+const updatetask=require('./routers/edit-task-details.routes');
 
 const deleteTaskRouter = require('./routers/delete-task.routes');
 
@@ -81,7 +81,7 @@ app.use('/', delete_role);
 
 // Tasks & Features
 app.use('/add-task', taskRoutes);
-app.use('/update-task-details',updatetask);
+app.use('/edit-task-details',updatetask);
 
 app.use('/tasks', deleteTaskRouter);
 

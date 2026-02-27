@@ -18,6 +18,7 @@ router.get('/notifications', async (req, res) => {
     let adminName = null;
     let adminId = req.session.adminId;
     let memberRequests = [];
+    let deletionRequests = []; // New array for deletion requests
     let roles = [];
     let announcements = [];
 
@@ -35,17 +36,30 @@ router.get('/notifications', async (req, res) => {
             members = mRows;
 
             if (req.session.role === "admin") {
+                // Fetch ADD member requests
                 const [reqRows] = await con.query(`
                     SELECT mr.*, r.role_name, u.name AS requested_by_name
                     FROM member_requests mr
                     JOIN roles r ON r.id = mr.role_id
                     JOIN users u ON u.id = mr.requested_by
-                    WHERE mr.admin_id=? AND mr.status='PENDING' ORDER BY mr.created_at DESC
+                    WHERE mr.admin_id=? AND mr.status='PENDING' AND mr.request_type='ADD' 
+                    ORDER BY mr.created_at DESC
                 `, [adminId]);
                 memberRequests = reqRows;
+
+                // Fetch DELETE member requests
+                const [delRows] = await con.query(`
+                    SELECT mr.*, r.role_name, u.name AS requested_by_name
+                    FROM member_requests mr
+                    JOIN roles r ON r.id = mr.role_id
+                    JOIN users u ON u.id = mr.requested_by
+                    WHERE mr.admin_id=? AND mr.status='PENDING' AND mr.request_type='DELETE' 
+                    ORDER BY mr.created_at DESC
+                `, [adminId]);
+                deletionRequests = delRows;
             }
 
-            // Fetch ALL Announcements with (Admin) tag for primary admin
+            // Fetch ALL Announcements
             const [annRows] = await con.query(`
                 SELECT a.*, 
                 IF(a.role_id = 0, 'All', r.role_name) AS target_role,
@@ -81,6 +95,7 @@ router.get('/notifications', async (req, res) => {
             members,
             adminName,
             memberRequests,
+            deletionRequests, // Passing to EJS
             roles,
             announcements,
             session: req.session
