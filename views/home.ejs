@@ -242,13 +242,14 @@
 
 
 /* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
-.flatpickr-calendar.open {
+/* ✅ Apply only to task calendar, NOT navbar */
+.flatpickr-calendar.task-calendar.open {
   position: fixed !important;
-  top: 190px !important;              /* 🔥 change this to move up/down */
+  top: 190px !important;
   left: 60% !important;
-     right: 20px !important; 
+  right: 20px !important;
   transform: translateX(-50%) !important;
-  bottom: auto !important;           /* 🔥 VERY IMPORTANT */
+  bottom: auto !important;
 }
 
 
@@ -518,7 +519,7 @@ if (due_date === "") {
         return;
       }
 
-      // Skip parsing JSON (simpler)
+      
       window.location.reload();
 
     } catch (error) {
