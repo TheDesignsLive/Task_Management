@@ -20,7 +20,8 @@ router.post('/update-task-status', async (req, res) => {
             `UPDATE tasks SET status = ?, section = ? WHERE id = ?`,
             [status, section, id]
         );
-
+  // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_tasks');
         //  Send back updated status and section so frontend can update tasks array
         res.json({ success: true, status, section });
     } catch (err) {
