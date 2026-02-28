@@ -71,7 +71,8 @@ router.post('/', async (req, res) => {
         who_assigned
       ]
     );
-
+         // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_tasks');
     // Return simple success
     res.send("success");
   } catch (err) {
