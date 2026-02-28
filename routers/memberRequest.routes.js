@@ -56,12 +56,15 @@ router.get('/approve-member/:id', async (req, res) => {
             "UPDATE member_requests SET status='APPROVED' WHERE id=?",
             [requestId]
         );
-
+         // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
         //  DELETE REQUEST AFTER APPROVE
         await con.query(
             "DELETE FROM member_requests WHERE id=?",
             [requestId]
         );
+                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
 
         return res.redirect('/notifications');
 
@@ -88,12 +91,16 @@ router.get('/reject-member/:id', async (req, res) => {
             "UPDATE member_requests SET status='REJECTED' WHERE id=?",
             [requestId]
         );
+                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
 
         //  DELETE REQUEST AFTER REJECT
         await con.query(
             "DELETE FROM member_requests WHERE id=?",
             [requestId]
         );
+                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
 
         return res.redirect('/notifications');
 
@@ -123,9 +130,13 @@ router.get('/confirm-deletion/:id', async (req, res) => {
 
             // 2. Delete the actual user from the users table
             await con.query("DELETE FROM users WHERE email=?", [userEmail]);
+                     // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
 
             // 3. Delete the request from member_requests table
             await con.query("DELETE FROM member_requests WHERE id=?", [requestId]);
+                     // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
         }
 
         return res.redirect('/notifications');
@@ -147,6 +158,9 @@ router.get('/reject-deletion/:id', async (req, res) => {
         // To reject a deletion request, we simply remove the request from the list.
         // This keeps the member safely in the users table.
         await con.query("DELETE FROM member_requests WHERE id=?", [requestId]);
+
+                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
 
         return res.redirect('/notifications');
     } catch (err) {
