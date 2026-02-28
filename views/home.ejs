@@ -783,5 +783,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
   attachDateEvents(); 
 });
 </script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('update_tasks', () => {
+        window.location.reload(); 
+    });
+</script>
+
 </body>
 </html>
