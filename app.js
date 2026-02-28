@@ -35,6 +35,11 @@ const allMemberTask=require('./routers/all-member-task.routes');
 const updatetask=require('./routers/edit-task-details.routes');
 
 const deleteTaskRouter = require('./routers/delete-task.routes');
+const deleteCompletedTasksRouter = require('./routers/delete-completed-task.routes');
+
+// … after all other app.use() …
+app.use('/', deleteCompletedTasksRouter);
+
 
 
 // ================= MIDDLEWARES =================
@@ -91,6 +96,7 @@ app.use('/profile', profile);
 app.use('/settings', settings);
 app.use('/', updateTaskDate);
 app.use('/',allMemberTask);
+app.use('/api', deleteCompletedTasksRouter);
 
 // Forgot Password Workflow
 app.get("/forgot-password", (req, res) => {

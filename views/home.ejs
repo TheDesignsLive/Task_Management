@@ -81,16 +81,34 @@
   }
 
   /* ===== COMPLETED SECTION ===== */
-  .completed-header {
+.completed-header {
     margin-left: 10px;
     margin-right: 10px;
     border-radius: 100px;
     background-color: #0F8989;
-    padding: 8px 20px;
-    font-weight: bold;
-    color: white;
+    padding: 10px 15px;
+    font-weight: 600;
+    font-family: Arial, sans-serif;
     font-size: 14px;
-  }
+
+    display: flex;                  /* Keep text and icon on same line */
+    align-items: center;            /* Vertically center */
+    justify-content: space-between; /* Push icon to the right */
+
+    color: white; /* Text color */
+}
+
+/* Dustbin icon */
+#delete-completed {
+    cursor: pointer;
+    transition: transform 0.2s, fill 0.2s;
+    fill: #e74c3c; /* Red color for dustbin */
+}
+
+#delete-completed:hover {
+    transform: scale(1.2);   /* Slight enlarge on hover */
+    fill: #c0392b;           /* Darker red on hover */
+}
 
   .completed-section {
     height: 150px;
@@ -310,6 +328,8 @@
 }
 
 
+
+
 </style>
 </head>
 
@@ -340,7 +360,12 @@
         <div class="task-box task-other" id="other-section"></div>
       </div>
 
-      <div class="completed-header">Completed Tasks</div>
+<div class="completed-header">
+  Completed Tasks
+  <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20" style="cursor:pointer; margin-left:auto;">
+    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+  </svg>
+</div>
       <div class="completed-section" id="completed-section"></div>
     </div>
   </div>
@@ -708,6 +733,31 @@ onOpen: function(selectedDates, dateStr, instance) {
     currentTaskDiv = null;
   }
 });
+
+// Delete all completed task
+document.getElementById('delete-completed').addEventListener('click', async () => {
+  if(!confirm("Are you sure you want to delete all completed tasks?")) return;
+
+  try {
+    const res = await fetch('/api/delete-completed-tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
+    });
+
+    const data = await res.json();
+    if(data.success){
+      alert(data.message);
+      window.location.reload();
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Server error while deleting tasks");
+  }
+});
+//
 
 // Attach date picker to task-date
 function attachDateEvents() {
