@@ -15,6 +15,8 @@ router.post('/update-task-date', (req, res) => {
             console.log(err);
             return res.json({ success: false });
         }
+          // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_tasks');
         res.json({ success: true });
     });
 });
