@@ -216,6 +216,8 @@ router.post('/update-task-status', async (req, res) => {
     const { id, status } = req.body;
     try {
         await con.query("UPDATE tasks SET status=? WHERE id=?", [status, id]);
+            // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_tasks');
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -230,6 +232,8 @@ router.post('/update-task-section', async (req, res) => {
     const { id, section } = req.body;
     try {
         await con.query("UPDATE tasks SET section=? WHERE id=?", [section, id]);
+                // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_tasks');
         res.json({ success: true });
     } catch (err) {
         console.error(err);
