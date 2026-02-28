@@ -128,4 +128,40 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
     }
 });
 
+// POST ROUTE: EDIT ANNOUNCEMENT
+router.post('/edit-announcement/:id', upload.single('attachment'), async (req, res) => {
+    try {
+        const { title, description, role_id } = req.body;
+        const announcementId = req.params.id;
+        let query = "UPDATE announcements SET title=?, description=?, role_id=? WHERE id=?";
+        let params = [title, description, role_id, announcementId];
+
+        if (req.file) {
+            query = "UPDATE announcements SET title=?, description=?, role_id=?, attachment=? WHERE id=?";
+            params = [title, description, role_id, req.file.filename, announcementId];
+        }
+
+        await con.query(query, params);
+        res.redirect('/notifications');
+    } catch (err) {
+        console.error(err);
+        res.send("Error updating announcement");
+    }
+});
+
+// GET ROUTE: DELETE ANNOUNCEMENT
+router.get('/delete-announcement/:id', async (req, res) => {
+    try {
+        if (req.session.role === 'admin' || req.session.control_type === 'ADMIN') {
+            await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
+            res.redirect('/notifications');
+        } else {
+            res.send("Unauthorized to delete announcements");
+        }
+    } catch (err) {
+        console.error(err);
+        res.send("Error deleting announcement");
+    }
+});
+
 module.exports = router;

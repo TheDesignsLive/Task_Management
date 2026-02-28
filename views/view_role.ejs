@@ -3,90 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <title>Roles</title>
 
 <style>
-/* ===== Body ===== */
+/* ===== Body - Matching Theme ===== */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background-color: #3C3A3A;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== Layout ===== */
 .layout {
   display: flex;
-  min-height: calc(100vh - 60px);
+  flex: 1;
+  overflow: hidden;
 }
 
 .sidebar-container {
   width: 55px;
+  background: #095959;
+  height: 100%;
 }
 
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  background-color: #f4f4f4;
+  padding: 20px;
+  background: #3C3A3A;
+  overflow-y: auto;
+  height: 100%;
 }
+
+/* Custom Scrollbar */
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: #2E2D2D; }
+.main-content::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 
 /* ===== Sub Header ===== */
 .sub-header {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  margin-left: 26px;
-  margin-right: 70px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 50px;
 }
 
 .sub-header input[type="text"] {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
+  padding: 10px 20px;
+  border: none;
   border-radius: 100px;
+  background: white;
+  color: #333;
+  width: 300px;
+  outline: none;
 }
 
-.sub-header button {
-  padding: 13px 18px;
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  padding: 8px 18px;
   border: none;
   cursor: pointer;
-  background-color: #209595;
+  background-color: #0F8989;
   color: white;
   border-radius: 100px;
   font-weight: bold;
-  margin-top: 30px;
+  font-size: 13px;
+  transition: background 0.3s;
 }
 
-/* ===== Table ===== */
+.header-buttons button:hover { background-color: #12a3a3; }
+
+/* ===== Table - Dark Theme ===== */
+.table-container {
+  background-color: rgba(255,255,255,0.05); /* Darker container */
+  padding: 20px;
+  border-radius: 8px;
+  margin: 0 50px;
+}
+
 table {
-  margin-left: 50px;
-  width: 90%;
+  width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-  background-color: white;
-}
-
-table th, table td {
-  padding: 10px;
-  border: 1px solid #ccc;
-  text-align: center;
+  color: white; /* White text for dark theme */
 }
 
 table th {
   background-color: #CDF4F4;
+  color: #095959;
+  text-align: center;
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+}
+
+table tr:hover td {
+  background-color: rgba(255,255,255,0.02);
 }
 
 .no-records {
-  margin-top: 20px;
   text-align: center;
-  color: #555;
-}
-
-#searchRole {
-  margin-top: 30px;
-  max-width: 400px;
-  margin-left: 30px;
+  color: #888;
+  padding: 40px;
 }
 
 /* ===== Dialog Overlay ===== */
@@ -96,14 +129,14 @@ table th {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 1000;
 }
 
-/* ===== Dialog Box ===== */
+/* ===== Dialog Box (Untouched structure) ===== */
 .dialog-box {
   background: #fff;
   width: 380px;
@@ -112,7 +145,6 @@ table th {
   position: relative;
 }
 
-/* Inputs */
 .dialog-box input,
 .dialog-box select {
   width: 100%;
@@ -120,9 +152,9 @@ table th {
   margin-bottom: 12px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  box-sizing: border-box;
 }
 
-/* Button */
 .dialog-box button {
   width: 100%;
   padding: 10px;
@@ -131,9 +163,9 @@ table th {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-weight: bold;
 }
 
-/* Close Button */
 .close-btn {
   position: absolute;
   top: 6px;
@@ -141,28 +173,65 @@ table th {
   font-size: 20px;
   cursor: pointer;
   font-weight: bold;
+  color: #999;
 }
-
-.close-btn:hover {
-  color: red;
-}
+.close-btn:hover { color: red; }
 
 /* ===== Action Icons ===== */
 .actions-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 }
 
 .action-icon {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  color: #aaa;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+.edit-icon:hover { color: #f1c40f; }
+.delete-icon:hover { color: #ff4d4d; }
+
+/* ===== Confirmation Modal Style (Same as Member Page) ===== */
+.confirm-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 380px;
+  text-align: center;
+  color: #333;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
 }
 
-.edit-icon svg { fill: #FFD000; }
-.delete-icon svg { fill: #ed1e1e; }
+.modal-buttons { 
+  margin-top: 25px; 
+  display: flex; 
+  justify-content: center; 
+  gap: 15px; 
+}
+
+.btn { 
+  flex: 1; 
+  height: 44px;
+  border: none; 
+  cursor: pointer; 
+  border-radius: 8px; 
+  font-size: 15px; 
+  font-weight: bold; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  transition: 0.2s;
+  box-sizing: border-box;
+}
+.btn-danger { background-color: #e74c3c; color: #fff; }
+.btn-danger:hover { background-color: #c0392b; }
+.btn-cancel { background-color: #f1f1f1; color: #333; }
+.btn-cancel:hover { background-color: #e2e2e2; }
 
 </style>
 </head>
@@ -175,66 +244,62 @@ table th {
 
   <div class="sidebar-container">
     <%- include('sidebar') %>
-</div>
+  </div>
 
   <div class="main-content">
 
     <div class="sub-header">
       <input type="text" placeholder="Search role..." id="searchRole">
-
-      <button onclick="openCategoryDialog()">Add Role</button>
-      <button onclick="location.href='/view_member'">Members Panel</button>
+      <div class="header-buttons">
+        <button onclick="openCategoryDialog()">Add Role</button>
+        <button onclick="location.href='/view_member'">Members Panel</button>
+      </div>
     </div>
 
-    <% if (roles && roles.length > 0) { %>
+    <div class="table-container">
+      <% if (roles && roles.length > 0) { %>
+        <table id="rolesTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Role Name</th>
+              <th>Control Type</th>
+              <th>Created</th>
+              <th>Actions</th> </tr>
+          </thead>
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Role Name</th>
-            <th>Control Type</th>
-            <th>Created</th>
-            <th>Actions</th> </tr>
-        </thead>
+          <tbody>
+           <% roles.forEach((r, index) => { %>
+            <tr class="role-row">
+               <td><%= index + 1 %></td>
+              <td class="role-name"><%= r.role_name %></td>
+              <td><%= r.control_type %></td>
+            <td><%= new Date(r.created_at).toLocaleDateString() %></td>
 
-        <tbody>
-         <% roles.forEach((r, index) => { %>
-          <tr>
-             <td><%= index + 1 %></td>
-            <td><%= r.role_name %></td>
-            <td><%= r.control_type %></td>
-          <td><%= new Date(r.created_at).toLocaleDateString() %></td>
+              <td>
+                <div class="actions-container">
 
+                  <a href="javascript:void(0)" 
+                     onclick="openEditDialog('<%= r.id %>','<%= r.role_name %>','<%= r.control_type %>')" 
+                     class="action-icon edit-icon">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </a>
 
-            <td>
-              <div class="actions-container">
+                  <a href="javascript:void(0)" onclick="openDeletePopup('<%= r.id %>', '<%= r.role_name %>')" class="action-icon delete-icon">
+                    <i class="fa-solid fa-trash"></i>
+                  </a>
 
-                <a href="javascript:void(0)" 
-   onclick="openEditDialog('<%= r.id %>','<%= r.role_name %>','<%= r.control_type %>')" 
-   class="action-icon edit-icon">
-                  <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/>
-                  </svg>
-                </a>
+                </div>
+              </td>
 
-                <a href="/delete-role/<%= r.id %>" class="action-icon delete-icon">
-                  <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                  </svg>
-                </a>
-
-              </div>
-            </td>
-
-          </tr>
-          <% }) %>
-        </tbody>
-      </table>
-
-    <% } else { %>
-      <div class="no-records">No roles found</div>
-    <% } %>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="no-records">No roles found</div>
+      <% } %>
+    </div>
 
   </div>
 </div>
@@ -242,12 +307,12 @@ table th {
 <div class="dialog-overlay" id="categoryDialog">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeCategoryDialog()">✖</span>
-
+    <h3 style="margin-top:0; text-align: center;">Add Role</h3>
     <form action="/add-role" method="POST">
-
       <label>Role Name</label>
       <input type="text" name="role_name" placeholder="Enter role name" required>
 
+      <label>Control Type</label>
       <select name="control_type" required>
         <option value="">Select Control Type</option>
         <option value="ADMIN">ADMIN</option>
@@ -259,15 +324,16 @@ table th {
     </form>
   </div>
 </div>
+
 <div class="dialog-overlay" id="editRoleDialog">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeEditDialog()">✖</span>
-
+    <h3 style="margin-top:0; text-align: center;">Edit Role</h3>
     <form  id="editRoleForm" method="POST">
-
       <label>Role Name</label>
       <input type="text" name="role_name" id="edit_role_name"  required>
 
+      <label>Control Type</label>
       <select name="control_type" id="edit_control_type" required>
         <option value="ADMIN">ADMIN</option>
         <option value="PARTIAL">PARTIAL</option>
@@ -279,8 +345,30 @@ table th {
   </div>
 </div>
 
+<div class="dialog-overlay" id="deleteModal">
+  <div class="confirm-modal-content">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: #e74c3c; margin-bottom: 10px;"></i>
+    <h3 style="margin-top:0;">Are you sure?</h3>
+    <p id="deleteMessage"></p>
+    <div class="modal-buttons">
+        <button id="confirmDeleteBtn" class="btn btn-danger">Yes</button>
+        <button onclick="closeDeletePopup()" class="btn btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script>
+// Search Logic: StartsWith fix
+document.getElementById('searchRole').addEventListener('input', function() {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll('.role-row');
+  rows.forEach(row => {
+    const nameText = row.querySelector('.role-name').textContent.trim().toLowerCase();
+    // Use startsWith instead of includes to fix the "a" showing "Manager" issue
+    row.style.display = nameText.startsWith(filter) ? "" : "none";
+  });
+});
+
 function openCategoryDialog() {
   document.getElementById("categoryDialog").style.display = "flex";
 }
@@ -290,10 +378,8 @@ function closeCategoryDialog() {
 
 function openEditDialog(id, name, control) {
   document.getElementById("editRoleDialog").style.display = "flex";
-
   document.getElementById("edit_role_name").value = name;
   document.getElementById("edit_control_type").value = control;
-
   document.getElementById("editRoleForm").action = "/edit-role/" + id;
 }
 
@@ -301,6 +387,28 @@ function closeEditDialog() {
   document.getElementById("editRoleDialog").style.display = "none";
 }
 
+// Delete Logic
+let deleteTargetId = null;
+function openDeletePopup(id, name) {
+  deleteTargetId = id;
+  document.getElementById("deleteMessage").innerText = `Permanently delete the role "${name}"?`;
+  document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeletePopup() {
+  document.getElementById("deleteModal").style.display = "none";
+}
+
+document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+  if (deleteTargetId) location.href = "/delete-role/" + deleteTargetId;
+});
+
+// Close dialogs on overlay click
+window.onclick = function(event) {
+  if (event.target.className === 'dialog-overlay') {
+    event.target.style.display = "none";
+  }
+}
 </script>
 
 </body>
