@@ -27,6 +27,8 @@ router.post("/edit-role/:id", async (req, res) => {
         `;
 
        await con.query(sql, [role_name, control_type, roleId]);
+             // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_roles');
 
         res.send(`
             <script>
