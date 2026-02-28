@@ -275,5 +275,13 @@ document.getElementById('phoneInput').addEventListener('input', function(e) {
 });
 </script>
 
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('update_profiles', () => {
+        window.location.reload(); 
+    });
+</script>
+
 </body>
 </html>
