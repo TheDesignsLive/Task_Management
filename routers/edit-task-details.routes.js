@@ -20,6 +20,8 @@ router.post('/', async (req, res) => {
         `;
 
         await db.execute(sql, [title, finalDesc, priority.toUpperCase(), due_date, id]);
+             // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_tasks');
 
         res.json({ success: true });
     } catch (err) {
