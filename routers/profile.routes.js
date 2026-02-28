@@ -112,6 +112,8 @@ router.post('/update-profile', upload.single('profile_pic'), async (req, res) =>
                 await con.query("UPDATE users SET name=?,phone=? WHERE id=?", [name, phone, req.session.userId]);
             }
         }
+                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_profiles');
         res.redirect('/profile');
     } catch (err) {
         console.error(err);
