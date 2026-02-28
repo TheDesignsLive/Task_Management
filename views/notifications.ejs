@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notifications</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
 body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
@@ -66,7 +67,26 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 .announcement-card {
     border-left: 5px solid #095959; background: #fff; padding: 15px;
     margin-top: 10px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;
 }
+
+.card-actions {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #888;
+}
+.icon-btn:hover { color: #333; }
+.delete-icon:hover { color: #e74c3c; }
 
 /* Member Request Box Style */
 .request-card {
@@ -120,7 +140,18 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
             <% if (announcements.length > 0) { %>
                 <% announcements.forEach(a => { %>
                     <div class="announcement-card">
-                        <h3 style="margin:0;"><%= a.title %></h3>
+                        <% if (session.role === 'admin' || session.control_type === 'ADMIN') { %>
+                        <div class="card-actions">
+                            <button class="icon-btn" onclick="openEditAnnounce('<%= a.id %>', '<%= a.title %>', `<%= a.description %>`, '<%= a.role_id %>')">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="icon-btn delete-icon" onclick="confirmDeleteAnnounce('<%= a.id %>')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <% } %>
+
+                        <h3 style="margin:0; padding-right: 60px;"><%= a.title %></h3>
                         <p style="color:#666; font-size: 12px; margin-top: 5px;">
                           By: <strong><%= a.added_by_name %></strong> | 
                           To: <strong><%= a.target_role || (a.role_id == 0 ? 'All' : 'Your Role') %></strong> |
@@ -238,9 +269,65 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
     </div>
 </div>
 
+<div class="modal" id="editAnnounceModal">
+    <div class="modal-content">
+        <h3>Edit Announcement</h3>
+        <form id="editForm" method="POST" enctype="multipart/form-data">
+            <label>Title</label>
+            <input type="text" name="title" id="edit_title" required>
+            
+            <label>Description</label>
+            <textarea name="description" id="edit_description"></textarea>
+            
+            <label>Target Role</label>
+            <select name="role_id" id="edit_role_id" required>
+                <option value="0">All</option> 
+                <% roles.forEach(role => { %>
+                    <option value="<%= role.id %>"><%= role.role_name %></option>
+                <% }) %>
+            </select>
+            
+            <label>Change Attachment (Keep empty to retain old)</label>
+            <input type="file" name="attachment">
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" class="action-btn accept-btn" style="flex:1;">Update</button>
+                <button type="button" class="action-btn reject-btn" style="flex:1;" onclick="closeEditAnnounce()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="deleteAnnounceModal">
+    <div class="modal-content" style="text-align: center;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: #e74c3c;"></i>
+        <h3 style="margin-top: 10px;">Are you sure?</h3>
+        <p>This announcement will be permanently deleted.</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <a id="confirmDeleteBtn" class="action-btn reject-btn" style="flex:1; text-decoration: none; text-align: center; line-height: 24px;">Delete</a>
+            <button type="button" class="action-btn accept-btn" style="flex:1;" onclick="closeDeleteAnnounce()">No, Keep it</button>
+        </div>
+    </div>
+</div>
+
 <script>
 function openAnnounce() { document.getElementById('announceModal').style.display='flex'; }
 function closeAnnounce() { document.getElementById('announceModal').style.display='none'; }
+
+function openEditAnnounce(id, title, desc, roleId) {
+    document.getElementById('editForm').action = '/edit-announcement/' + id;
+    document.getElementById('edit_title').value = title;
+    document.getElementById('edit_description').value = desc;
+    document.getElementById('edit_role_id').value = roleId;
+    document.getElementById('editAnnounceModal').style.display = 'flex';
+}
+function closeEditAnnounce() { document.getElementById('editAnnounceModal').style.display = 'none'; }
+
+function confirmDeleteAnnounce(id) {
+    document.getElementById('confirmDeleteBtn').href = '/delete-announcement/' + id;
+    document.getElementById('deleteAnnounceModal').style.display = 'flex';
+}
+function closeDeleteAnnounce() { document.getElementById('deleteAnnounceModal').style.display = 'none'; }
 </script>
 
 </body>
