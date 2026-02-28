@@ -31,6 +31,8 @@ router.get('/delete-role/:id', async (req, res) => {
 }
     // DELETE ROLE
     await con.execute("DELETE FROM roles WHERE id = ?", [roleId]);
+         // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_roles');
 
     res.redirect('/view-roles');
 
