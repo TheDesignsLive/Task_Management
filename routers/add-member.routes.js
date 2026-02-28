@@ -64,7 +64,7 @@ router.post('/', (req, res) => {
                 );
 
                 // 🔴 AUTO REFRESH FOR ALL USERS
-                req.io.emit('update_notifications');
+                req.io.emit('update_members');
                  return res.send("<script>alert('Request successfully sent'); window.location=document.referrer;</script>");
             }
             res.redirect('/view_member');
