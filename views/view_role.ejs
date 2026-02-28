@@ -411,5 +411,13 @@ window.onclick = function(event) {
 }
 </script>
 
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('update_roles', () => {
+        window.location.reload(); 
+    });
+</script>
+
 </body>
 </html>
