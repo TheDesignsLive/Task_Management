@@ -121,6 +121,7 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             "INSERT INTO announcements (admin_id, added_by, who_added, role_id, title, description, attachment) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [adminId, addedBy, whoAdded, role_id, title, description, attachment]
         );
+        req.io.emit('update_notifications');
         res.redirect('/notifications');
     } catch (err) {
         console.error(err);
@@ -142,6 +143,7 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
         }
 
         await con.query(query, params);
+        req.io.emit('update_notifications');
         res.redirect('/notifications');
     } catch (err) {
         console.error(err);
@@ -154,6 +156,7 @@ router.get('/delete-announcement/:id', async (req, res) => {
     try {
         if (req.session.role === 'admin' || req.session.control_type === 'ADMIN') {
             await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
+            req.io.emit('update_notifications');
             res.redirect('/notifications');
         } else {
             res.send("Unauthorized to delete announcements");

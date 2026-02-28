@@ -37,6 +37,8 @@ router.post('/update-task-details', (req, res) => {
     [title, description, priority, due_date || null, id],
     (err) => {
       if (err) return res.status(500).json({ success: false });
+        // 🔴 AUTO REFRESH (TASK DETAILS UPDATED)
+      req.io.emit('update_tasks');
       res.json({ success: true });
     }
   );
@@ -53,6 +55,8 @@ router.post('/update-task-date', (req, res) => {
     [due_date || null, id],
     (err) => {
       if (err) return res.status(500).json({ success: false });
+        // 🔴 AUTO REFRESH (TASK DETAILS UPDATED)
+      req.io.emit('update_tasks');
       res.json({ success: true });
     }
   );
@@ -71,6 +75,8 @@ router.post('/update-task-status', (req, res) => {
     [status, section, id],
     (err) => {
       if (err) return res.status(500).json({ success: false });
+        // 🔴 AUTO REFRESH (TASK DETAILS UPDATED)
+      req.io.emit('update_tasks');
       res.json({ success: true });
     }
   );
@@ -87,6 +93,8 @@ router.post('/update-task-section', (req, res) => {
     [section, id],
     (err) => {
       if (err) return res.status(500).json({ success: false });
+        // 🔴 AUTO REFRESH (TASK DETAILS UPDATED)
+      req.io.emit('update_tasks');
       res.json({ success: true });
     }
   );

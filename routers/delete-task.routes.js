@@ -13,7 +13,8 @@ router.post('/delete-task/:id', (req, res) => {
       console.error(err);
       return res.status(500).json({ success: false });
     }
-
+          // 🔴 AUTO REFRESH FOR ALL USERS (TASK DELETED)
+    req.io.emit('update_tasks');
     return res.status(200).json({ success: true });
   });
 });

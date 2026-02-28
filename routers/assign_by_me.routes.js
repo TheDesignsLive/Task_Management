@@ -99,6 +99,9 @@ router.post('/update-assignee', async (req, res) => {
             "UPDATE tasks SET assigned_to = ? WHERE id = ?",
             [newAssigneeId, taskId]
         );
+            // 🔴 AUTO REFRESH FOR ALL USERS (TASK UPDATED)
+        req.io.emit('update_tasks');
+
         res.json({ success: true });
     } catch (err) {
         console.error(err);

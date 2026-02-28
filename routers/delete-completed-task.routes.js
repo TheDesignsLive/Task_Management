@@ -1,37 +1,4 @@
-// // routes/deleteCompletedTasks.js
-// const express = require('express');
-// const router = express.Router();
-// const db = require('../config/db'); // use promise pool
 
-// router.post('/delete-completed-tasks', async (req, res) => {
-//   try {
-//     const { adminId } = req.body;
-
-//     if (!adminId) {
-//       return res.status(400).json({ success: false, message: 'Admin ID is required' });
-//     }
-
-//     const [result] = await db.query(
-//       "DELETE FROM tasks WHERE admin_id = ? AND assigned_to=0 AND status = 'COMPLETED'",
-//       [adminId]
-//     );
-
-//     console.log("Delete result:", result);
-
-//     return res.json({
-//       success: result.affectedRows > 0,
-//       message: result.affectedRows > 0
-//         ? 'Completed tasks deleted successfully'
-//         : 'No completed tasks found to delete'
-//     });
-
-//   } catch (err) {
-//     console.error('Error deleting completed tasks:', err);
-//     return res.status(500).json({ success: false, message: 'Server error', error: err.message });
-//   }
-// });
-
-// module.exports = router;
 
 // routes/deleteCompletedTasks.js
 const express = require('express');
@@ -66,7 +33,15 @@ router.post('/delete-completed-tasks', async (req, res) => {
 
     const [result] = await db.query(query, params);
 
+
+
     console.log("Delete result:", result);
+
+
+    // 🔴 AUTO REFRESH FOR ALL USERS (COMPLETED TASKS DELETED)
+    if (result.affectedRows > 0) {
+      req.io.emit('update_tasks');
+    }
 
     return res.json({
       success: result.affectedRows > 0,

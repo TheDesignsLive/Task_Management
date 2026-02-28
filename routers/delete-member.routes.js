@@ -12,6 +12,8 @@ router.get('/delete-member/:id', async (req, res) => {
         if (req.session.role === 'admin') {
             // ADMIN: Direct deletion
             await con.execute('DELETE FROM users WHERE id = ?', [memberId]);
+              // 🔴 AUTO REFRESH MEMBER LIST
+            req.io.emit('update_members');
             res.send(`
                 <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; font-family: Arial, sans-serif;">
                     <div style="background: white; width: 380px; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.25);">
@@ -52,6 +54,8 @@ router.get('/delete-member/:id', async (req, res) => {
                     member.profile_pic
                 ]
             );
+             // 🔴 AUTO REFRESH MEMBER LIST
+            req.io.emit('update_members');
             res.send(`
                 <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; font-family: Arial, sans-serif;">
                     <div style="background: white; width: 380px; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.25);">

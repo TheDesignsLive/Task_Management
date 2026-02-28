@@ -51,12 +51,20 @@ router.post('/', (req, res) => {
                     "INSERT INTO users (admin_id, role_id, name, email, phone, password, profile_pic, created_by, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', NOW())",
                     [admin_id, role_id, name, email, phone, hashedPassword, profile_pic, admin_id]
                 );
+
+                                // 🔴 AUTO REFRESH FOR ALL USERS
+                req.io.emit('update_members');
+
+
                  return res.send("<script>alert('Member successfully added'); window.location=document.referrer;</script>");
             } else {
                 await con.execute(
                     "INSERT INTO member_requests (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, created_by, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())",
                     [admin_id, role_id, req.session.userId, name, email, phone, hashedPassword, profile_pic, req.session.role]
                 );
+
+                // 🔴 AUTO REFRESH FOR ALL USERS
+                req.io.emit('update_notifications');
                  return res.send("<script>alert('Request successfully sent'); window.location=document.referrer;</script>");
             }
             res.redirect('/view_member');

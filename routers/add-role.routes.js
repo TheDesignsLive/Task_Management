@@ -16,6 +16,9 @@ router.post('/', async (req, res) => {
       [adminId, role_name, control_type]
     );
 
+        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_roles');
+
     res.redirect('/view-roles'); // back to pages
 
   } catch (err) {

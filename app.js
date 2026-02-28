@@ -3,9 +3,12 @@ const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
 const con = require('./config/db');
+const http = require('http'); // Required for Socket.io
+const socketIo = require('socket.io'); // Required for Socket.io
 
 const app = express();
-//const PORT = 3000;
+const server = http.createServer(app); // Create HTTP server
+const io = socketIo(server); // Initialize Socket.io
 
 // ================= ROUTES IMPORT =================
 const authRoutes = require('./routers/auth.routes');
@@ -37,11 +40,6 @@ const updatetask=require('./routers/edit-task-details.routes');
 const deleteTaskRouter = require('./routers/delete-task.routes');
 const deleteCompletedTasksRouter = require('./routers/delete-completed-task.routes');
 
-// … after all other app.use() …
-app.use('/', deleteCompletedTasksRouter);
-
-
-
 // ================= MIDDLEWARES =================
 app.use(cors());
 app.use(express.json());
@@ -51,6 +49,12 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
+
+// SOCKET.IO MIDDLEWARE: This makes 'req.io' available in all your routers
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
 
 // ================= EJS & STATIC FILES =================
 app.set('view engine', 'ejs');
@@ -75,9 +79,6 @@ app.use('/', delete_member);
 app.use('/', suspendmember);
 app.use('/', memberRequest);
 
-
-
-
 // Roles Management
 app.use('/view-roles', viewrole);
 app.use('/add-role', addrole);
@@ -87,9 +88,7 @@ app.use('/', delete_role);
 // Tasks & Features
 app.use('/add-task', taskRoutes);
 app.use('/edit-task-details',updatetask);
-
 app.use('/tasks', deleteTaskRouter);
-
 app.use('/assign_by_me', AssignByMe);
 app.use('/', notification);
 app.use('/profile', profile);
@@ -97,6 +96,7 @@ app.use('/settings', settings);
 app.use('/', updateTaskDate);
 app.use('/',allMemberTask);
 app.use('/api', deleteCompletedTasksRouter);
+app.use('/', deleteCompletedTasksRouter);
 
 // Forgot Password Workflow
 app.get("/forgot-password", (req, res) => {
@@ -112,6 +112,6 @@ app.get('/reset-password', (req, res) => {
 
 // ================= START SERVER =================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+server.listen(PORT, () => { // Changed app.listen to server.listen
+    console.log("Server running on port " + PORT);
 });
