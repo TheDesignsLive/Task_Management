@@ -48,6 +48,8 @@ router.post('/edit-member/:id', (req, res) => {
             }
 
             await con.query(sql, values);
+                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
             res.send("<script>window.location='/view_member';</script>");
         } catch (dbErr) {
             console.log(dbErr);
