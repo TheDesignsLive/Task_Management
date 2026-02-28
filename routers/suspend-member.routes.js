@@ -34,7 +34,8 @@ router.get('/suspend-member/:id', async (req, res) => {
             "UPDATE users SET status = ? WHERE id = ?",
             [newStatus, userId]
         );
-
+         // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    req.io.emit('update_members');
         // 4. Redirect back
         res.redirect('/view_member');
 
