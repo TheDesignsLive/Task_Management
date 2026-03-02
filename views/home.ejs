@@ -568,7 +568,7 @@ div.addEventListener('dblclick', () => {
     dateInput._flatpickr.destroy();
   }
 
-  // ✅ Get date from database (already in task object)
+  //  Get date from database (already in task object)
   let dbDate = task.due_date;
 
   // If date exists, set it
@@ -673,7 +673,7 @@ function isPastDate(dateStr) {
   return taskDate < today;
 }
 
-// ✅ INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
+//  INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
 function initSections() {
   const sections = {
     'TASK': document.getElementById('task-section'),
@@ -709,7 +709,7 @@ function initSections() {
     }
   });
 
-  // ✅ Sort dates ascending (YYYY-MM-DD auto sorts correctly)
+  //  Sort dates ascending (YYYY-MM-DD auto sorts correctly)
   const sortedDates = Object.keys(taskGroups).sort();
 
   sortedDates.forEach(dateStr => {
@@ -766,7 +766,7 @@ function createSeparator() {
   hr.style.opacity = '0.5';
   return hr;
 }
-// ✅ PRIORITY SORT FUNCTION
+//  PRIORITY SORT FUNCTION
 function sortByPriority(tasks) {
   const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
   return tasks.sort((a, b) => {
@@ -776,7 +776,7 @@ function sortByPriority(tasks) {
   });
 }
 
-// ✅ HIDDEN INPUT FOR FLATPICKR CENTER TOP
+//  HIDDEN INPUT FOR FLATPICKR CENTER TOP
 const hiddenInput = document.createElement('input');
 hiddenInput.type = 'text';
 hiddenInput.className = 'task-date-picker';
@@ -830,7 +830,7 @@ document.getElementById('delete-completed').addEventListener('click', async () =
     const res = await fetch('/api/delete-completed-tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
+      body: JSON.stringify({ adminId: <%= session.adminId %> }) //  EJS will render the adminId
     });
 
     const data = await res.json();
