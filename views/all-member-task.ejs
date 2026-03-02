@@ -22,45 +22,112 @@ html,body{
   padding:6px 10px;
   border-radius:4px;
   border:none;
-  max-width: 200px; /* Fixed: Prevents expansion with long names */
-  width: 100%;
-  text-overflow: ellipsis;
+  max-width:200px;
+  width:100%;
+  text-overflow:ellipsis;
 }
 
+/* ===== SUB HEADER ===== */
 .sub-header{
   display:flex;
   background:#CDF4F4;
-  padding:6px;
   font-size:14px;
 }
-.sub-header div{text-align:center;padding:4px;border-radius:5px;}
 
-.task{flex:4;}
-.change{flex:1.5;}
-.update{flex:1.5;}
-.other-task{flex:2;}
+.task-header{
+  flex:3;
+  text-align:center;
+  padding:6px;
+}
 
-.content-wrapper{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.task-container{flex:1;display:flex;overflow:hidden;}
+.right-header{
+  flex:5;
+  display:flex;
+}
 
-.task-box{padding:8px;overflow-y:auto;}
-.task-main{flex:4;}
-.task-change{flex:1.5;}
-.task-update{flex:1.5;}
-.task-other{flex:2;}
+.right-header .change,
+.right-header .update,
+.right-header .other-task{
+  flex:2;
+  text-align:center;
+  padding:6px;
+}
 
-.vertical-line{width:1px;background:#777;}
+/* ===== MAIN LAYOUT ===== */
+.content-wrapper{
+  flex:1;
+  display:flex;
+  overflow:hidden;
+}
 
+/* LEFT TASK */
+.task-main{
+  flex:3;
+  padding:8px;
+  overflow-y:auto;
+}
+
+/* RIGHT SIDE */
+.right-section{
+  flex:5;
+  display:flex;
+  flex-direction:column;
+}
+
+.top-columns{
+  height:70%;
+  display:flex;
+  overflow:hidden;
+}
+
+.task-change,
+.task-update,
+.task-other{
+  flex:2;
+  padding:8px;
+  overflow-y:auto;
+}
+
+.vertical-line{
+  width:1px;
+  background:#777;
+}
+
+/* COMPLETED */
+.completed-wrapper{
+  height:30%;
+  display:flex;
+  flex-direction:column;
+  background:#2E2D2D;
+  border-top:1px solid #666;
+}
+
+.completed-header{
+  margin:8px;
+  border-radius:50px;
+  background:#0F8989;
+  padding:6px 15px;
+  color:white;
+  font-weight:bold;
+}
+
+.completed-section{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+  color:white;
+}
+
+/* ===== TASK CARD ===== */
 .task-card{
   background:#444;
   color:white;
   padding:6px;
   margin-bottom:6px;
   border-radius:4px;
-
-  font-size:13px;   /* updated font size */
-  display: flex; 
-    justify-content: space-between;
+  font-size:13px;
+  display:flex;
+  justify-content:space-between;
 }
 
 .priority-red{border-left:4px solid red;}
@@ -73,66 +140,39 @@ html,body{
   gap:6px;
 }
 
-
 .task-date{
-  font-size: 11px;
-  opacity: 0.7;
-  font-weight: normal;
-  white-space: nowrap;
-  margin-left: auto;   /* pushes date to right */
-  text-align: right;
-}
-  /* Checkbox base */
-  .task-checkbox {
-    width: 12px;
-    height: 12px;
-    appearance: none;
-    border: 2px solid white; 
-    border-radius: 3px;
-    background: transparent;
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;  
-  }
-
-  .task-checkbox:checked::after {
-    content: "✔";                
-    position: absolute;
-    top: 0;
-    left: 1px;
-    font-size: 7px;
-    color: white;                
-  }
-
-
-.checkbox-red{
-  border-color:red;
+  font-size:11px;
+  opacity:0.7;
+  white-space:nowrap;
+  margin-left:auto;
 }
 
-.checkbox-yellow{
-  border-color:yellow;
+/* Checkbox */
+.task-checkbox{
+  width:12px;
+  height:12px;
+  appearance:none;
+  border:2px solid white;
+  border-radius:3px;
+  background:transparent;
+  cursor:pointer;
+  position:relative;
+  flex-shrink:0;
 }
 
-.checkbox-blue{
-  border-color:blue;
-}
-
-.completed-header{
-  margin:5px 10px;
-  border-radius:100px;
-  background:#0F8989;
-  padding:6px 20px;
-  color:white;
-  font-weight:bold;
-}
-
-.completed-section{
-  height:140px;
-  overflow-y:auto;
-  padding:10px;
-  background:#2E2D2D;
+.task-checkbox:checked::after{
+  content:"✔";
+  position:absolute;
+  top:0;
+  left:1px;
+  font-size:7px;
   color:white;
 }
+
+.checkbox-red{border-color:red;}
+.checkbox-yellow{border-color:yellow;}
+.checkbox-blue{border-color:blue;}
+
 </style>
 </head>
 
@@ -141,7 +181,6 @@ html,body{
 <%- include('navbar') %>
 
 <div class="layout">
-
 <div class="sidebar-container">
  <%- include('sidebar') %>
 </div>
@@ -163,220 +202,148 @@ html,body{
 </div>
 
 <div class="sub-header">
-<div class="task">Task</div>
-<div class="change">Change</div>
-<div class="update">Update</div>
-<div class="other-task">Others</div>
+  <div class="task-header">Task</div>
+  <div class="right-header">
+    <div class="change">Change</div>
+    <div class="update">Update</div>
+    <div class="other-task">Others</div>
+  </div>
 </div>
 
 <div class="content-wrapper">
 
-<div class="task-container">
-
-<div class="task-box task-main">
+<!-- LEFT TASK -->
+<div class="task-main">
  <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
-    <% 
-      // ✅ MARK 100%: Format date like homepage
-      let taskDate = '';
-      if(task.due_date){
-        const d = new Date(task.due_date);
-        const day = ("0"+d.getDate()).slice(-2);
-        const month = d.toLocaleString('en-GB',{month:'short'});
-        taskDate = `${day} ${month}`;
-      }
-    %>
-
-<div class="task-card priority-<%= task.priority.toLowerCase() %>">
-  <div class="task-row">
-    <input type="checkbox"
-  disabled
-      class="task-checkbox 
-      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
-      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
-      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>">
-    <%= task.title %>
-  </div>
-  <div class="task-date"><%= taskDate %></div>
-</div>
-<% }) %>
+ <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
+ <div class="task-card priority-<%= task.priority.toLowerCase() %>">
+   <div class="task-row">
+     <input type="checkbox" disabled class="task-checkbox 
+     <%= task.priority==='HIGH'?'checkbox-red':'' %>
+     <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+     <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+     <%= task.title %>
+   </div>
+   <div class="task-date"><%= taskDate %></div>
+ </div>
+ <% }) %>
 </div>
 
 <div class="vertical-line"></div>
 
-<div class="task-box task-change">
+<!-- RIGHT SIDE -->
+<div class="right-section">
+
+<div class="top-columns">
+
+<div class="task-change">
 <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
-
-<%
-  let taskDate = '';
-  if(task.due_date){
-    const d = new Date(task.due_date);
-    const day = ("0"+d.getDate()).slice(-2);
-    const month = d.toLocaleString('en-GB',{month:'short'});
-    taskDate = `${day} ${month}`;
-  }
-%>
-
+<% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
-
-  <div class="task-row">
-    <input type="checkbox"
-      disabled
-      class="task-checkbox 
-      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
-      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
-      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
-      onchange="markCompleted(<%= task.id %>)">
-
-    <%= task.title %>
-  </div>
-
-  <div class="task-date"><%= taskDate %></div>
-
+<div class="task-row">
+<input type="checkbox" disabled class="task-checkbox 
+<%= task.priority==='HIGH'?'checkbox-red':'' %>
+<%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+<%= task.priority==='LOW'?'checkbox-blue':'' %>">
+<%= task.title %>
 </div>
-
+<div class="task-date"><%= taskDate %></div>
+</div>
 <% }) %>
 </div>
 
-
 <div class="vertical-line"></div>
 
-<div class="task-box task-update">
+<div class="task-update">
 <% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
-
-<%
-  let taskDate = '';
-  if(task.due_date){
-    const d = new Date(task.due_date);
-    const day = ("0"+d.getDate()).slice(-2);
-    const month = d.toLocaleString('en-GB',{month:'short'});
-    taskDate = `${day} ${month}`;
-  }
-%>
-
+<% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
-
-  <div class="task-row">
-    <input type="checkbox"
-      disabled
-      class="task-checkbox 
-      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
-      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
-      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
-      onchange="markCompleted(<%= task.id %>)">
-
-    <%= task.title %>
-  </div>
-
-  <div class="task-date"><%= taskDate %></div>
-
+<div class="task-row">
+<input type="checkbox" disabled class="task-checkbox 
+<%= task.priority==='HIGH'?'checkbox-red':'' %>
+<%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+<%= task.priority==='LOW'?'checkbox-blue':'' %>">
+<%= task.title %>
 </div>
-
+<div class="task-date"><%= taskDate %></div>
+</div>
 <% }) %>
 </div>
 
 <div class="vertical-line"></div>
 
-<div class="task-box task-other">
+<div class="task-other">
 
-<% tasks
-   .filter(t => t.section === 'OTHERS' && t.status === 'OPEN')
-   .forEach(task => { %>
+<% tasks.filter(t=>t.section==='OTHERS' && t.status==='OPEN').forEach(task=>{ %>
 
-  <div class="task-card priority-<%= (task.priority || '').toLowerCase() %>">
-    
-    <div class="task-row">
+<div class="task-card priority-<%= (task.priority||'').toLowerCase() %>">
 
-      <input type="checkbox"
-        disabled
-        class="task-checkbox 
-        <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
-        <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
-        <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
-        onchange="markCompleted(<%= task.id %>)">
+  <div class="task-row">
+    <input type="checkbox" disabled class="task-checkbox 
+    <%= task.priority==='HIGH'?'checkbox-red':'' %>
+    <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+    <%= task.priority==='LOW'?'checkbox-blue':'' %>">
 
     <%= task.title %>
+  </div>
 
-    </div>
-
- <div style="font-size:11px; opacity:0.7;">
-    <% if (selected_user === 'all') { %>
+  <!-- 👇 NAME LOGIC ADDED HERE -->
+  <div style="font-size:11px; opacity:0.7; margin-top:4px;">
+    <% if(selected_user === 'all'){ %>
         <%= task.assigned_by_name %> → <%= task.assigned_to_name %>
     <% } else { %>
-      <%= task.assigned_by_name %>
+        <%= task.assigned_by_name %>
     <% } %>
-</div>
-
   </div>
+
+</div>
 
 <% }) %>
 
 </div>
 
-
 </div>
 
+<!-- COMPLETED -->
+<div class="completed-wrapper">
 <div class="completed-header">Completed Tasks</div>
 <div class="completed-section">
 <% tasks.filter(t=>t.status==='COMPLETED').forEach(task=>{ %>
-
-<%
-  let taskDate = '';
-  if(task.due_date){
-    const d = new Date(task.due_date);
-    const day = ("0"+d.getDate()).slice(-2);
-    const month = d.toLocaleString('en-GB',{month:'short'});
-    taskDate = `${day} ${month}`;
-  }
-%>
+<% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
-  <div class="task-row">
-    
-    <input type="checkbox"
-      checked
-      disabled
-      class="task-checkbox 
-      <%= task.priority === 'HIGH' ? 'checkbox-red' : '' %>
-      <%= task.priority === 'MEDIUM' ? 'checkbox-yellow' : '' %>
-      <%= task.priority === 'LOW' ? 'checkbox-blue' : '' %>"
-      onchange="markOpen(<%= task.id %>)">
-
-    <span>
-      <%= task.title %> - <%= task.assigned_to_name %> 
-    </span>
-    
-
-  </div>
-     <div class="task-date"><%= taskDate %></div>
+<div class="task-row">
+<input type="checkbox" checked disabled class="task-checkbox 
+<%= task.priority==='HIGH'?'checkbox-red':'' %>
+<%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+<%= task.priority==='LOW'?'checkbox-blue':'' %>">
+<%= task.title %> - <%= task.assigned_to_name %>
 </div>
-
+<div class="task-date"><%= taskDate %></div>
+</div>
 <% }) %>
 </div>
+</div>
 
+</div>
 </div>
 </div>
 </div>
 
 <script>
-// ✅ Mark task as completed via fetch
 function markCompleted(taskId){
   fetch(`/complete-task/${taskId}`, { method:'POST' })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success){
-        location.reload(); // simple way to reload tasks
-      } else {
-        alert('Error completing task');
-      }
-    });
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.success){ location.reload(); }
+    else{ alert('Error completing task'); }
+  });
 }
 </script>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io();
-    socket.on('update_tasks', () => {
-        window.location.reload(); 
-    });
+const socket=io();
+socket.on('update_tasks',()=>{ window.location.reload(); });
 </script>
 
 </body>

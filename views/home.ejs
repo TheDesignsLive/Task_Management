@@ -416,12 +416,23 @@ html, body {
 </div>
 <div class="content-wrapper">
 
+<<<<<<< HEAD
+=======
+  <!-- TASK MAIN -->
+>>>>>>> 224b2979e9ac59600300c94c6cb8e31f9619069f
   <div class="task-main" id="task-section"></div>
 
   <div class="vertical-line"></div>
 
+<<<<<<< HEAD
   <div class="right-section">
 
+=======
+  <!-- RIGHT SIDE -->
+  <div class="right-section">
+
+    <!-- CHANGE / UPDATE / OTHER -->
+>>>>>>> 224b2979e9ac59600300c94c6cb8e31f9619069f
     <div class="top-columns">
 
       <div class="task-change" id="change-section"></div>
@@ -436,6 +447,10 @@ html, body {
 
     </div>
 
+<<<<<<< HEAD
+=======
+    <!-- ONE COMPLETED SECTION -->
+>>>>>>> 224b2979e9ac59600300c94c6cb8e31f9619069f
     <div class="completed-wrapper">
       <div class="completed-header">
         Completed Tasks
@@ -565,7 +580,7 @@ div.addEventListener('dblclick', () => {
     dateInput._flatpickr.destroy();
   }
 
-  // ✅ Get date from database (already in task object)
+  //  Get date from database (already in task object)
   let dbDate = task.due_date;
 
   // If date exists, set it
@@ -670,7 +685,7 @@ function isPastDate(dateStr) {
   return taskDate < today;
 }
 
-// ✅ INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
+//  INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
 function initSections() {
   const sections = {
     'TASK': document.getElementById('task-section'),
@@ -706,7 +721,7 @@ function initSections() {
     }
   });
 
-  // ✅ Sort dates ascending (YYYY-MM-DD auto sorts correctly)
+  //  Sort dates ascending (YYYY-MM-DD auto sorts correctly)
   const sortedDates = Object.keys(taskGroups).sort();
 
   sortedDates.forEach(dateStr => {
@@ -800,7 +815,7 @@ function createSeparator(dateStr) {
   hr.style.opacity = '0.5';
   return hr;
 }
-// ✅ PRIORITY SORT FUNCTION
+//  PRIORITY SORT FUNCTION
 function sortByPriority(tasks) {
   const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
   return tasks.sort((a, b) => {
@@ -810,7 +825,7 @@ function sortByPriority(tasks) {
   });
 }
 
-// ✅ HIDDEN INPUT FOR FLATPICKR CENTER TOP
+//  HIDDEN INPUT FOR FLATPICKR CENTER TOP
 const hiddenInput = document.createElement('input');
 hiddenInput.type = 'text';
 hiddenInput.className = 'task-date-picker';
@@ -864,7 +879,7 @@ document.getElementById('delete-completed').addEventListener('click', async () =
     const res = await fetch('/api/delete-completed-tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
+      body: JSON.stringify({ adminId: <%= session.adminId %> }) //  EJS will render the adminId
     });
 
     const data = await res.json();
