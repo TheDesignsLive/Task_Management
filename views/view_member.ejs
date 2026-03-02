@@ -219,6 +219,14 @@
     .btn-cancel { background-color: #f1f1f1; color: #333; }
     .btn-cancel:hover { background-color: #e2e2e2; }
 
+    /* Empty Role Warning Style */
+    .empty-role-warning {
+      text-align: center;
+      padding: 20px;
+    }
+    .empty-role-warning i { font-size: 40px; color: #f39c12; margin-bottom: 15px; }
+    .empty-role-warning p { margin-bottom: 20px; color: #555; }
+
   </style>
 </head>
 <body>
@@ -303,36 +311,46 @@
 <div class="dialog-overlay" id="dialogBox">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeDialog()">✖</span>
-    <h3>Add Member</h3>
-    <form id="addMemberForm">
-      <label>Role</label>
-      <select name="role_id" required>
-        <option value="">Select Role</option>
-        <% if (roles) { roles.forEach(r => { %>
-          <option value="<%= r.id %>"><%= r.role_name %></option>
-        <% }) } %>
-      </select>
-      <input type="text" name="name" placeholder="Name" required>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10">
-      <div id="addPhoneError" class="error-msg">Please enter a valid 10-digit phone number.</div>
-      
-      <div style="position: relative; margin-top: 15px;">
-        <input type="password" id="addPassword" name="password" placeholder="Password" required>
-        <i class="fa-solid fa-eye-slash" id="toggleAddPassword" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
-      </div>
-      <div id="addPassError" class="error-msg">Min 8 chars, 1 Upper, 1 Lower, 1 Number.</div>
+    
+    <% if (roles && roles.length > 0) { %>
+      <h3>Add Member</h3>
+      <form id="addMemberForm">
+        <label>Role</label>
+        <select name="role_id" required>
+          <option value="">Select Role</option>
+          <% roles.forEach(r => { %>
+            <option value="<%= r.id %>"><%= r.role_name %></option>
+          <% }) %>
+        </select>
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10">
+        <div id="addPhoneError" class="error-msg">Please enter a valid 10-digit phone number.</div>
+        
+        <div style="position: relative; margin-top: 15px;">
+          <input type="password" id="addPassword" name="password" placeholder="Password" required>
+          <i class="fa-solid fa-eye-slash" id="toggleAddPassword" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
+        </div>
+        <div id="addPassError" class="error-msg">Min 8 chars, 1 Upper, 1 Lower, 1 Number.</div>
 
-      <div style="position: relative; margin-top: 15px;">
-        <input type="password" id="addConfirmPassword" placeholder="Confirm Password" required>
-        <i class="fa-solid fa-eye-slash" id="toggleAddConfirm" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
-      </div>
-      <div id="addConfirmError" class="error-msg">Passwords do not match.</div>
+        <div style="position: relative; margin-top: 15px;">
+          <input type="password" id="addConfirmPassword" placeholder="Confirm Password" required>
+          <i class="fa-solid fa-eye-slash" id="toggleAddConfirm" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
+        </div>
+        <div id="addConfirmError" class="error-msg">Passwords do not match.</div>
 
-      <label>Profile Picture</label>
-      <input type="file" name="profile_pic" accept="image/*">
-      <button type="submit">Submit</button>
-    </form>
+        <label>Profile Picture</label>
+        <input type="file" name="profile_pic" accept="image/*">
+        <button type="submit">Submit</button>
+      </form>
+    <% } else { %>
+      <div class="empty-role-warning">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <h3>No Roles Found</h3>
+        <p>Please create a role in the Roles Panel before adding a new member.</p>
+        <button onclick="location.href='/view-roles'">Go to Roles Panel</button>
+      </div>
+    <% } %>
   </div>
 </div>
 
@@ -432,30 +450,37 @@ function togglePassword(inputId, iconId) {
   }
 }
 
-document.getElementById("toggleAddPassword").addEventListener("click", () => togglePassword("addPassword", "toggleAddPassword"));
-document.getElementById("toggleAddConfirm").addEventListener("click", () => togglePassword("addConfirmPassword", "toggleAddConfirm"));
+const toggleAddPass = document.getElementById("toggleAddPassword");
+if (toggleAddPass) toggleAddPass.addEventListener("click", () => togglePassword("addPassword", "toggleAddPassword"));
+
+const toggleAddConf = document.getElementById("toggleAddConfirm");
+if (toggleAddConf) toggleAddConf.addEventListener("click", () => togglePassword("addConfirmPassword", "toggleAddConfirm"));
+
 document.getElementById("toggleEditPassword").addEventListener("click", () => togglePassword("editPassword", "toggleEditPassword"));
 document.getElementById("toggleEditConfirm").addEventListener("click", () => togglePassword("editConfirmPassword", "toggleEditConfirm"));
 
 const passRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
 
-document.getElementById("addMemberForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
-    resetErrors();
-    const phone = document.getElementById("addPhone").value;
-    const pass = document.getElementById("addPassword").value;
-    const confirm = document.getElementById("addConfirmPassword").value;
-    let hasError = false;
+const addForm = document.getElementById("addMemberForm");
+if (addForm) {
+  addForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      resetErrors();
+      const phone = document.getElementById("addPhone").value;
+      const pass = document.getElementById("addPassword").value;
+      const confirm = document.getElementById("addConfirmPassword").value;
+      let hasError = false;
 
-    if(phone.length !== 10) { document.getElementById("addPhoneError").style.display = 'block'; hasError = true; }
-    if(!passRegex.test(pass)) { document.getElementById("addPassError").style.display = 'block'; hasError = true; }
-    if(pass !== confirm) { document.getElementById("addConfirmError").style.display = 'block'; hasError = true; }
-    if(hasError) return;
+      if(phone.length !== 10) { document.getElementById("addPhoneError").style.display = 'block'; hasError = true; }
+      if(!passRegex.test(pass)) { document.getElementById("addPassError").style.display = 'block'; hasError = true; }
+      if(pass !== confirm) { document.getElementById("addConfirmError").style.display = 'block'; hasError = true; }
+      if(hasError) return;
 
-    const formData = new FormData(this);
-    const response = await fetch('/add-member', { method: 'POST', body: formData });
-    location.reload();
-});
+      const formData = new FormData(this);
+      const response = await fetch('/add-member', { method: 'POST', body: formData });
+      location.reload();
+  });
+}
 
 document.getElementById("editMemberForm").addEventListener("submit", async function(e) {
     e.preventDefault();
