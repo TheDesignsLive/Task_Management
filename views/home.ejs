@@ -570,7 +570,6 @@ div.addEventListener('dblclick', () => {
 
   // If date exists, set it
   if (dbDate) {
-    // Ensuring we only use the date part to avoid shifts
     dateInput.value = dbDate.split('T')[0];  // format must be YYYY-MM-DD
   }
 
@@ -757,39 +756,40 @@ function enableDragAndDrop() {
       const draggingId = e.dataTransfer.getData('text/plain');
       if(!draggingId) return;
 
-      // Identify target date from the element dropped on
+      // Find what we dropped on
       const targetEl = e.target.closest('.task-item, .date-separator');
-      let newDate = undefined;
-
+      
+      // ✅ MATCH EDIT BOX LOGIC: Pull raw string, trim, and handle null
+      let due_date = undefined;
       if (targetEl) {
-        // Use split('T')[0] trick to prevent date shifts, similar to edit box
-        newDate = targetEl.dataset.date ? targetEl.dataset.date.split('T')[0] : null;
+        // We take the date string directly from the data attribute
+        due_date = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
+        if (due_date === "") due_date = null;
       }
 
-      // 1. Update Section
+      // 1. Update the Section (Column)
       const sectionPromise = fetch('/update-task-section', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: draggingId, section: containers[containerId] })
       });
 
-      // 2. Update Date (only if we dropped into a specific date context)
+      // 2. Update the Date (Using the raw string extracted above)
       let datePromise = Promise.resolve();
-      if (newDate !== undefined) {
+      if (due_date !== undefined) {
         datePromise = fetch('/update-task-date', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: draggingId, due_date: newDate })
+          body: JSON.stringify({ id: draggingId, due_date: due_date })
         });
       }
 
+      // Wait for both to finish, then the socket or reload will refresh the UI
       await Promise.all([sectionPromise, datePromise]);
       window.location.reload();
     });
   });
 }
-
-
 
 // Separator line
 function createSeparator(dateStr) {
