@@ -570,13 +570,14 @@ div.addEventListener('dblclick', () => {
 
   // If date exists, set it
   if (dbDate) {
-    dateInput.value = dbDate;  // format must be YYYY-MM-DD
+    // Ensuring we only use the date part to avoid shifts
+    dateInput.value = dbDate.split('T')[0];  // format must be YYYY-MM-DD
   }
 
   // Initialize flatpickr with same date
   flatpickr(dateInput, {
     dateFormat: "Y-m-d",
-    defaultDate: dbDate || null
+    defaultDate: dateInput.value || null
   });
 });
   // Dots Menu logic
@@ -761,7 +762,8 @@ function enableDragAndDrop() {
       let newDate = undefined;
 
       if (targetEl) {
-        newDate = targetEl.dataset.date || null;
+        // Use split('T')[0] trick to prevent date shifts, similar to edit box
+        newDate = targetEl.dataset.date ? targetEl.dataset.date.split('T')[0] : null;
       }
 
       // 1. Update Section
