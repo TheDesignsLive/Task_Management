@@ -36,12 +36,13 @@ const upload = multer({
 });
 
 // ================= SESSION ====================
+/*
 router.use(session({
     secret: "mysecretkey",
     resave: false,
     saveUninitialized: true
 }));
-
+*/
 // ================= SIGNUP ====================
 router.post("/signup", (req, res) => {
     upload.single("profile_pic")(req, res, async (err) => {
