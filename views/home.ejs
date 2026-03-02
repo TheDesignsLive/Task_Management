@@ -220,9 +220,9 @@ html, body {
   .priority-red { border-color: #ff4d4d; }
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
-     
+      
 
-     
+      
       .info-icon{
           width: 14px;         
         height: 14px;
@@ -419,15 +419,12 @@ html, body {
 </div>
 <div class="content-wrapper">
 
-  <!-- TASK MAIN -->
   <div class="task-main" id="task-section"></div>
 
   <div class="vertical-line"></div>
 
-  <!-- RIGHT SIDE -->
   <div class="right-section">
 
-    <!-- CHANGE / UPDATE / OTHER -->
     <div class="top-columns">
 
       <div class="task-change" id="change-section"></div>
@@ -442,7 +439,6 @@ html, body {
 
     </div>
 
-    <!-- ONE COMPLETED SECTION -->
     <div class="completed-wrapper">
       <div class="completed-header">
         Completed Tasks
@@ -502,6 +498,7 @@ function createTaskElement(task) {
   const div = document.createElement('div');
   div.className = 'task-item';
   div.dataset.id = task.id;
+  div.dataset.date = task.due_date ? task.due_date.split('T')[0] : '';
 
   if (task.status === 'COMPLETED') div.classList.add('completed-task');
 
@@ -571,18 +568,18 @@ div.addEventListener('dblclick', () => {
     dateInput._flatpickr.destroy();
   }
 
-  //  Get date from database (already in task object)
+  // ✅ Get date from database (already in task object)
   let dbDate = task.due_date;
 
   // If date exists, set it
   if (dbDate) {
-    dateInput.value = dbDate;  // format must be YYYY-MM-DD
+    dateInput.value = dbDate.split('T')[0];  // format must be YYYY-MM-DD
   }
 
   // Initialize flatpickr with same date
   flatpickr(dateInput, {
     dateFormat: "Y-m-d",
-    defaultDate: dbDate || null
+    defaultDate: dateInput.value || null
   });
 });
   // Dots Menu logic
@@ -676,7 +673,7 @@ function isPastDate(dateStr) {
   return taskDate < today;
 }
 
-//  INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
+// ✅ INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
 function initSections() {
   const sections = {
     'TASK': document.getElementById('task-section'),
@@ -712,20 +709,22 @@ function initSections() {
     }
   });
 
-  //  Sort dates ascending (YYYY-MM-DD auto sorts correctly)
+  // ✅ Sort dates ascending (YYYY-MM-DD auto sorts correctly)
   const sortedDates = Object.keys(taskGroups).sort();
 
   sortedDates.forEach(dateStr => {
     appendTasksToContainer(
       sections[sec],
-      sortByPriority(taskGroups[dateStr])
+      sortByPriority(taskGroups[dateStr]),
+      dateStr
     );
   });
 
   // Tasks without date at end
   appendTasksToContainer(
     sections[sec],
-    sortByPriority(noDateTasks)
+    sortByPriority(noDateTasks),
+    null
   );
 
 });
@@ -735,41 +734,91 @@ function initSections() {
 }
 
 // Append tasks
-function appendTasksToContainer(container, taskArray) {
+function appendTasksToContainer(container, taskArray, dateStr) {
   taskArray.forEach(task => container.appendChild(createTaskElement(task)));
-  if(taskArray.length > 0) container.appendChild(createSeparator());
+  if(taskArray.length > 0) container.appendChild(createSeparator(dateStr));
 }
 
 function enableDragAndDrop() {
-  const containers = { 'task-section': 'TASK', 'change-section': 'CHANGES', 'update-section': 'UPDATE' };
+  const containers = { 
+    'task-section': 'TASK', 
+    'change-section': 'CHANGES', 
+    'update-section': 'UPDATE', 
+    'other-section': 'OTHERS' 
+  };
+
   Object.keys(containers).forEach(containerId => {
     const container = document.getElementById(containerId);
-    container.addEventListener('dragover', e => e.preventDefault());
+    
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+
     container.addEventListener('drop', async (e) => {
+      e.preventDefault();
       const draggingId = e.dataTransfer.getData('text/plain');
       if(!draggingId) return;
-      await fetch('/update-task-section', {
+
+      // Find what we dropped on
+      const targetEl = e.target.closest('.task-item, .date-separator');
+      
+      // ✅ MATCH EDIT BOX LOGIC: Pull raw string, trim, and handle null
+     let due_date = undefined;
+
+if (targetEl) {
+  let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
+
+  if (rawDate && rawDate !== "") {
+
+    // ✅ Force correct YYYY-MM-DD format (like edit box)
+    const parts = rawDate.split("-");
+    if (parts.length === 3) {
+      due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
+    } else {
+      due_date = null;
+    }
+
+  } else {
+    due_date = null;
+  }
+}
+
+      // 1. Update the Section (Column)
+      const sectionPromise = fetch('/update-task-section', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: draggingId, section: containers[containerId] })
       });
+
+      // 2. Update the Date (Using the raw string extracted above)
+      let datePromise = Promise.resolve();
+      if (due_date !== undefined) {
+        datePromise = fetch('/update-task-date', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: draggingId, due_date: due_date })
+        });
+      }
+
+      // Wait for both to finish, then the socket or reload will refresh the UI
+      await Promise.all([sectionPromise, datePromise]);
       window.location.reload();
     });
   });
 }
 
-
-
 // Separator line
-function createSeparator() {
+function createSeparator(dateStr) {
   const hr = document.createElement('div');
-  hr.style.height = '1px';
-  hr.style.backgroundColor = '#7C7B7B';
+  hr.className = 'date-separator';
+  hr.dataset.date = dateStr || ''; // Store date in separator
+  hr.style.height = '12px';
+  hr.style.borderBottom = '1px solid #7C7B7B';
   hr.style.margin = '6px 0';
   hr.style.opacity = '0.5';
   return hr;
 }
-//  PRIORITY SORT FUNCTION
+// ✅ PRIORITY SORT FUNCTION
 function sortByPriority(tasks) {
   const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
   return tasks.sort((a, b) => {
@@ -779,7 +828,7 @@ function sortByPriority(tasks) {
   });
 }
 
-//  HIDDEN INPUT FOR FLATPICKR CENTER TOP
+// ✅ HIDDEN INPUT FOR FLATPICKR CENTER TOP
 const hiddenInput = document.createElement('input');
 hiddenInput.type = 'text';
 hiddenInput.className = 'task-date-picker';
@@ -833,7 +882,7 @@ document.getElementById('delete-completed').addEventListener('click', async () =
     const res = await fetch('/api/delete-completed-tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: <%= session.adminId %> }) //  EJS will render the adminId
+      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
     });
 
     const data = await res.json();
