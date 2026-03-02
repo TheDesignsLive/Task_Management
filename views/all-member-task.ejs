@@ -176,7 +176,7 @@ html,body{
 <div class="task-box task-main">
  <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
     <% 
-      // ✅ MARK 100%: Format date like homepage
+      // Format date like homepage
       let taskDate = '';
       if(task.due_date){
         const d = new Date(task.due_date);
@@ -357,7 +357,7 @@ html,body{
 </div>
 
 <script>
-// ✅ Mark task as completed via fetch
+// Mark task as completed via fetch
 function markCompleted(taskId){
   fetch(`/complete-task/${taskId}`, { method:'POST' })
     .then(res => res.json())
