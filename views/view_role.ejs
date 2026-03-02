@@ -233,6 +233,18 @@ table tr:hover td {
 .btn-cancel { background-color: #f1f1f1; color: #333; }
 .btn-cancel:hover { background-color: #e2e2e2; }
 
+/* ===== Permissions Guide Style ===== */
+.permissions-guide {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed #ddd;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.permissions-guide strong { color: #209595; display: block; margin-top: 5px; }
+
 </style>
 </head>
 
@@ -322,6 +334,16 @@ table tr:hover td {
 
       <button type="submit">Create Role</button>
     </form>
+
+    <div class="permissions-guide">
+      <span style="font-weight: bold; color: #333; text-decoration: underline;">Control Type Guide:</span>
+      <strong>ADMIN</strong>
+      High-level access. Can manage members, roles, and full administrative tasks.
+      <strong>PARTIAL</strong>
+      Supervisor access. Can view all team tasks but cannot add, remove, or suspend members.
+      <strong>NONE</strong>
+      Standard User. Access is limited to personal tasks and general platform usage.
+    </div>
   </div>
 </div>
 
@@ -342,6 +364,16 @@ table tr:hover td {
 
       <button type="submit">Update Role</button>
     </form>
+
+    <div class="permissions-guide">
+      <span style="font-weight: bold; color: #333; text-decoration: underline;">Control Type Guide:</span>
+      <strong>ADMIN</strong>
+      High-level access. Can manage members, roles, and full administrative tasks.
+      <strong>PARTIAL</strong>
+      Supervisor access. Can view all team tasks but cannot add, remove, or suspend members.
+      <strong>NONE</strong>
+      Standard User. Access is limited to personal tasks and general platform usage.
+    </div>
   </div>
 </div>
 

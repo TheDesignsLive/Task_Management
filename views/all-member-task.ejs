@@ -246,7 +246,7 @@ html,body{
 <div class="filter-section">
 <form method="GET">
 <select name="user_id" onchange="this.form.submit()">
-<option value="all">All Employees</option>
+<option value="all">All Members</option>
 <% users.forEach(user => { %>
 <option value="<%= user.id %>"
 <%= selected_user == user.id ? 'selected' : '' %>>
