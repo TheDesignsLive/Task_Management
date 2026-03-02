@@ -57,11 +57,12 @@
     overflow: hidden;
   }
 
-  /* ===== TASK SECTION ===== */
+  /* ===== TASK SECTION (Set to 60%) ===== */
   .task-container {
-    flex: 1;
+    flex: 0 0 60%; /* Occupies exactly 60% height */
     display: flex;
     overflow: hidden;
+    border-bottom: 2px solid #555;
   }
 
   .task-box {
@@ -80,38 +81,34 @@
     opacity: 0.8;
   }
 
-  /* ===== COMPLETED SECTION ===== */
-.completed-header {
-    margin-left: 10px;
-    margin-right: 10px;
+  /* ===== COMPLETED SECTION (Set to 40%) ===== */
+  .completed-header {
+    margin: 10px 10px 0 10px;
     border-radius: 100px;
     background-color: #0F8989;
-    padding: 10px 15px;
+    padding: 8px 15px;
     font-weight: 600;
     font-family: Arial, sans-serif;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+  }
 
-    display: flex;                  /* Keep text and icon on same line */
-    align-items: center;            /* Vertically center */
-    justify-content: space-between; /* Push icon to the right */
-
-    color: white; /* Text color */
-}
-
-/* Dustbin icon */
-#delete-completed {
+  #delete-completed {
     cursor: pointer;
     transition: transform 0.2s, fill 0.2s;
-    fill: #e74c3c; /* Red color for dustbin */
-}
+    fill: #e74c3c;
+  }
 
-#delete-completed:hover {
-    transform: scale(1.2);   /* Slight enlarge on hover */
-    fill: #c0392b;           /* Darker red on hover */
-}
+  #delete-completed:hover {
+    transform: scale(1.2);
+    fill: #c0392b;
+  }
 
   .completed-section {
-    height: 150px;
+    flex: 0 0 40%; /* Occupies exactly 40% height */
     overflow-y: auto;
     padding: 10px;
     background-color: #2E2D2D;
@@ -132,14 +129,8 @@
     position: relative;
   }
 
-  .task-item:hover {
-    background-color: #555;
-  }
-
-  .completed-task {
-    opacity: 0.6;
-    cursor: default;
-  }
+  .task-item:hover { background-color: #555; }
+  .completed-task { opacity: 0.6; cursor: default; }
 
   .task-checkbox {
     width: 12px;
@@ -154,31 +145,26 @@
   }
 
   .task-checkbox:checked::after {
-    content: "✔";                
+    content: "✔";                        
     position: absolute;
     top: 0;
     left: 1px;
     font-size: 7px;
-    color: white;                
+    color: white;                   
   }
 
   .priority-red { border-color: #ff4d4d; }
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
-     
-
-     
-      .info-icon{
-          width: 14px;         
-        height: 14px;
-        stroke: #959494;       
-        flex-shrink: 0;
-        margin-left: 8px;      
-        vertical-align: middle;
-
-          margin-left: auto; 
-
-      }
+      
+  .info-icon {
+    width: 14px;         
+    height: 14px;
+    stroke: #959494;       
+    flex-shrink: 0;
+    margin-left: auto;      
+    vertical-align: middle;
+  }
       
   .task-row {
     display: flex;
@@ -231,105 +217,37 @@
   .task-desc-text { color: #ccc; line-height: 1.4; margin-bottom: 8px; }
   .task-item.expanded .task-details { display: block; }
 
-  /* ===== CALENDAR OVERRIDE ===== */
+  .task-date-picker { width: 0; height: 0; opacity: 0; position: absolute; }
 
-
-  /* Class to show details when active */
-  .task-item.expanded .task-details {
-    display: block;
+  /* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
+  .flatpickr-calendar.task-calendar.open {
+    position: fixed !important;
+    top: 190px !important;
+    left: 60% !important;
+    right: 20px !important;
+    transform: translateX(-50%) !important;
+    bottom: auto !important;
   }
 
-  
-  .task-date-picker {
-  width: 0;
-  height: 0;
-  opacity: 0;
-  position: absolute;
-}
+  .past-date { color: #ff4d4d !important; font-weight:500; }
 
-/* TRUE LOGO: calendar style for task-date */
-.flatpickr-calendar.task-calendar {
-  margin-top: 0 !important;
-  width: 330px !important;
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-  font-family: Segoe UI, sans-serif;
-}
+  .center-calendar {
+    position: fixed !important;
+    top: 20% !important;
+    left: 60% !important;
+    transform: translateX(-50%) !important;
+    z-index: 10000 !important;
+  }
 
+  .flatpickr-calendar {
+    font-size: 12px;
+    width: 280px !important;
+    border-radius: 12px;
+  }
 
-
-/* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
-/* ✅ Apply only to task calendar, NOT navbar */
-.flatpickr-calendar.task-calendar.open {
-  position: fixed !important;
-  top: 190px !important;
-  left: 60% !important;
-  right: 20px !important;
-  transform: translateX(-50%) !important;
-  bottom: auto !important;
-}
-
-
-
-.flatpickr-months .flatpickr-month {
-  height: 32px !important;
-}
-
-.flatpickr-weekdays {
-  font-size: 10px !important;
-}
-
-
-.flatpickr-days {
-  width: 100% !important;
-}
-
-.numInputWrapper input {
-  font-size: 12px !important;
-}
-
-.past-date {
-  color: #ff4d4d !important;   /* 🔴 red color */
-  font-weight:500;
-}
-
-.center-calendar {
-  position: fixed !important;
-  top: 20% !important;          /* change this value */
-  left: 60% !important;
-  transform: translateX(-50%) !important;
-  z-index: 10000 !important;
-}
-
-.flatpickr-calendar {
-  font-size: 12px;              /* overall small text */
-  width: 280px !important;      /* smaller width */
-  border-radius: 12px;
-}
-
-.flatpickr-day {
-  height: 30px;
-  line-height: 30px;
-  font-size: 12px;
-}
-
-.flatpickr-weekday {
-  font-size: 11px;
-}
-
-.flatpickr-current-month {
-  font-size: 13px;
-}
-
-.flatpickr-monthDropdown-months,
-.numInputWrapper {
-  font-size: 12px;
-}
-
-
-
-
+  .flatpickr-day { height: 30px; line-height: 30px; font-size: 12px; }
+  .flatpickr-weekday { font-size: 11px; }
+  .flatpickr-current-month { font-size: 13px; }
 </style>
 </head>
 
@@ -360,12 +278,12 @@
         <div class="task-box task-other" id="other-section"></div>
       </div>
 
-<div class="completed-header">
-  Completed Tasks
-  <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20" style="cursor:pointer; margin-left:auto;">
-    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-  </svg>
-</div>
+      <div class="completed-header">
+        Completed Tasks
+        <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+        </svg>
+      </div>
       <div class="completed-section" id="completed-section"></div>
     </div>
   </div>
@@ -380,10 +298,8 @@ function formatDate(dateStr) {
   const taskDate = new Date(dateStr);
   today.setHours(0,0,0,0);
   taskDate.setHours(0,0,0,0);
-
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
-
   if (taskDate.getTime() === today.getTime()) return "Today";
   else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
   else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -411,9 +327,7 @@ function createTaskElement(task) {
   const div = document.createElement('div');
   div.className = 'task-item';
   div.dataset.id = task.id;
-
   if (task.status === 'COMPLETED') div.classList.add('completed-task');
-
   const priorityClass = getPriorityClass(task.priority);
 
   div.innerHTML = `
@@ -421,27 +335,20 @@ function createTaskElement(task) {
       <input type="checkbox" class="task-checkbox ${priorityClass}" ${task.status === 'COMPLETED' ? 'checked' : ''} />
       <div class="task-title">${task.title}</div>
       <div class="task-name">${task.assigned_by_name || ''}</div>
-      
       <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="8.5"></line>
         <line x1="12" y1="11" x2="12" y2="16"></line>
       </svg>
-
       <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
         ${formatDate(task.due_date)}
       </div>
-
-      <div class="dots-btn">
-        <i class="fa-solid fa-ellipsis-vertical"></i>
-      </div>
-
+      <div class="dots-btn"><i class="fa-solid fa-ellipsis-vertical"></i></div>
       <div class="task-options-menu">
         <div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>
         <div class="delete-opt" style="color:red"><i class="fa-solid fa-trash"></i> Delete</div>
       </div>
     </div>
-
     <div class="edit-box">
       <input type="text" class="edit-title" value="${task.title}" placeholder="Title">
       <textarea class="edit-desc" placeholder="Description">${task.description || ''}</textarea>
@@ -451,14 +358,13 @@ function createTaskElement(task) {
           <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
           <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
         </select>
-<input type="text" class="edit-date" placeholder="Due Date" >
+        <input type="text" class="edit-date" placeholder="Due Date" >
       </div>
       <div class="edit-actions">
         <button class="save-btn">Save</button>
         <button class="cancel-btn">Cancel</button>
       </div>
     </div>
-
     <div class="task-details">
       <div class="task-desc-text">${task.description || 'No description provided.'}</div>
     </div>
@@ -466,35 +372,17 @@ function createTaskElement(task) {
 
   if (task.status !== 'COMPLETED') div.draggable = true;
 
-  // Toggle Edit Box on Double Click
-div.addEventListener('dblclick', () => {
-  if (task.status === 'COMPLETED') return;
-
-  const editBox = div.querySelector('.edit-box');
-  editBox.style.display = 'flex';
-
-  const dateInput = editBox.querySelector('.edit-date');
-
-  // Destroy old flatpickr if exists
-  if (dateInput._flatpickr) {
-    dateInput._flatpickr.destroy();
-  }
-
-  // ✅ Get date from database (already in task object)
-  let dbDate = task.due_date;
-
-  // If date exists, set it
-  if (dbDate) {
-    dateInput.value = dbDate;  // format must be YYYY-MM-DD
-  }
-
-  // Initialize flatpickr with same date
-  flatpickr(dateInput, {
-    dateFormat: "Y-m-d",
-    defaultDate: dbDate || null
+  div.addEventListener('dblclick', () => {
+    if (task.status === 'COMPLETED') return;
+    const editBox = div.querySelector('.edit-box');
+    editBox.style.display = 'flex';
+    const dateInput = editBox.querySelector('.edit-date');
+    if (dateInput._flatpickr) dateInput._flatpickr.destroy();
+    let dbDate = task.due_date;
+    if (dbDate) dateInput.value = dbDate;
+    flatpickr(dateInput, { dateFormat: "Y-m-d", defaultDate: dbDate || null });
   });
-});
-  // Dots Menu logic
+
   const dotsBtn = div.querySelector('.dots-btn');
   const menu = div.querySelector('.task-options-menu');
   dotsBtn.addEventListener('click', (e) => {
@@ -518,12 +406,9 @@ div.addEventListener('dblclick', () => {
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
     const priority = div.querySelector('.edit-priority').value;
- let due_date = div.querySelector('.edit-date').value.trim();
-if (due_date === "") {
-  due_date = null;
-}
-
-    const res = await fetch('/edit-task-details', { // Create this endpoint in backend
+    let due_date = div.querySelector('.edit-date').value.trim();
+    if (due_date === "") due_date = null;
+    const res = await fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date })
@@ -532,36 +417,20 @@ if (due_date === "") {
   });
 
   div.querySelector('.delete-opt').addEventListener('click', async () => {
-  if(confirm("Delete this task?")) {
-
-    try {
-      const res = await fetch(`/tasks/delete-task/${task.id}`, {
-        method: 'POST'
-      });
-
-      if (!res.ok) {
-        alert("Server error");
-        return;
-      }
-
-      
-      window.location.reload();
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Delete failed");
+    if(confirm("Delete this task?")) {
+      try {
+        const res = await fetch(`/tasks/delete-task/${task.id}`, { method: 'POST' });
+        if (!res.ok) return;
+        window.location.reload();
+      } catch (error) { console.error(error); }
     }
+  });
 
-  }
-});
-
-  // Info icon toggle
   div.querySelector('.info-icon').addEventListener('click', (e) => {
     e.stopPropagation();
     div.classList.toggle('expanded');
   });
 
-  // Checkbox toggle
   div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
@@ -585,7 +454,6 @@ function isPastDate(dateStr) {
   return taskDate < today;
 }
 
-// ✅ INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
 function initSections() {
   const sections = {
     'TASK': document.getElementById('task-section'),
@@ -594,56 +462,34 @@ function initSections() {
     'OTHERS': document.getElementById('other-section'),
     'COMPLETED': document.getElementById('completed-section')
   };
-
   const sectionTasks = { 'TASK': [], 'CHANGES': [], 'UPDATE': [], 'OTHERS': [], 'COMPLETED': [] };
-
   tasks.forEach(task => {
     const targetSection = task.status === 'COMPLETED' ? 'COMPLETED' : (task.section || 'TASK');
     if (sectionTasks[targetSection]) sectionTasks[targetSection].push(task);
   });
 
- ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
-
-  const taskList = sectionTasks[sec];
-  if (!taskList.length) return;
-
-  const taskGroups = {};
-  const noDateTasks = [];
-
-  taskList.forEach(task => {
-    const dateKey = task.due_date ? task.due_date.split('T')[0] : null;
-
-    if (!dateKey) {
-      noDateTasks.push(task);
-    } else {
-      if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
-      taskGroups[dateKey].push(task);
-    }
+  ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
+    const taskList = sectionTasks[sec];
+    if (!taskList.length) return;
+    const taskGroups = {};
+    const noDateTasks = [];
+    taskList.forEach(task => {
+      const dateKey = task.due_date ? task.due_date.split('T')[0] : null;
+      if (!dateKey) noDateTasks.push(task);
+      else {
+        if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
+        taskGroups[dateKey].push(task);
+      }
+    });
+    const sortedDates = Object.keys(taskGroups).sort();
+    sortedDates.forEach(dateStr => {
+      appendTasksToContainer(sections[sec], sortByPriority(taskGroups[dateStr]));
+    });
+    appendTasksToContainer(sections[sec], sortByPriority(noDateTasks));
   });
-
-  // ✅ Sort dates ascending (YYYY-MM-DD auto sorts correctly)
-  const sortedDates = Object.keys(taskGroups).sort();
-
-  sortedDates.forEach(dateStr => {
-    appendTasksToContainer(
-      sections[sec],
-      sortByPriority(taskGroups[dateStr])
-    );
-  });
-
-  // Tasks without date at end
-  appendTasksToContainer(
-    sections[sec],
-    sortByPriority(noDateTasks)
-  );
-
-});
-
-  // Completed tasks
   sectionTasks['COMPLETED'].forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
 }
 
-// Append tasks
 function appendTasksToContainer(container, taskArray) {
   taskArray.forEach(task => container.appendChild(createTaskElement(task)));
   if(taskArray.length > 0) container.appendChild(createSeparator());
@@ -667,18 +513,13 @@ function enableDragAndDrop() {
   });
 }
 
-
-
-// Separator line
 function createSeparator() {
   const hr = document.createElement('div');
-  hr.style.height = '1px';
-  hr.style.backgroundColor = '#7C7B7B';
-  hr.style.margin = '6px 0';
-  hr.style.opacity = '0.5';
+  hr.style.height = '1px'; hr.style.backgroundColor = '#7C7B7B';
+  hr.style.margin = '6px 0'; hr.style.opacity = '0.5';
   return hr;
 }
-// ✅ PRIORITY SORT FUNCTION
+
 function sortByPriority(tasks) {
   const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
   return tasks.sort((a, b) => {
@@ -688,36 +529,17 @@ function sortByPriority(tasks) {
   });
 }
 
-// ✅ HIDDEN INPUT FOR FLATPICKR CENTER TOP
 const hiddenInput = document.createElement('input');
 hiddenInput.type = 'text';
 hiddenInput.className = 'task-date-picker';
 document.body.appendChild(hiddenInput);
 
 let currentTaskDiv = null;
-
 const fp = flatpickr(hiddenInput, {
-  dateFormat: "Y-m-d",
-  minDate: "today",
-  clickOpens: false,
-  appendTo: document.body,
-  static: false,
-  onReady: function(selectedDates, dateStr, instance) {
-    const calendar = instance.calendarContainer;
-    calendar.style.position = "fixed";
-    calendar.style.top = "-10%";          // vertical center
-    calendar.style.left = "50%";         // horizontal center
-    calendar.style.transform = "translate(-50%, -50%)";
-    calendar.style.margin = "0";
-    calendar.style.zIndex = "10000";
-    calendar.style.width = "90%";        // responsive width
-    calendar.style.maxWidth = "400px";   // optional max width
+  dateFormat: "Y-m-d", minDate: "today", clickOpens: false, appendTo: document.body,
+  onOpen: function(selectedDates, dateStr, instance) {
+    instance.calendarContainer.classList.add("center-calendar");
   },
-onOpen: function(selectedDates, dateStr, instance) {
-  const calendar = instance.calendarContainer;
-
-  calendar.classList.add("center-calendar");
-},
   onChange: function(selectedDates, dateStr) {
     if (currentTaskDiv && dateStr) {
       fetch('/update-task-date', {
@@ -726,40 +548,24 @@ onOpen: function(selectedDates, dateStr, instance) {
         body: JSON.stringify({ id: currentTaskDiv.dataset.id, due_date: dateStr })
       })
       .then(res => res.json())
-      .then(data => {
-        if (data.success) window.location.reload();
-      });
+      .then(data => { if (data.success) window.location.reload(); });
     }
-    currentTaskDiv = null;
   }
 });
 
-// Delete all completed task
 document.getElementById('delete-completed').addEventListener('click', async () => {
   if(!confirm("Are you sure you want to delete all completed tasks?")) return;
-
   try {
     const res = await fetch('/api/delete-completed-tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
+      body: JSON.stringify({ adminId: <%= session.adminId %> })
     });
-
     const data = await res.json();
-    if(data.success){
-      alert(data.message);
-      window.location.reload();
-    } else {
-      alert(data.message);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Server error while deleting tasks");
-  }
+    if(data.success) window.location.reload();
+  } catch (err) { console.error(err); }
 });
-//
 
-// Attach date picker to task-date
 function attachDateEvents() {
   document.querySelectorAll('.task-date').forEach(div => {
     div.addEventListener('click', (e) => {
@@ -769,14 +575,13 @@ function attachDateEvents() {
     });
   });
 }
-// Drag support
+
 document.addEventListener('dragstart', (e) => {
   if(e.target.classList.contains('task-item')) {
     e.dataTransfer.setData('text/plain', e.target.dataset.id);
   }
 });
 
-// INIT ON LOAD
 document.addEventListener('DOMContentLoaded', ()=>{
   initSections();
   enableDragAndDrop();
