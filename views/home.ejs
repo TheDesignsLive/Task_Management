@@ -760,12 +760,25 @@ function enableDragAndDrop() {
       const targetEl = e.target.closest('.task-item, .date-separator');
       
       // ✅ MATCH EDIT BOX LOGIC: Pull raw string, trim, and handle null
-      let due_date = undefined;
-      if (targetEl) {
-        // We take the date string directly from the data attribute
-        due_date = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
-        if (due_date === "") due_date = null;
-      }
+     let due_date = undefined;
+
+if (targetEl) {
+  let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
+
+  if (rawDate && rawDate !== "") {
+
+    // ✅ Force correct YYYY-MM-DD format (like edit box)
+    const parts = rawDate.split("-");
+    if (parts.length === 3) {
+      due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
+    } else {
+      due_date = null;
+    }
+
+  } else {
+    due_date = null;
+  }
+}
 
       // 1. Update the Section (Column)
       const sectionPromise = fetch('/update-task-section', {
