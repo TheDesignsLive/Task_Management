@@ -52,20 +52,20 @@ html, body {
 }
 
 .task-header {
-  flex: 3;              /* SAME as .task-main */
+  flex: 1.5;              /* Reduced from 3 to 1.5 */
   text-align: center;
   padding: 6px;
 }
 
 .right-header {
-  flex: 5;              /* SAME as .right-section */
+  flex: 3;              /* Reduced from 5 to 3 */
   display: flex;
 }
 
 .right-header .change,
 .right-header .update,
 .right-header .other-task {
-  flex: 2;              /* SAME as task-change/update/other */
+  flex: 1;              /* Reduced from 2 to 1 */
   text-align: center;
   padding: 6px;
 }
@@ -82,7 +82,7 @@ html, body {
 
 /* LEFT TASK SECTION */
 .task-main {
-  flex: 3;
+  flex: 1.5;            /* Matches .task-header */
   padding: 10px;
   overflow-y: auto;
 }
@@ -95,7 +95,7 @@ html, body {
 
 /* RIGHT SIDE */
 .right-section {
-  flex: 5; /* 1.5 + 1.5 + 2 */
+  flex: 3;            /* Matches .right-header */
   display: flex;
   flex-direction: column;
 }
@@ -108,19 +108,19 @@ html, body {
 }
 
 .task-change {
-  flex: 2;
+  flex: 1;            /* Matches .change */
   padding: 10px;
   overflow-y: auto;
 }
 
 .task-update {
-  flex: 2;
+  flex: 1;            /* Matches .update */
   padding: 10px;
   overflow-y: auto;
 }
 
 .task-other {
-  flex: 2;
+  flex: 1;            /* Matches .other-task */
   padding: 10px;
   overflow-y: auto;
 }
@@ -221,7 +221,6 @@ html, body {
   .priority-yellow { border-color: #ffd633; }
   .priority-blue { border-color: #4da6ff; }
       
-
       
       .info-icon{
           width: 14px;         
@@ -265,7 +264,7 @@ html, body {
   .task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
   .task-options-menu div:hover { background-color: #f0f0f0; }
 
-  /* ===== EDIT BOX ===== */
+  /* ===== EDIT BOX - WIDTH SYNCED ===== */
   .edit-box {
     display: none;
     background: #555;
@@ -274,11 +273,27 @@ html, body {
     margin-top: 5px;
     flex-direction: column;
     gap: 8px;
+    box-sizing: border-box; /* Critical for width alignment */
   }
 
   .edit-box input, .edit-box textarea, .edit-box select {
     background: #3C3A3A; color: white; border: 1px solid #7C7B7B;
     padding: 5px; border-radius: 4px; font-size: 12px;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+  }
+
+  .edit-box input.edit-title, 
+  .edit-box textarea.edit-desc {
+    width: 100% !important;   /* Force same width */
+    display: block;
+  }
+
+  /* Auto-adjusting Textarea */
+  .edit-box textarea.edit-desc {
+    min-height: 80px;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
   }
 
   .edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
@@ -355,7 +370,7 @@ html, body {
 
 .center-calendar {
   position: fixed !important;
-  top: 20% !important;          /* change this value */
+  top: 20% !important;            /* change this value */
   left: 60% !important;
   transform: translateX(-50%) !important;
   z-index: 10000 !important;
@@ -367,7 +382,7 @@ html, body {
   border-radius: 12px;
 }
 
-/* FIX MONTH DROPDOWN WHITE BOX ISSUE */
+/* FIX MONTH DROPDOWN WHITE BOX ISSUE - MATCHING NAV STYLE */
 .flatpickr-monthDropdown-months {
   background: transparent !important;
   color: white !important;
@@ -375,6 +390,8 @@ html, body {
   outline: none !important;
   appearance: none;
   -webkit-appearance: none;
+  font-weight: 600;
+  padding: 2px 4px !important;
 }
 
 .flatpickr-monthDropdown-months:hover,
@@ -391,6 +408,7 @@ html, body {
 .flatpickr-current-month .numInputWrapper input.cur-year {
   color: white !important;
   background: transparent !important;
+  font-weight: 600;
 }
 
 .flatpickr-day {
@@ -412,6 +430,17 @@ html, body {
 .numInputWrapper {
   font-size: 12px;
 }
+
+.flatpickr-months {
+  background: linear-gradient(to right, #0f9d9a, #14b8a6);
+  border-radius: 12px 12px 0 0;
+}
+
+.flatpickr-prev-month, .flatpickr-next-month {
+  color: white !important;
+  fill: white !important;
+}
+
 /* */
 .modal {
   display: none;
@@ -544,7 +573,6 @@ html, body {
   </div>
 </div>
 
-<!-- Single Task Delete Modal -->
 <div id="singleDeleteModal" class="modal">
   <div class="modal-content">
     <h3>Delete This Task?</h3>
@@ -557,7 +585,6 @@ html, body {
   </div>
 </div>
 
-<!-- delete popup for completed tasks -->
 <div id="deleteModal" class="modal">
   <div class="modal-content">
     <h3>Delete Completed Tasks?</h3>
@@ -668,34 +695,48 @@ function createTaskElement(task) {
 
   if (task.status !== 'COMPLETED') div.draggable = true;
 
+  // Function to handle textarea auto-resize
+  const autoResizeTextarea = (textarea) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
+
   // Toggle Edit Box on Double Click
-div.addEventListener('dblclick', () => {
-  if (task.status === 'COMPLETED') return;
+  div.addEventListener('dblclick', () => {
+    if (task.status === 'COMPLETED') return;
 
-  const editBox = div.querySelector('.edit-box');
-  editBox.style.display = 'flex';
+    const editBox = div.querySelector('.edit-box');
+    editBox.style.display = 'flex';
 
-  const dateInput = editBox.querySelector('.edit-date');
+    const descTextarea = editBox.querySelector('.edit-desc');
+    const dateInput = editBox.querySelector('.edit-date');
 
-  // Destroy old flatpickr if exists
-  if (dateInput._flatpickr) {
-    dateInput._flatpickr.destroy();
-  }
+    // Auto-resize once opened
+    autoResizeTextarea(descTextarea);
 
-  // ✅ Get date from database (already in task object)
-  let dbDate = task.due_date;
+    // Attach resize listener
+    descTextarea.addEventListener('input', () => autoResizeTextarea(descTextarea));
 
-  // If date exists, set it
-  if (dbDate) {
-    dateInput.value = dbDate.split('T')[0];  // format must be YYYY-MM-DD
-  }
+    // Destroy old flatpickr if exists
+    if (dateInput._flatpickr) {
+      dateInput._flatpickr.destroy();
+    }
 
-  // Initialize flatpickr with same date
-  flatpickr(dateInput, {
-    dateFormat: "Y-m-d",
-    defaultDate: dateInput.value || null
+    // ✅ Get date from database (already in task object)
+    let dbDate = task.due_date;
+
+    // If date exists, set it
+    if (dbDate) {
+      dateInput.value = dbDate.split('T')[0];  // format must be YYYY-MM-DD
+    }
+
+    // Initialize flatpickr with same date
+    flatpickr(dateInput, {
+      dateFormat: "Y-m-d",
+      defaultDate: dateInput.value || null
+    });
   });
-});
+
   // Dots Menu logic
   const dotsBtn = div.querySelector('.dots-btn');
   const menu = div.querySelector('.task-options-menu');
@@ -732,9 +773,6 @@ if (due_date === "") {
     });
     if(res.ok) window.location.reload();
   });
-
-//delete one task
-
 
   // Info icon toggle
   div.querySelector('.info-icon').addEventListener('click', (e) => {
