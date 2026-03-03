@@ -367,6 +367,32 @@ html, body {
   border-radius: 12px;
 }
 
+/* FIX MONTH DROPDOWN WHITE BOX ISSUE */
+.flatpickr-monthDropdown-months {
+  background: transparent !important;
+  color: white !important;
+  border: none !important;
+  outline: none !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.flatpickr-monthDropdown-months:hover,
+.flatpickr-monthDropdown-months:focus {
+  background: transparent !important;
+}
+
+/* Ensure the actual options inside the dropdown have a background so they are readable */
+.flatpickr-monthDropdown-months option {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.flatpickr-current-month .numInputWrapper input.cur-year {
+  color: white !important;
+  background: transparent !important;
+}
+
 .flatpickr-day {
   height: 30px;
   line-height: 30px;
@@ -379,13 +405,14 @@ html, body {
 
 .flatpickr-current-month {
   font-size: 13px;
+  color: white !important;
 }
 
 .flatpickr-monthDropdown-months,
 .numInputWrapper {
   font-size: 12px;
 }
-/*  */
+/* */
 .modal {
   display: none;
   position: fixed;
@@ -518,7 +545,6 @@ html, body {
 </div>
 
 
-<!-- DELETE CONFIRM MODAL -->
 <div id="deleteModal" class="modal">
   <div class="modal-content">
     <h3>Delete Completed Tasks?</h3>
