@@ -212,7 +212,7 @@ const openTasks = <%- JSON.stringify(openTasks) %>;
 const members = <%- JSON.stringify(members) %>;
 
 function formatDate(dateStr) {
-if (!dateStr || dateStr === 'null') return '';
+if (!dateStr || dateStr === 'null') return { text: '', isOverdue: false };
 const today = new Date();
 const tomorrow = new Date();
 tomorrow.setDate(today.getDate() + 1);
@@ -221,9 +221,12 @@ today.setHours(0,0,0,0);
 tomorrow.setHours(0,0,0,0);
 taskDate.setHours(0,0,0,0);
 
-if (taskDate.getTime() === today.getTime()) return "Today";
-else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
-else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+let text = "";
+if (taskDate.getTime() === today.getTime()) text = "Today";
+else if (taskDate.getTime() === tomorrow.getTime()) text = "Tom";
+else text = taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+return { text: text, isOverdue: taskDate.getTime() < today.getTime() };
 }
 
 async function toggleStatus(id, status) {
@@ -259,6 +262,8 @@ let memberOptions = members.map(m =>
 ).join('');
 
 const displayDesc = (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description;
+const dateInfo = formatDate(task.due_date);
+const dateStyle = dateInfo.isOverdue ? 'color: #ff4d4d; font-weight: bold; opacity: 1;' : '';
 
 const item = document.createElement('div');
 item.className = 'task-item';
@@ -279,7 +284,7 @@ ${memberOptions}
 </select>
 </div>
 
-<div class="task-date">${formatDate(task.due_date)}</div>
+<div class="task-date" style="${dateStyle}">${dateInfo.text}</div>
 </div>
 `;
 
@@ -290,7 +295,13 @@ container.appendChild(item);
 document.addEventListener('DOMContentLoaded', () => {
 renderOpenTasks();
 document.querySelectorAll('.date-display').forEach(el => {
-el.innerText = formatDate(el.innerText);
+const dateInfo = formatDate(el.innerText);
+el.innerText = dateInfo.text;
+if(dateInfo.isOverdue) {
+    el.style.color = '#ff4d4d';
+    el.style.fontWeight = 'bold';
+    el.style.opacity = '1';
+}
 });
 });
 </script>
