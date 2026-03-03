@@ -68,29 +68,29 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ================= AUTOMATIC CLEANUP (CRON JOB) =================
 // Runs every day at 00:00 (Midnight)
 cron.schedule('0 0 * * *', () => {
-    console.log('Running auto-cleanup: Deleting completed tasks older than 1 month...');
-    
-    // First delete notifications linked to these tasks, then the tasks themselves
-    const deleteNotificationsSql = `
-        DELETE FROM notifications 
-        WHERE task_id IN (
-            SELECT id FROM tasks 
-            WHERE status = 'COMPLETED' 
-            AND updated_at < NOW() - INTERVAL 1 MONTH
-        )`;
-    
+    console.log('Running auto-cleanup: Deleting old data...');
+
+    // 1. Delete Announcements older than 1 month
+    const deleteAnnouncementsSql = `
+        DELETE FROM announcements 
+        WHERE created_at < NOW() - INTERVAL 1 MONTH`;
+
+    // 2. Delete Completed Tasks older than 1 month
     const deleteTasksSql = `
         DELETE FROM tasks 
         WHERE status = 'COMPLETED' 
         AND updated_at < NOW() - INTERVAL 1 MONTH`;
 
-    con.query(deleteNotificationsSql, (err) => {
-        if (err) console.error('Auto-cleanup Notifications Error:', err);
-        
-        con.query(deleteTasksSql, (err2) => {
-            if (err2) console.error('Auto-cleanup Tasks Error:', err2);
-            else console.log('Auto-cleanup completed successfully.');
-        });
+    // Execute Announcements deletion
+    con.query(deleteAnnouncementsSql, (err) => {
+        if (err) console.error('Auto-cleanup Announcements Error:', err);
+        else console.log('Old announcements cleaned up.');
+    });
+
+    // Execute Tasks deletion
+    con.query(deleteTasksSql, (err) => {
+        if (err) console.error('Auto-cleanup Tasks Error:', err);
+        else console.log('Old completed tasks cleaned up.');
     });
 });
 
