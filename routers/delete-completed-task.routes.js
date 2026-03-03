@@ -13,6 +13,7 @@ router.post('/delete-completed-tasks', async (req, res) => {
     const userId = req.session.userId;
 
     if (!role) {
+  
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
