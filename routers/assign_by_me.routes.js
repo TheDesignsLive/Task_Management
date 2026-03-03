@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     try {
         let adminId = req.session.adminId;
 
-        // Fetch members for editing dropdown
+        // Fetch members (employees)
         const [mRows] = await con.query(
             "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
             [adminId]
@@ -26,15 +26,12 @@ router.get('/', async (req, res) => {
         const [aRows] = await con.query("SELECT id, name FROM admins WHERE id=?", [adminId]);
         if (aRows.length > 0) adminName = aRows[0].name;
 
-        // Logic for Dropdown Members
+        // Logic for Dropdown Members - REMOVED MANUAL ADMIN ADDITION
         if (req.session.role === "admin") {
-            // Admin sees all employees, but we don't include admin in this specific dropdown logic
             members = mRows; 
         } else {
-            // User sees Admin (with tag) and all other employees except themselves
-            const adminObj = { id: 0, name: `${aRows[0].name} (Admin)` };
-            const otherEmployees = mRows.filter(m => m.id != req.session.userId);
-            members = [adminObj, ...otherEmployees];
+            // User sees all other employees except themselves
+            members = mRows.filter(m => m.id != req.session.userId);
         }
 
         // ================= ADMIN =================
@@ -99,9 +96,7 @@ router.post('/update-assignee', async (req, res) => {
             "UPDATE tasks SET assigned_to = ? WHERE id = ?",
             [newAssigneeId, taskId]
         );
-            // 🔴 AUTO REFRESH FOR ALL USERS (TASK UPDATED)
         req.io.emit('update_tasks');
-
         res.json({ success: true });
     } catch (err) {
         console.error(err);
