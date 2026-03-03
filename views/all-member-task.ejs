@@ -326,14 +326,37 @@ html,body{
 <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
 <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
-<div class="task-row">
-<input type="checkbox" disabled class="task-checkbox 
-<%= task.priority==='HIGH'?'checkbox-red':'' %>
-<%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
-<%= task.priority==='LOW'?'checkbox-blue':'' %>">
-<%= task.title %>
-<div class="task-date"><%= taskDate %></div>
-</div>
+
+  <div class="task-card-header">
+
+    <div class="task-row">
+      <input type="checkbox" disabled class="task-checkbox 
+      <%= task.priority==='HIGH'?'checkbox-red':'' %>
+      <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+      <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        <%= task.title %>
+      </div>
+    </div>
+
+    <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+      fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="8.5"></line>
+      <line x1="12" y1="11" x2="12" y2="16"></line>
+    </svg>
+
+    <div class="task-date"><%= taskDate %></div>
+
+  </div>
+
+  <div class="task-details">
+    <div class="task-desc-text">
+      <%= task.description || "No description provided." %>
+    </div>
+  </div>
 
 </div>
 <% }) %>

@@ -544,15 +544,29 @@ html, body {
   </div>
 </div>
 
+<!-- Single Task Delete Modal -->
+<div id="singleDeleteModal" class="modal">
+  <div class="modal-content">
+    <h3>Delete This Task?</h3>
+    <p>This task will be permanently removed.</p>
 
+    <div class="modal-buttons">
+      <button id="confirmSingleDelete" class="btn delete">Delete</button>
+      <button id="cancelSingleDelete" class="btn cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- delete popup for completed tasks -->
 <div id="deleteModal" class="modal">
   <div class="modal-content">
     <h3>Delete Completed Tasks?</h3>
     <p>This action cannot be undone.</p>
 
     <div class="modal-buttons">
-      <button id="cancelDelete" class="btn cancel">Cancel</button>
+    
       <button id="confirmDelete" class="btn delete">Delete</button>
+        <button id="cancelDelete" class="btn cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -719,29 +733,8 @@ if (due_date === "") {
     if(res.ok) window.location.reload();
   });
 
-  div.querySelector('.delete-opt').addEventListener('click', async () => {
-  if(confirm("Delete this task?")) {
+//delete one task
 
-    try {
-      const res = await fetch(`/tasks/delete-task/${task.id}`, {
-        method: 'POST'
-      });
-
-      if (!res.ok) {
-        alert("Server error");
-        return;
-      }
-
-      
-      window.location.reload();
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Delete failed");
-    }
-
-  }
-});
 
   // Info icon toggle
   div.querySelector('.info-icon').addEventListener('click', (e) => {
@@ -1072,14 +1065,68 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
+//delete one task
+// ===============================
+// SINGLE TASK DELETE (GLOBAL)
+// ===============================
+
+let taskToDeleteId = null;
+
+// Open modal when clicking delete option
+document.addEventListener("click", function(e) {
+  const deleteBtn = e.target.closest(".delete-opt");
+
+  if (deleteBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const taskItem = deleteBtn.closest(".task-item");
+    taskToDeleteId = taskItem.dataset.id;
+
+    document.getElementById("singleDeleteModal").style.display = "flex";
+  }
+});
+
+// Cancel button
+document.getElementById("cancelSingleDelete").addEventListener("click", function() {
+  document.getElementById("singleDeleteModal").style.display = "none";
+  taskToDeleteId = null;
+});
+
+// Confirm delete
+document.getElementById("confirmSingleDelete").addEventListener("click", async function () {
+
+  if (!taskToDeleteId) return;
+
+  try {
+    // Close modal immediately
+    document.getElementById("singleDeleteModal").style.display = "none";
+
+    await fetch(`/tasks/delete-task/${taskToDeleteId}`, {
+      method: "POST"
+    });
+
+    taskToDeleteId = null;
+
+    // ❌ DO NOT reload here
+    // Socket will reload automatically
+
+  } catch (err) {
+    console.error("Delete error:", err);
+  }
+
+});
+
 </script>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    socket.on('update_tasks', () => {
-        window.location.reload(); 
-    });
+   socket.on('update_tasks', () => {
+    setTimeout(() => {
+        window.location.reload();
+    }, 100);
+});
 </script>
 
 </body>
