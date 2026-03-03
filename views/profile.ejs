@@ -6,7 +6,6 @@
 <title>Profile</title>
 
 <style>
-/* FILL 1 PAGE WITHOUT SCROLL */
 html, body {
   height: 100%;
   margin: 0;
@@ -17,7 +16,7 @@ html, body {
 }
 .layout {
   display: flex;
-  height: calc(100vh - 60px); /* Height minus navbar */
+  height: calc(100vh - 60px); 
 }
 .sidebar-container {
   width: 55px;
@@ -26,17 +25,15 @@ html, body {
 .main-content {
   flex: 1;
   padding: 20px;
-  background: #3C3A3A; /* Changed to match theme */
+  background: #3C3A3A; 
   display: flex;
   justify-content: center;
   align-items: center; 
   overflow: hidden;
 }
-
-/* HORIZONTAL CARD DESIGN */
 .profile-card {
   width: 750px;
-  background: rgba(255, 255, 255, 0.05); /* Darker Card Background */
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   display: flex;
@@ -83,7 +80,6 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
 .profile-right {
   flex: 1;
   padding: 40px;
@@ -93,7 +89,7 @@ html, body {
 }
 .section-title {
   font-size: 20px;
-  color: #00d1b2; /* Lighter teal for dark background */
+  color: #00d1b2;
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 10px;
   margin-bottom: 20px;
@@ -108,12 +104,12 @@ html, body {
 .info-item label {
   display: block;
   font-size: 12px;
-  color: #bbb; /* Lighter label color */
+  color: #bbb;
   margin-bottom: 3px;
 }
 .info-item span {
   font-size: 15px;
-  color: #fff; /* White text for info */
+  color: #fff;
   font-weight: 500;
 }
 .profile-btn {
@@ -130,8 +126,6 @@ html, body {
 .profile-btn:hover {
   background: #00a896;
 }
-
-/* DIALOG BOX (Unchanged logic/layout) */
 .modal {
   display: none;
   position: fixed;
@@ -142,87 +136,87 @@ html, body {
   z-index: 1000;
 }
 .error-msg {
-    color: #ff6b6b;
-    font-size: 11px;
-    display: none;
-    margin-top: -8px;
-    margin-bottom: 10px;
+  color: #ff6b6b;
+  font-size: 11px;
+  display: none;
+  margin-top: -8px;
+  margin-bottom: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<%- include('navbar') %>
+<!-- Pass members safely to navbar -->
+<%- include('navbar', { members: members || [] }) %>
 
 <div class="layout">
-
-<div class="sidebar-container">
- <%- include('sidebar') %>
-</div>
-
-<div class="main-content">
-
-  <div class="profile-card">
-    <div class="profile-left">
-        <% if (profilePic) { %>
-            <img src="/images/<%= profilePic %>" class="profile-img">
-        <% } else { %>
-            <div class="profile-letter-avatar">
-                <%= name.charAt(0) %>
-            </div>
-        <% } %>
-        <div class="profile-name-left"><%= name %></div>
-        <div class="profile-role-tag"><%= role %></div>
-    </div>
-
-    <div class="profile-right">
-        <div class="section-title">Information</div>
-        
-        <div class="info-grid">
-            <div class="info-item">
-                <label>Company</label>
-                <span><%= company || 'N/A' %></span>
-            </div>
-            <div class="info-item">
-                <label>Email Address</label>
-                <span><%= email %></span>
-            </div>
-            <div class="info-item">
-                <label>Phone Number</label>
-                <span><%= phone %></span>
-            </div>
-
-            <% if (session.role === 'admin') { %>
-                <div class="info-item">
-                    <label>Account Type</label>
-                    <span>Admin</span>
-                </div>
-            <% } else { %>
-                <div class="info-item">
-                    <label>Account Type</label>
-                    <span>User</span>
-                </div>
-                <div class="info-item">
-                    <label>Role</label>
-                    <span><%= userRoleName || 'N/A' %></span>
-                </div>
-            <% } %>
-
-            <div class="info-item">
-                <label>Account Status</label>
-                <span style="color: #4ade80;">● Active</span>
-            </div>
-        </div>
-
-        <button class="profile-btn" onclick="openEdit()">Edit Profile Information</button>
-    </div>
+  <div class="sidebar-container">
+    <%- include('sidebar') %>
   </div>
 
+  <div class="main-content">
+
+    <div class="profile-card">
+      <div class="profile-left">
+          <% if (profilePic) { %>
+              <img src="/images/<%= profilePic %>" class="profile-img">
+          <% } else { %>
+              <div class="profile-letter-avatar">
+                  <%= name.charAt(0) %>
+              </div>
+          <% } %>
+          <div class="profile-name-left"><%= name %></div>
+          <div class="profile-role-tag"><%= role %></div>
+      </div>
+
+      <div class="profile-right">
+          <div class="section-title">Information</div>
+          
+          <div class="info-grid">
+              <div class="info-item">
+                  <label>Company</label>
+                  <span><%= company || 'N/A' %></span>
+              </div>
+              <div class="info-item">
+                  <label>Email Address</label>
+                  <span><%= email %></span>
+              </div>
+              <div class="info-item">
+                  <label>Phone Number</label>
+                  <span><%= phone %></span>
+              </div>
+
+              <% if (session.role === 'admin') { %>
+                  <div class="info-item">
+                      <label>Account Type</label>
+                      <span>Admin</span>
+                  </div>
+              <% } else { %>
+                  <div class="info-item">
+                      <label>Account Type</label>
+                      <span>User</span>
+                  </div>
+                  <div class="info-item">
+                      <label>Role</label>
+                      <span><%= userRoleName || 'N/A' %></span>
+                  </div>
+              <% } %>
+
+              <div class="info-item">
+                  <label>Account Status</label>
+                  <span style="color: #4ade80;">● Active</span>
+              </div>
+          </div>
+
+          <button class="profile-btn" onclick="openEdit()">Edit Profile Information</button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-</div>
-
+<!-- Edit Modal -->
 <div class="modal" id="editModal">
   <div style="width:400px; background:white; border-radius:10px; padding:25px; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
     <h3 style="margin-top:0; color: #095959;">Edit Profile</h3>
@@ -253,34 +247,50 @@ html, body {
 <script>
 function openEdit(){document.getElementById('editModal').style.display='flex';}
 function closeEdit(){document.getElementById('editModal').style.display='none';}
+document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
 
-document.getElementById('editForm').addEventListener('submit', function(e) {
+const editForm = document.getElementById('editForm');
+editForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
     const phone = document.getElementById('phoneInput').value;
-    const error = document.getElementById('phoneError');
-    
-    // Only allow digits and check length
+    const phoneError = document.getElementById('phoneError');
     const phoneRegex = /^\d{10}$/;
-    
-    if(!phoneRegex.test(phone)) {
-        e.preventDefault();
-        error.style.display = 'block';
-    } else {
-        error.style.display = 'none';
-    }
+    if(!phoneRegex.test(phone)) { phoneError.style.display = 'block'; return; } 
+    else { phoneError.style.display = 'none'; }
+
+    const formData = new FormData(editForm);
+
+    try {
+        const res = await fetch('/profile/update-profile', { method:'POST', body: formData });
+        const data = await res.json();
+        if(data.success){
+            document.querySelector('.profile-name-left').textContent = data.name;
+            const infoItems = document.querySelectorAll('.info-grid .info-item span');
+            let index = 0;
+            <% if(session.role=="admin"){ %>
+                infoItems[index++].textContent = data.company || 'N/A';
+            <% } %>
+            index++;
+            infoItems[index++].textContent = data.phone;
+            if(data.profilePic){
+                const imgContainer = document.querySelector('.profile-left');
+                let imgTag = document.querySelector('.profile-img');
+                if(!imgTag){
+                    const letterAvatar = document.querySelector('.profile-letter-avatar');
+                    if(letterAvatar) letterAvatar.remove();
+                    imgTag = document.createElement('img');
+                    imgTag.classList.add('profile-img');
+                    imgContainer.prepend(imgTag);
+                }
+                imgTag.src = '/images/' + data.profilePic;
+            }
+            closeEdit();
+        } else { alert("Profile update failed!"); }
+    } catch(err){ console.error(err); alert("Something went wrong!"); }
 });
 
-// Force numeric input only
-document.getElementById('phoneInput').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-</script>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    socket.on('update_profiles', () => {
-        window.location.reload(); 
-    });
+const socket = io();
+socket.on('update_profiles', () => { window.location.reload(); });
 </script>
 
 </body>
