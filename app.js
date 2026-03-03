@@ -99,7 +99,7 @@ app.use('/settings', settings);
 app.use('/', updateTaskDate);
 app.use('/',allMemberTask);
 app.use('/api', deleteCompletedTasksRouter);
-app.use('/', deleteCompletedTasksRouter);
+
 
 // Forgot Password Workflow
 app.get("/forgot-password", (req, res) => {

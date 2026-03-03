@@ -385,10 +385,69 @@ html, body {
 .numInputWrapper {
   font-size: 12px;
 }
+/*  */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
 
-/* */
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 320px;
+  text-align: center;
+  animation: pop 0.3s ease;
+}
 
+.modal-content h3 {
+  color: #d32f2f;
+  margin-bottom: 10px;
+}
 
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.cancel {
+  background: #ccc;
+}
+
+.cancel:hover {
+  background: #aaa;
+}
+
+.delete {
+  background: #d32f2f;
+  color: white;
+}
+
+.delete:hover {
+  background: #b71c1c;
+}
+
+@keyframes pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
 
 </style>
 </head>
@@ -457,6 +516,21 @@ html, body {
 
   </div>
 </div>
+
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h3>Delete Completed Tasks?</h3>
+    <p>This action cannot be undone.</p>
+
+    <div class="modal-buttons">
+      <button id="cancelDelete" class="btn cancel">Cancel</button>
+      <button id="confirmDelete" class="btn delete">Delete</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 const tasks = <%- JSON.stringify(tasks) %>;
@@ -922,6 +996,56 @@ document.addEventListener('DOMContentLoaded', ()=>{
   enableDragAndDrop();
   attachDateEvents(); 
 });
+
+
+//Delete completed task pop up:
+document.addEventListener("DOMContentLoaded", function() {
+
+  const deleteIcon = document.getElementById("delete-completed");
+  const modal = document.getElementById("deleteModal");
+  const cancelBtn = document.getElementById("cancelDelete");
+  const confirmBtn = document.getElementById("confirmDelete");
+
+  // 🔴 REMOVE OLD CLICK EVENTS (VERY IMPORTANT)
+  const newDeleteIcon = deleteIcon.cloneNode(true);
+  deleteIcon.parentNode.replaceChild(newDeleteIcon, deleteIcon);
+
+  // ✅ Now attach ONLY this event
+  newDeleteIcon.addEventListener("click", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    modal.style.display = "flex";
+  });
+
+  cancelBtn.addEventListener("click", function() {
+    modal.style.display = "none";
+  });
+
+  confirmBtn.addEventListener("click", async function() {
+    try {
+      const response = await fetch('/api/delete-completed-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+
+      modal.style.display = "none";
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      modal.style.display = "none";
+    }
+  });
+
+  window.addEventListener("click", function(e) {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+
+});
+
 </script>
 
 <script src="/socket.io/socket.io.js"></script>
