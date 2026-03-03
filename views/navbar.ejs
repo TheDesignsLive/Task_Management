@@ -19,17 +19,27 @@ body{
   display:flex;
   align-items:center;
   gap:15px;
-  padding:10px 20px;
+  padding:10px 20px 10px 5px; 
   background:linear-gradient(to right,var(--teal1),var(--teal2));
   box-shadow:0 2px 4px rgba(0,0,0,0.1);
 }
 
-.logo{
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  background:#0b6e6b;
-  margin-right:15px;
+.logo {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+  background: white;              /* clean contrast */
+  padding: 3px;                   /* small inner spacing */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+
+.logo:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 
 .input-box{
@@ -160,12 +170,43 @@ select::-ms-expand {
   background: linear-gradient(to right, #0f9d9a, #14b8a6);
   padding: 10px 0;
 }
+/* */
+/* ============================= */
+/* Professional Month Dropdown   */
+/* ============================= */
 
-.flatpickr-current-month {
-  color: white;
-  font-weight: 600;
-  font-size: 16px;
+/* Target ONLY Flatpickr month dropdown */
+.flatpickr-calendar select.flatpickr-monthDropdown-months {
+  background: #ffffff !important;
+  color: #2c3e50 !important;
+  font-size: 12px !important;      /* smaller professional size */
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-weight: 500;
+  border-radius: 6px !important;
+  border: 1px solid #d6e3df !important;
+  padding: 4px 6px !important;
+  appearance: auto !important;     /* restore default dropdown arrow */
 }
+
+/* Dropdown options */
+.flatpickr-calendar select.flatpickr-monthDropdown-months option {
+  background: #ffffff;
+  color: #2c3e50;
+  font-size: 12px;
+}
+
+/* Hover effect (some browsers support) */
+.flatpickr-calendar select.flatpickr-monthDropdown-months option:hover {
+  background: #e6f7f5;
+  color: #0f9d9a;
+}
+
+/* Make header month text smaller */
+.flatpickr-current-month {
+  font-size: 14px !important;
+  font-weight: 600;
+}
+/* */
 
 .flatpickr-current-month input.cur-year {
   color: white;
@@ -241,7 +282,10 @@ select::-ms-expand {
 
 
 <div class="navbar">
-  <div class="logo"></div>
+
+<img src="/images/tms_logo.jpeg" alt="TMS Logo" class="logo">
+ 
+
 
   <div class="input-box">
     
