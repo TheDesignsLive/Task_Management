@@ -5,6 +5,7 @@ const session = require('express-session');
 const con = require('./config/db');
 const http = require('http'); // Required for Socket.io
 const socketIo = require('socket.io'); // Required for Socket.io
+const cron = require('node-cron'); // Added for automatic cleanup
 
 const app = express();
 const server = http.createServer(app); // Create HTTP server
@@ -63,6 +64,35 @@ app.use((req, res, next) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ================= AUTOMATIC CLEANUP (CRON JOB) =================
+// Runs every day at 00:00 (Midnight)
+cron.schedule('0 0 * * *', () => {
+    console.log('Running auto-cleanup: Deleting completed tasks older than 1 month...');
+    
+    // First delete notifications linked to these tasks, then the tasks themselves
+    const deleteNotificationsSql = `
+        DELETE FROM notifications 
+        WHERE task_id IN (
+            SELECT id FROM tasks 
+            WHERE status = 'COMPLETED' 
+            AND updated_at < NOW() - INTERVAL 1 MONTH
+        )`;
+    
+    const deleteTasksSql = `
+        DELETE FROM tasks 
+        WHERE status = 'COMPLETED' 
+        AND updated_at < NOW() - INTERVAL 1 MONTH`;
+
+    con.query(deleteNotificationsSql, (err) => {
+        if (err) console.error('Auto-cleanup Notifications Error:', err);
+        
+        con.query(deleteTasksSql, (err2) => {
+            if (err2) console.error('Auto-cleanup Tasks Error:', err2);
+            else console.log('Auto-cleanup completed successfully.');
+        });
+    });
+});
 
 // ================= ROUTES EXECUTION =================
 
