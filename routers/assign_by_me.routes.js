@@ -87,7 +87,7 @@ router.get('/', async (req, res) => {
 
 /* ================= UPDATE ASSIGNEE ================= */
 router.post('/update-assignee', async (req, res) => {
-    if (!req.session.role) return res.status(401).json({ success: false });
+    if (!req.session.role) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { taskId, newAssigneeId } = req.body;
 
@@ -97,10 +97,10 @@ router.post('/update-assignee', async (req, res) => {
             [newAssigneeId, taskId]
         );
         req.io.emit('update_tasks');
-        res.json({ success: true });
+        res.json({ success: true, message: 'Assignee updated' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false });
+        res.status(500).json({ success: false, message: 'Database Error' });
     }
 });
 
