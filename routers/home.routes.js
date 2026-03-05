@@ -142,7 +142,7 @@ router.get('/home', async (req, res) => {
                  WHERE t.admin_id=?
                  AND t.assigned_to=?
                  AND t.who_assigned='admin'
-               ORDER BY 
+                ORDER BY 
     due_date ASC,
     CASE priority
         WHEN 'HIGH' THEN 1
@@ -158,7 +158,7 @@ router.get('/home', async (req, res) => {
                 `SELECT id, title, description, priority, due_date, status, section
                  FROM tasks
                  WHERE admin_id=? AND assigned_to=? AND who_assigned='user'
-               ORDER BY 
+                ORDER BY 
     due_date ASC,
     CASE priority
         WHEN 'HIGH' THEN 1
@@ -181,7 +181,7 @@ router.get('/home', async (req, res) => {
                  AND t.assigned_to=? 
                  AND t.who_assigned='user' 
                  AND t.assigned_by != ? 
-               ORDER BY 
+                ORDER BY 
     due_date ASC,
     CASE priority
         WHEN 'HIGH' THEN 1
@@ -218,10 +218,10 @@ router.post('/update-task-status', async (req, res) => {
         await con.query("UPDATE tasks SET status=? WHERE id=?", [status, id]);
             // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_tasks');
-        res.json({ success: true });
+        res.json({ success: true, message: 'Task status updated' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false });
+        res.status(500).json({ success: false, message: 'Database Error' });
     }
 });
 
@@ -234,10 +234,10 @@ router.post('/update-task-section', async (req, res) => {
         await con.query("UPDATE tasks SET section=? WHERE id=?", [section, id]);
                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_tasks');
-        res.json({ success: true });
+        res.json({ success: true, message: 'Task section updated' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false });
+        res.status(500).json({ success: false, message: 'Database Error' });
     }
 });
 
