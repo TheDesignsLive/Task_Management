@@ -232,6 +232,8 @@ table tr:hover td {
 .btn-danger:hover { background-color: #c0392b; }
 .btn-cancel { background-color: #f1f1f1; color: #333; }
 .btn-cancel:hover { background-color: #e2e2e2; }
+.btn-success { background-color: #0F8989; color: #fff; } /* Added for Success Alert */
+.btn-success:hover { background-color: #0c7575; }
 
 /* ===== Permissions Guide Style ===== */
 .permissions-guide {
@@ -389,7 +391,56 @@ table tr:hover td {
   </div>
 </div>
 
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="confirm-modal-content">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons">
+        <button id="customAlertBtn" class="btn btn-success" style="width: 100%;">Okay</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// FLAG TO PREVENT SOCKET REFRESH WHILE DIALOG IS OPEN
+let isProcessingAjax = false;
+
+// ================= CUSTOM ALERT FUNCTION =================
+let alertReloadFlag = false;
+
+function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  
+  alertReloadFlag = shouldReload;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertReloadFlag) {
+      window.location.reload();
+  } else {
+      isProcessingAjax = false; 
+  }
+});
+// =========================================================
+
+
 // Search Logic: StartsWith fix
 document.getElementById('searchRole').addEventListener('input', function() {
   const filter = this.value.toLowerCase();
@@ -440,6 +491,8 @@ document.getElementById('addRoleForm').addEventListener('submit', async function
         role_name: this.role_name.value,
         control_type: this.control_type.value
     };
+    
+    isProcessingAjax = true; // Pause socket reload
     try {
         const response = await fetch('/add-role', {
             method: 'POST',
@@ -449,12 +502,15 @@ document.getElementById('addRoleForm').addEventListener('submit', async function
         const resData = await response.json();
         if (resData.success) {
             closeCategoryDialog();
+            showAlertDialog("Success!", resData.message || "Role created successfully.", true, true);
         } else {
-            alert(resData.message);
+            isProcessingAjax = false; // Unblock if error
+            showAlertDialog("Error", resData.message, false, false);
         }
     } catch (err) {
         console.error(err);
-        alert("Server Error");
+        isProcessingAjax = false; // Unblock if error
+        showAlertDialog("Error", "Server Error", false, false);
     }
 });
 
@@ -465,6 +521,8 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
         role_name: document.getElementById('edit_role_name').value,
         control_type: document.getElementById('edit_control_type').value
     };
+    
+    isProcessingAjax = true; // Pause socket reload
     try {
         const response = await fetch(this.action, {
             method: 'POST',
@@ -474,30 +532,39 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
         const resData = await response.json();
         if (resData.success) {
             closeEditDialog();
+            showAlertDialog("Updated!", resData.message || "Role updated successfully.", true, true);
         } else {
-            alert(resData.message);
+            isProcessingAjax = false; // Unblock if error
+            showAlertDialog("Error", resData.message, false, false);
         }
     } catch (err) {
         console.error(err);
-        alert("Server Error");
+        isProcessingAjax = false; // Unblock if error
+        showAlertDialog("Error", "Server Error", false, false);
     }
 });
 
 // DELETE ROLE
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     if (deleteTargetId) {
+        isProcessingAjax = true; // Pause socket reload
         try {
             const response = await fetch('/delete-role/' + deleteTargetId);
             const resData = await response.json();
+            
+            closeDeletePopup();
+            
             if (resData.success) {
-                closeDeletePopup();
+                showAlertDialog("Deleted!", resData.message || "Role deleted successfully.", true, true);
             } else {
-                alert(resData.message);
-                closeDeletePopup();
+                isProcessingAjax = false; // Unblock if error
+                showAlertDialog("Error", resData.message, false, false);
             }
         } catch (err) {
             console.error(err);
-            alert("Server Error");
+            closeDeletePopup();
+            isProcessingAjax = false; // Unblock if error
+            showAlertDialog("Error", "Server Error", false, false);
         }
     }
 });
@@ -505,6 +572,10 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
 // Close dialogs on overlay click
 window.onclick = function(event) {
   if (event.target.className === 'dialog-overlay') {
+    // Prevent closing the custom alert by clicking outside IF it requires a reload to finish the action
+    if (event.target.id === 'customAlertModal' && alertReloadFlag) {
+        return; 
+    }
     event.target.style.display = "none";
   }
 }
@@ -514,7 +585,10 @@ window.onclick = function(event) {
 <script>
     const socket = io();
     socket.on('update_roles', () => {
-        window.location.reload(); 
+        // ✅ Only auto-reload if the user doesn't have an alert modal waiting for them
+        if (!isProcessingAjax) {
+            window.location.reload(); 
+        }
     });
 </script>
 

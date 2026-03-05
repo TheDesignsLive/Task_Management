@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
     // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_roles');
 
-    res.json({ success: true, message: 'Role created successfully' });
+    res.json({ success: true, message: 'Role successfully created' });
 
   } catch (err) {
     console.error(err);

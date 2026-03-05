@@ -27,7 +27,7 @@ router.post("/edit-role/:id", async (req, res) => {
        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
        req.io.emit('update_roles');
 
-       res.json({ success: true, message: 'Role updated successfully' });
+       res.json({ success: true, message: 'Role successfully updated' });
 
     } catch (err) {
         console.log(err);

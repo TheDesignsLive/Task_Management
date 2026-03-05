@@ -28,7 +28,7 @@ router.get('/delete-role/:id', async (req, res) => {
     // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_roles');
 
-    res.json({ success: true, message: 'Role deleted successfully' });
+    res.json({ success: true, message: 'Role successfully deleted' });
 
   } catch (err) {
     console.error(err);

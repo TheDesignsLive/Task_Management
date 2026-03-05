@@ -219,6 +219,8 @@
     .btn-danger:hover { background-color: #c0392b; }
     .btn-cancel { background-color: #f1f1f1; color: #333; }
     .btn-cancel:hover { background-color: #e2e2e2; }
+    .btn-success { background-color: #0F8989; color: #fff; } 
+    .btn-success:hover { background-color: #0c7575; }
 
     /* Empty Role Warning Style */
     .empty-role-warning {
@@ -411,8 +413,56 @@
   </div>
 </div>
 
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="confirm-modal-content">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons">
+        <button id="customAlertBtn" class="btn btn-success" style="width: 100%;">Okay</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const userRole = '<%= session.role %>';
+
+// FLAG TO PREVENT SOCKET REFRESH WHILE DIALOG IS OPEN
+let isProcessingAjax = false;
+
+// ================= CUSTOM ALERT FUNCTION =================
+let alertReloadFlag = false;
+
+function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  
+  alertReloadFlag = shouldReload;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertReloadFlag) {
+      window.location.reload();
+  } else {
+      isProcessingAjax = false; // Reset flag so socket can reload if needed later
+  }
+});
+// =========================================================
 
 document.getElementById('searchMember').addEventListener('input', function() {
   const filter = this.value.toLowerCase();
@@ -477,19 +527,22 @@ if (addForm) {
       if(pass !== confirm) { document.getElementById("addConfirmError").style.display = 'block'; hasError = true; }
       if(hasError) return;
 
+      isProcessingAjax = true; // Block auto-refresh
       const formData = new FormData(this);
       try {
           const response = await fetch('/add-member', { method: 'POST', body: formData });
           const data = await response.json();
           if (data.success) {
-              alert(data.message);
-              location.reload();
+              closeDialog();
+              showAlertDialog("Success!", data.message, true, true);
           } else {
-              alert(data.message);
+              isProcessingAjax = false; // Unblock if error
+              showAlertDialog("Error", data.message, false, false);
           }
       } catch (err) {
           console.error(err);
-          alert("Server Error");
+          isProcessingAjax = false; // Unblock if error
+          showAlertDialog("Error", "Server Error", false, false);
       }
   });
 }
@@ -497,17 +550,22 @@ if (addForm) {
 document.getElementById("editMemberForm").addEventListener("submit", async function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    
+    isProcessingAjax = true; // Block auto-refresh
     try {
         const response = await fetch('/edit-member/' + editTargetId, { method: 'POST', body: formData });
         const data = await response.json();
         if (data.success) {
-            location.reload();
+            closeEditDialog();
+            showAlertDialog("Updated!", "Member updated successfully", true, true);
         } else {
-            alert(data.message);
+            isProcessingAjax = false; // Unblock if error
+            showAlertDialog("Error", data.message, false, false);
         }
     } catch (err) {
         console.error(err);
-        alert("Server Error");
+        isProcessingAjax = false; // Unblock if error
+        showAlertDialog("Error", "Server Error", false, false);
     }
 });
 
@@ -534,24 +592,34 @@ function closeDeletePopup() { document.getElementById("deleteModal").style.displ
 
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     if (deleteUserId) {
+        isProcessingAjax = true; // Block auto-refresh
         try {
             const response = await fetch("/delete-member/" + deleteUserId);
             const data = await response.json();
+            
+            closeDeletePopup();
+            
             if (data.success) {
-                alert(data.message);
-                location.reload();
+                showAlertDialog("Deleted!", data.message, true, true);
             } else {
-                alert(data.message);
+                isProcessingAjax = false; // Unblock if error
+                showAlertDialog("Error", data.message, false, false);
             }
         } catch (err) {
             console.error(err);
-            alert("Server Error");
+            closeDeletePopup();
+            isProcessingAjax = false; // Unblock if error
+            showAlertDialog("Error", "Server Error", false, false);
         }
     }
 });
 
 window.onclick = function(event) {
     if (event.target.className === 'dialog-overlay') {
+        // Prevent closing the custom alert by clicking outside IF it requires a reload to finish the action
+        if (event.target.id === 'customAlertModal' && alertReloadFlag) {
+            return; 
+        }
         event.target.style.display = "none";
         resetErrors();
     }
@@ -562,7 +630,10 @@ window.onclick = function(event) {
 <script>
     const socket = io();
     socket.on('update_members', () => {
-        window.location.reload(); 
+        // ONLY reload if the user didn't trigger the fetch request themselves
+        if (!isProcessingAjax) {
+            window.location.reload(); 
+        }
     });
 </script>
 
