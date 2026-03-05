@@ -6,7 +6,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/images'), // Updated folder location
+    destination: (req, file, cb) => cb(null, 'public/images'), 
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 
@@ -21,15 +21,13 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter }).single('profile_pic');
 
 router.post('/', (req, res) => {
-    // 🔥 Handle upload manually to catch the error
     upload(req, res, async (err) => {
         if (err) {
-            // Show alert instead of error page
-            return res.send(`<script>alert('${err.message}'); window.location=document.referrer;</script>`);
+            return res.json({ success: false, message: err.message });
         }
 
         try {
-            if (!req.session.role) return res.redirect('/');
+            if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
 
             const { role_id, name, email, phone, password } = req.body;
             const admin_id = req.session.adminId;
@@ -40,7 +38,7 @@ router.post('/', (req, res) => {
             );
 
             if (emailCheck.length > 0) {
-                return res.send("<script>alert('Email already exists'); window.location=document.referrer;</script>");
+                return res.json({ success: false, message: 'Email already exists' });
             }
 
             const profile_pic = req.file ? req.file.filename : null;
@@ -52,25 +50,20 @@ router.post('/', (req, res) => {
                     [admin_id, role_id, name, email, phone, hashedPassword, profile_pic, admin_id]
                 );
 
-                                // 🔴 AUTO REFRESH FOR ALL USERS
                 req.io.emit('update_members');
-
-
-                 return res.send("<script>alert('Member successfully added'); window.location=document.referrer;</script>");
+                return res.json({ success: true, message: 'Member successfully added' });
             } else {
                 await con.execute(
                     "INSERT INTO member_requests (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, created_by, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())",
                     [admin_id, role_id, req.session.userId, name, email, phone, hashedPassword, profile_pic, req.session.role]
                 );
 
-                // 🔴 AUTO REFRESH FOR ALL USERS
                 req.io.emit('update_members');
-                 return res.send("<script>alert('Request successfully sent'); window.location=document.referrer;</script>");
+                return res.json({ success: true, message: 'Request successfully sent' });
             }
-            res.redirect('/view_member');
         } catch (dbErr) {
             console.error(dbErr);
-            res.status(500).send("<script>alert('Database Error'); window.location=document.referrer;</script>");
+            res.status(500).json({ success: false, message: 'Database Error' });
         }
     });
 });

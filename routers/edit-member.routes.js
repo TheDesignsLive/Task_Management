@@ -23,11 +23,11 @@ const upload = multer({ storage, fileFilter }).single('profile_pic');
 router.post('/edit-member/:id', (req, res) => {
     upload(req, res, async (err) => {
         if (err) {
-            return res.send(`<script>alert('${err.message}'); window.location=document.referrer;</script>`);
+            return res.json({ success: false, message: err.message });
         }
 
         try {
-            if (!req.session.role) return res.redirect('/');
+            if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
             const id = req.params.id;
             const { role_id, name, email, phone, password } = req.body;
 
@@ -48,12 +48,11 @@ router.post('/edit-member/:id', (req, res) => {
             }
 
             await con.query(sql, values);
-                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
-            res.send("<script>window.location='/view_member';</script>");
+            req.io.emit('update_members');
+            res.json({ success: true, message: 'Member updated successfully' });
         } catch (dbErr) {
             console.log(dbErr);
-            res.send("<script>alert('Database Error'); window.location='/view_member';</script>");
+            res.status(500).json({ success: false, message: 'Database Error' });
         }
     });
 });

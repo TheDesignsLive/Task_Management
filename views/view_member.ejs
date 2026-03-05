@@ -471,22 +471,43 @@ if (addForm) {
       const confirm = document.getElementById("addConfirmPassword").value;
       let hasError = false;
 
-      if(phone.length !== 10) { document.getElementById("addPhoneError").style.display = 'block'; hasError = true; }
+      if(phone.length > 0 && phone.length !== 10) { document.getElementById("addPhoneError").style.display = 'block'; hasError = true; }
       if(!passRegex.test(pass)) { document.getElementById("addPassError").style.display = 'block'; hasError = true; }
       if(pass !== confirm) { document.getElementById("addConfirmError").style.display = 'block'; hasError = true; }
       if(hasError) return;
 
       const formData = new FormData(this);
-      const response = await fetch('/add-member', { method: 'POST', body: formData });
-      location.reload();
+      try {
+          const response = await fetch('/add-member', { method: 'POST', body: formData });
+          const data = await response.json();
+          if (data.success) {
+              alert(data.message);
+              location.reload();
+          } else {
+              alert(data.message);
+          }
+      } catch (err) {
+          console.error(err);
+          alert("Server Error");
+      }
   });
 }
 
 document.getElementById("editMemberForm").addEventListener("submit", async function(e) {
     e.preventDefault();
     const formData = new FormData(this);
-    await fetch('/edit-member/' + editTargetId, { method: 'POST', body: formData });
-    location.reload();
+    try {
+        const response = await fetch('/edit-member/' + editTargetId, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server Error");
+    }
 });
 
 let selectedUserId = null;
@@ -509,8 +530,23 @@ function openDeletePopup(userId, userName) {
     document.getElementById("deleteModal").style.display = "flex";
 }
 function closeDeletePopup() { document.getElementById("deleteModal").style.display = "none"; }
-document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
-    if (deleteUserId) location.href = "/delete-member/" + deleteUserId;
+
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    if (deleteUserId) {
+        try {
+            const response = await fetch("/delete-member/" + deleteUserId);
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Server Error");
+        }
+    }
 });
 
 window.onclick = function(event) {
