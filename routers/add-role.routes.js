@@ -5,7 +5,7 @@ const con = require('../config/db');
 // ADD CATEGORY (ROLE)
 router.post('/', async (req, res) => {
   try {
-     if (!req.session.role) return res.redirect('/');
+     if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
      
     const adminId = req.session.adminId;
     const { role_name, control_type } = req.body;
@@ -16,14 +16,14 @@ router.post('/', async (req, res) => {
       [adminId, role_name, control_type]
     );
 
-        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+    // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_roles');
 
-    res.redirect('/view-roles'); // back to pages
+    res.json({ success: true, message: 'Role created successfully' });
 
   } catch (err) {
     console.error(err);
-    res.send("Error creating role");
+    res.status(500).json({ success: false, message: 'Error creating role' });
   }
 });
 

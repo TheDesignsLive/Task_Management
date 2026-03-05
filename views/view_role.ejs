@@ -320,7 +320,7 @@ table tr:hover td {
   <div class="dialog-box">
     <span class="close-btn" onclick="closeCategoryDialog()">✖</span>
     <h3 style="margin-top:0; text-align: center;">Add Role</h3>
-    <form action="/add-role" method="POST">
+    <form id="addRoleForm">
       <label>Role Name</label>
       <input type="text" name="role_name" placeholder="Enter role name" required>
 
@@ -351,7 +351,7 @@ table tr:hover td {
   <div class="dialog-box">
     <span class="close-btn" onclick="closeEditDialog()">✖</span>
     <h3 style="margin-top:0; text-align: center;">Edit Role</h3>
-    <form  id="editRoleForm" method="POST">
+    <form id="editRoleForm">
       <label>Role Name</label>
       <input type="text" name="role_name" id="edit_role_name"  required>
 
@@ -431,8 +431,75 @@ function closeDeletePopup() {
   document.getElementById("deleteModal").style.display = "none";
 }
 
-document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
-  if (deleteTargetId) location.href = "/delete-role/" + deleteTargetId;
+// ===== AJAX JSON FETCH REQUESTS =====
+
+// ADD ROLE
+document.getElementById('addRoleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        role_name: this.role_name.value,
+        control_type: this.control_type.value
+    };
+    try {
+        const response = await fetch('/add-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resData = await response.json();
+        if (resData.success) {
+            closeCategoryDialog();
+        } else {
+            alert(resData.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server Error");
+    }
+});
+
+// EDIT ROLE
+document.getElementById('editRoleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        role_name: document.getElementById('edit_role_name').value,
+        control_type: document.getElementById('edit_control_type').value
+    };
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resData = await response.json();
+        if (resData.success) {
+            closeEditDialog();
+        } else {
+            alert(resData.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server Error");
+    }
+});
+
+// DELETE ROLE
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    if (deleteTargetId) {
+        try {
+            const response = await fetch('/delete-role/' + deleteTargetId);
+            const resData = await response.json();
+            if (resData.success) {
+                closeDeletePopup();
+            } else {
+                alert(resData.message);
+                closeDeletePopup();
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Server Error");
+        }
+    }
 });
 
 // Close dialogs on overlay click
