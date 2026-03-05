@@ -107,7 +107,7 @@ router.get('/notifications', async (req, res) => {
     }
 });
 
-// POST ROUTE: ADD ANNOUNCEMENT
+// POST ROUTE: ADD ANNOUNCEMENT (Changed to JSON)
 router.post('/add-announcement', upload.single('attachment'), async (req, res) => {
     try {
         const { title, description, role_id } = req.body;
@@ -122,14 +122,14 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             [adminId, addedBy, whoAdded, role_id, title, description, attachment]
         );
         req.io.emit('update_notifications');
-        res.redirect('/notifications');
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
-        res.send("Error adding announcement");
+        res.status(500).json({ success: false, message: "Error adding announcement" });
     }
 });
 
-// POST ROUTE: EDIT ANNOUNCEMENT
+// POST ROUTE: EDIT ANNOUNCEMENT (Changed to JSON)
 router.post('/edit-announcement/:id', upload.single('attachment'), async (req, res) => {
     try {
         const { title, description, role_id } = req.body;
@@ -144,26 +144,26 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
 
         await con.query(query, params);
         req.io.emit('update_notifications');
-        res.redirect('/notifications');
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
-        res.send("Error updating announcement");
+        res.status(500).json({ success: false, message: "Error updating announcement" });
     }
 });
 
-// GET ROUTE: DELETE ANNOUNCEMENT
+// GET ROUTE: DELETE ANNOUNCEMENT (Changed to JSON)
 router.get('/delete-announcement/:id', async (req, res) => {
     try {
         if (req.session.role === 'admin' || req.session.control_type === 'ADMIN') {
             await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
             req.io.emit('update_notifications');
-            res.redirect('/notifications');
+            res.json({ success: true });
         } else {
-            res.send("Unauthorized to delete announcements");
+            res.status(403).json({ success: false, message: "Unauthorized to delete announcements" });
         }
     } catch (err) {
         console.error(err);
-        res.send("Error deleting announcement");
+        res.status(500).json({ success: false, message: "Error deleting announcement" });
     }
 });
 

@@ -228,7 +228,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
             
             <% if (announcements.length > 10) { %>
                <p id="toggle-announcements-btn" onclick="toggleAnnouncements()" style="text-align: center; color: #0F8989; font-size: 12px; cursor: pointer; margin-top: 20px; font-weight: bold;">
-                  View All Announcements (<%= announcements.length %>) <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 5px;"></i>
+                 View All Announcements (<%= announcements.length %>) <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 5px;"></i>
                </p>
             <% } %>
 
@@ -311,7 +311,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 <div class="modal" id="announceModal">
     <div class="modal-content">
         <h3>Create Announcement</h3>
-        <form action="/add-announcement" method="POST" enctype="multipart/form-data">
+        <form id="addAnnounceForm" action="/add-announcement" method="POST" enctype="multipart/form-data">
             <label>Title</label>
             <input type="text" name="title" required placeholder="Announcement Title">
             
@@ -372,7 +372,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
         <h3 style="margin-top: 10px;">Are you sure?</h3>
         <p>This announcement will be permanently deleted.</p>
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <a id="confirmDeleteBtn" class="action-btn reject-btn" style="flex:1; text-decoration: none; text-align: center; line-height: 24px;">Delete</a>
+            <button type="button" id="confirmDeleteBtn" class="action-btn reject-btn" style="flex:1;">Delete</button>
             <button type="button" class="action-btn accept-btn" style="flex:1;" onclick="closeDeleteAnnounce()">No, Keep it</button>
         </div>
     </div>
@@ -391,11 +391,42 @@ function openEditAnnounce(id, title, desc, roleId) {
 }
 function closeEditAnnounce() { document.getElementById('editAnnounceModal').style.display = 'none'; }
 
+let deleteTargetId = null;
 function confirmDeleteAnnounce(id) {
-    document.getElementById('confirmDeleteBtn').href = '/delete-announcement/' + id;
+    deleteTargetId = id;
     document.getElementById('deleteAnnounceModal').style.display = 'flex';
 }
 function closeDeleteAnnounce() { document.getElementById('deleteAnnounceModal').style.display = 'none'; }
+
+// AJAX FORMS
+document.getElementById('addAnnounceForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch(this.action, { method: 'POST', body: formData });
+        const data = await res.json();
+        if(data.success) closeAnnounce();
+    } catch(err) { console.error(err); }
+});
+
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch(this.action, { method: 'POST', body: formData });
+        const data = await res.json();
+        if(data.success) closeEditAnnounce();
+    } catch(err) { console.error(err); }
+});
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+    if(!deleteTargetId) return;
+    try {
+        const res = await fetch('/delete-announcement/' + deleteTargetId, { method: 'GET' });
+        const data = await res.json();
+        if(data.success) closeDeleteAnnounce();
+    } catch(err) { console.error(err); }
+});
 
 let isShowingAll = false;
 function toggleAnnouncements() {
@@ -433,6 +464,7 @@ window.onclick = function(event) {
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
+    // Your existing socket logic will auto-refresh the page smoothly when data updates
     socket.on('update_notifications', () => {
         window.location.reload(); 
     });
