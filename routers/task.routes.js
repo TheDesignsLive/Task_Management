@@ -4,12 +4,12 @@ const con = require('../config/db');
 
 router.post('/', async (req, res) => {
   try {
-     if (!req.session.role) return res.redirect('/');
+     if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
      
     const { title, description, date, priority, assignedTo } = req.body;
 
     if (!req.session.adminId && !req.session.userId) {
-      return res.status(401).send("Unauthorized");
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const assigned_by = req.session.role === 'admin' 
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
         "SELECT admin_id FROM users WHERE id=?",
         [req.session.userId]
       );
-      if (rows.length === 0) return res.status(400).send("User not found");
+      if (rows.length === 0) return res.status(400).json({ success: false, message: 'User not found' });
       admin_id = rows[0].admin_id;
     }
 
@@ -73,11 +73,11 @@ router.post('/', async (req, res) => {
     );
          // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_tasks');
-    // Return simple success
-    res.send("success");
+    // Return simple JSON success
+    res.json({ success: true, message: 'Task added successfully' });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error adding task");
+    res.status(500).json({ success: false, message: 'Error adding task' });
   }
 });
 
