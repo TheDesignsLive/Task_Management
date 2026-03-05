@@ -268,13 +268,11 @@ html,body{
 
 <div class="content-wrapper">
 
-<!-- LEFT TASK -->
 <div class="task-main">
  <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
  <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
 
-  <!-- HEADER ROW -->
   <div class="task-card-header">
 
     <div class="task-row">
@@ -298,7 +296,6 @@ html,body{
 
   </div>
 
-  <!-- DESCRIPTION (INSIDE CARD) -->
   <div class="task-details">
     <div class="task-desc-text">
       <%= task.description || "No description provided." %>
@@ -317,7 +314,6 @@ html,body{
 
 <div class="vertical-line"></div>
 
-<!-- RIGHT SIDE -->
 <div class="right-section">
 
 <div class="top-columns">
@@ -391,7 +387,6 @@ html,body{
 
   <div class="task-row">
 
-    <!-- LEFT SIDE (checkbox + title) -->
     <div style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
       <input type="checkbox" disabled class="task-checkbox 
       <%= task.priority==='HIGH'?'checkbox-red':'' %>
@@ -403,7 +398,6 @@ html,body{
       </div>
     </div>
 
-    <!-- RIGHT SIDE (Assigned Name) -->
     <div class="other-name">
       <% if(selected_user === 'all'){ %>
         <%= task.assigned_by_name %> → <%= task.assigned_to_name %>
@@ -422,7 +416,6 @@ html,body{
 
 </div>
 
-<!-- COMPLETED -->
 <div class="completed-wrapper">
 <div class="completed-header">Completed Tasks</div>
 <div class="completed-section">
