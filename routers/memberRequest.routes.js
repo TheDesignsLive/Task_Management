@@ -7,7 +7,7 @@ const con = require('../config/db');
 router.get('/approve-member/:id', async (req, res) => {
 
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.redirect('/');
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const requestId = req.params.id;
@@ -20,7 +20,7 @@ router.get('/approve-member/:id', async (req, res) => {
         );
 
         if (rows.length === 0) {
-            return res.redirect('/notifications');
+            return res.json({ success: false, message: 'Request not found' });
         }
 
         const request = rows[0];
@@ -32,7 +32,7 @@ router.get('/approve-member/:id', async (req, res) => {
         );
 
         if (existingUser.length > 0) {
-            return res.send("❌ Email already exists in users");
+            return res.json({ success: false, message: 'Email already exists in users' });
         }
 
         //  INSERT INTO USERS TABLE
@@ -66,11 +66,11 @@ router.get('/approve-member/:id', async (req, res) => {
                  // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_members');
 
-        return res.redirect('/notifications');
+        return res.json({ success: true, message: 'Member approved successfully' });
 
     } catch (err) {
         console.error(err);
-        res.send("Error approving member");
+        res.status(500).json({ success: false, message: 'Error approving member' });
     }
 });
 
@@ -80,7 +80,7 @@ router.get('/approve-member/:id', async (req, res) => {
 router.get('/reject-member/:id', async (req, res) => {
 
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.redirect('/');
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const requestId = req.params.id;
@@ -102,18 +102,18 @@ router.get('/reject-member/:id', async (req, res) => {
                  // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_members');
 
-        return res.redirect('/notifications');
+        return res.json({ success: true, message: 'Member rejected successfully' });
 
     } catch (err) {
         console.error(err);
-        res.send("Error rejecting member");
+        res.status(500).json({ success: false, message: 'Error rejecting member' });
     }
 });
 
 // ================= CONFIRM DELETION REQUEST =================
 router.get('/confirm-deletion/:id', async (req, res) => {
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.redirect('/');
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const requestId = req.params.id;
@@ -139,17 +139,17 @@ router.get('/confirm-deletion/:id', async (req, res) => {
     req.io.emit('update_members');
         }
 
-        return res.redirect('/notifications');
+        return res.json({ success: true, message: 'Deletion confirmed successfully' });
     } catch (err) {
         console.error(err);
-        res.send("Error confirming deletion");
+        res.status(500).json({ success: false, message: 'Error confirming deletion' });
     }
 });
 
 // ================= REJECT DELETION REQUEST =================
 router.get('/reject-deletion/:id', async (req, res) => {
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.redirect('/');
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const requestId = req.params.id;
@@ -162,10 +162,10 @@ router.get('/reject-deletion/:id', async (req, res) => {
                  // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_members');
 
-        return res.redirect('/notifications');
+        return res.json({ success: true, message: 'Deletion request rejected' });
     } catch (err) {
         console.error(err);
-        res.send("Error rejecting deletion request");
+        res.status(500).json({ success: false, message: 'Error rejecting deletion request' });
     }
 });
 

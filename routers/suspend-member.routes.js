@@ -4,7 +4,7 @@ const con = require('../config/db');
 
 // TOGGLE ACTIVE <-> SUSPEND
 router.get('/suspend-member/:id', async (req, res) => {
-     if (!req.session.role) return res.redirect('/');
+     if (!req.session.role) return res.status(401).json({ success: false, message: 'Unauthorized' });
      
     const userId = req.params.id;
 
@@ -16,7 +16,7 @@ router.get('/suspend-member/:id', async (req, res) => {
         );
 
         if (rows.length === 0) {
-            return res.send("<script>alert('User not found'); window.history.back();</script>");
+            return res.json({ success: false, message: 'User not found' });
         }
 
         const currentStatus = rows[0].status;
@@ -36,12 +36,12 @@ router.get('/suspend-member/:id', async (req, res) => {
         );
          // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
     req.io.emit('update_members');
-        // 4. Redirect back
-        res.redirect('/view_member');
+        // 4. Return JSON
+        res.json({ success: true, message: 'Member status updated successfully' });
 
     } catch (err) {
         console.error(err);
-        res.send("<script>alert('Database error'); window.history.back();</script>");
+        res.status(500).json({ success: false, message: 'Database error' });
     }
 });
 
