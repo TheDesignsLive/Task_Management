@@ -396,19 +396,15 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 // GLOBAL ZERO RELOAD FLAG
 let isProcessingAjax = false;
 
-// ================= MEMBER REQUEST PROCESSOR (ZERO RELOAD) =================
+// ================= MEMBER REQUEST PROCESSOR =================
 async function processMemberRequest(url, reqId) {
     isProcessingAjax = true; 
     try {
         const res = await fetch(url, { method: 'GET' });
         const data = await res.json();
-        
         if(data.success) {
-            // ZERO RELOAD: Instantly remove the card from the DOM
             const card = document.getElementById('req-card-' + reqId);
             if (card) card.remove();
-
-            // Show success alert, BUT PASS FALSE so it doesn't reload
             showAlertDialog("Success!", data.message, true, false);
             setTimeout(() => isProcessingAjax = false, 500);
         } else {
@@ -492,6 +488,15 @@ document.getElementById('addAnnounceForm').addEventListener('submit', async func
         
         if(data.success) {
             const a = data.announcement;
+            
+            // FIX: Agar socket ne already box draw kar diya hai toh dubara mat draw karo
+            if (document.getElementById('announce-' + a.id)) {
+                closeAnnounce();
+                this.reset();
+                setTimeout(() => isProcessingAjax = false, 500);
+                return;
+            }
+
             const dateStr = new Date(a.created_at).toLocaleDateString();
             const isAdmin = <%= session.role === 'admin' || session.control_type === 'ADMIN' ? 'true' : 'false' %>;
             
@@ -550,7 +555,10 @@ document.getElementById('addAnnounceForm').addEventListener('submit', async func
             const emptyMsg = document.getElementById('empty-announcements');
             if (emptyMsg) emptyMsg.remove();
             
-            list.prepend(newCard);
+            // Double check just to be 100% safe
+            if (!document.getElementById('announce-' + a.id)) {
+                list.prepend(newCard);
+            }
 
             closeAnnounce();
             this.reset();
