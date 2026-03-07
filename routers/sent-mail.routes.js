@@ -10,12 +10,12 @@ router.post("/forgot-password/send-otp", async (req, res) => {
         service: "gmail",
         auth: {
             user: "social.designs.live@gmail.com",
-<<<<<<< HEAD
+
             pass: "ipka xjqi uach zrpc" 
             
-=======
-            pass: "ipka xjqi uach zrpc" // Use App Password for Gmail
->>>>>>> ecb66c6e242d081b801dc2ea67d19c81ae439662
+
+           
+
         }
     });
     
