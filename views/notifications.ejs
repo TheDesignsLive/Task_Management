@@ -252,7 +252,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
           <h4 class="sub-section-header" style="color: #2ecc71;"><i class="fa-solid fa-user-plus" style="margin-right:8px;"></i> Add Requests</h4>
           <% if (memberRequests.length > 0) { %>
                 <% memberRequests.forEach((r) => { %>
-                  <div class="request-card add-border">
+                  <div class="request-card add-border" id="req-card-<%= r.id %>">
                     <div class="request-profile">
                       <% if (r.profile_pic) { %>
                         <img src="/images/<%= r.profile_pic %>" width="50" height="50" style="border-radius:50%; object-fit: cover; border: 2px solid #2ecc71;">
@@ -267,8 +267,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn accept-btn" onclick="processMemberRequest('/approve-member/<%= r.id %>')">Accept</button>
-                      <button class="action-btn reject-btn" onclick="processMemberRequest('/reject-member/<%= r.id %>')">Reject</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/approve-member/<%= r.id %>', '<%= r.id %>')">Accept</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/reject-member/<%= r.id %>', '<%= r.id %>')">Reject</button>
                     </div>
                   </div>
                 <% }) %>
@@ -279,7 +279,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
           <h4 class="sub-section-header" style="color: #ff4d4d; margin-top: 35px;"><i class="fa-solid fa-user-minus" style="margin-right:8px;"></i> Deletion Requests</h4>
           <% if (deletionRequests.length > 0) { %>
                 <% deletionRequests.forEach((r) => { %>
-                  <div class="request-card deletion-border">
+                  <div class="request-card deletion-border" id="req-card-<%= r.id %>">
                     <div class="request-profile">
                       <% if (r.profile_pic) { %>
                         <img src="/images/<%= r.profile_pic %>" width="50" height="50" style="border-radius:50%; object-fit: cover; border: 2px solid #ff4d4d;">
@@ -294,8 +294,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn reject-btn" onclick="processMemberRequest('/confirm-deletion/<%= r.id %>')">Approve</button>
-                      <button class="action-btn accept-btn" onclick="processMemberRequest('/reject-deletion/<%= r.id %>')">Keep</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/confirm-deletion/<%= r.id %>', '<%= r.id %>')">Approve</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/reject-deletion/<%= r.id %>', '<%= r.id %>')">Keep</button>
                     </div>
                   </div>
                 <% }) %>
@@ -396,14 +396,21 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 // GLOBAL ZERO RELOAD FLAG
 let isProcessingAjax = false;
 
-// ================= MEMBER REQUEST PROCESSOR =================
-async function processMemberRequest(url) {
+// ================= MEMBER REQUEST PROCESSOR (ZERO RELOAD) =================
+async function processMemberRequest(url, reqId) {
     isProcessingAjax = true; 
     try {
         const res = await fetch(url, { method: 'GET' });
         const data = await res.json();
+        
         if(data.success) {
-            showAlertDialog("Success!", data.message, true, true);
+            // ZERO RELOAD: Instantly remove the card from the DOM
+            const card = document.getElementById('req-card-' + reqId);
+            if (card) card.remove();
+
+            // Show success alert, BUT PASS FALSE so it doesn't reload
+            showAlertDialog("Success!", data.message, true, false);
+            setTimeout(() => isProcessingAjax = false, 500);
         } else {
             isProcessingAjax = false;
             showAlertDialog("Error", data.message, false, false);
