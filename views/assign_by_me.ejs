@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Assign By Me</title>
 <link rel="icon" type="image/svg" href="/images/tms.svg">
+
 <style>
 /* ===== PREVENT FULL PAGE SCROLL ===== */
 html, body {
@@ -506,7 +507,52 @@ if(dateInfo.isOverdue) {
     socket.on('update_tasks', () => {
         window.location.reload(); 
     });
+
+
+
+    
 </script>
 
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  const dateDisplay = document.getElementById("dateDisplay");
+  const dateInput = document.getElementById("datePicker");
+
+  if(!dateDisplay || !dateInput) return;
+
+  function fixNavbarDate(){
+
+      const today = new Date();
+
+      const day = String(today.getDate()).padStart(2,'0');
+      const month = today.toLocaleString('en-US',{month:'short'});
+
+      const todayDB = today.toISOString().split("T")[0];
+
+      // Fix input
+      if(!dateInput.value || dateInput.value === "Invalid Date"){
+          dateInput.value = todayDB;
+      }
+
+      // Fix display
+      if(dateDisplay.innerText === "Invalid Date" || dateDisplay.innerText === ""){
+          dateDisplay.innerText = "Today";
+      }
+
+  }
+
+  // Run immediately
+  fixNavbarDate();
+
+  // Run again after navbar scripts
+  setTimeout(fixNavbarDate,200);
+  setTimeout(fixNavbarDate,500);
+
+});
+</script>
 </body>
 </html>
