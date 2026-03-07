@@ -68,7 +68,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
   justify-content: center; font-weight: bold; font-size: 16px; text-transform: uppercase;
 }
 
-/* Modal Style */
+/* Modal Style - AS PER YOUR REQUEST */
 .modal {
   display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
   justify-content:center; align-items:center; z-index:1000;
@@ -85,7 +85,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
   width:100%; height:120px; resize:none; margin-top:6px; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;
 }
 
-/* Announcement Card */
+/* Announcement Card - Better separation and Hover lift */
 .announcement-card {
     border-left: 5px solid #0F8989; 
     background: #444; 
@@ -107,6 +107,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
     gap: 12px;
 }
 
+/* Fixed Invisible Hover: Added background circle on hover */
 .icon-btn {
     background: none;
     border: none;
@@ -141,6 +142,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 .request-info p { margin: 4px 0; color: #bbb; font-size: 12px; }
 .request-actions { display: flex; flex-direction: column; gap: 8px; }
 
+/* Headers for sub-sections */
 .sub-section-header {
     color: #CDF4F4;
     border-bottom: 1px solid #555;
@@ -150,11 +152,14 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
     letter-spacing: 0.5px;
 }
 
+/* Member request border logic */
 .add-border { border-left: 5px solid #2ecc71; background: #2a352a; }
 .deletion-border { border-left: 5px solid #ff4d4d; background: #352525; }
 
+/* Hidden state for max 10 logic */
 .hidden-announcement { display: none; }
 
+/* Responsive adjustment */
 @media (max-width: 1024px) {
     .admin-horizontal-layout { flex-direction: column; }
     .box { width: 100%; }
@@ -262,8 +267,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn accept-btn" onclick="openRequestConfirm('Accept Member', 'Are you sure you want to approve this new member?', '/approve-member/<%= r.id %>')">Accept</button>
-                      <button class="action-btn reject-btn" onclick="openRequestConfirm('Reject Request', 'Are you sure you want to reject this add request?', '/reject-member/<%= r.id %>')">Reject</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/approve-member/<%= r.id %>')">Accept</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/reject-member/<%= r.id %>')">Reject</button>
                     </div>
                   </div>
                 <% }) %>
@@ -289,8 +294,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn reject-btn" onclick="openRequestConfirm('Approve Deletion', 'Are you sure you want to permanently delete this member?', '/confirm-deletion/<%= r.id %>')">Approve</button>
-                      <button class="action-btn accept-btn" onclick="openRequestConfirm('Keep Member', 'Are you sure you want to reject deletion and keep this member?', '/reject-deletion/<%= r.id %>')">Keep</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/confirm-deletion/<%= r.id %>')">Approve</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/reject-deletion/<%= r.id %>')">Keep</button>
                     </div>
                   </div>
                 <% }) %>
@@ -376,25 +381,13 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
     </div>
 </div>
 
-<div class="modal" id="requestConfirmModal">
-    <div class="modal-content" style="text-align: center;">
-        <i class="fa-solid fa-circle-question" style="font-size: 40px; color: #0F8989; margin-bottom: 10px;"></i>
-        <h3 id="reqConfirmTitle" style="margin-top:0;">Confirm Action</h3>
-        <p id="reqConfirmText" style="color: #555; font-size: 14px; margin-bottom: 25px;"></p>
-        <div style="display:flex; gap:10px;">
-            <button type="button" id="reqConfirmOkBtn" class="action-btn accept-btn" style="flex:1;">Okay</button>
-            <button type="button" class="action-btn reject-btn" style="flex:1;" onclick="closeRequestConfirm()">Cancel</button>
-        </div>
-    </div>
-</div>
-
 <div class="modal" id="customAlertModal">
   <div class="modal-content" style="text-align: center;">
     <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
     <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
     <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
     <div style="display:flex;">
-        <button id="customAlertBtn" class="action-btn accept-btn" style="flex: 1;">Okay</button>
+        <button id="customAlertBtn" class="action-btn accept-btn" style="flex: 1; height: 44px; font-size: 15px;">Okay</button>
     </div>
   </div>
 </div>
@@ -403,30 +396,11 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
 // GLOBAL ZERO RELOAD FLAG
 let isProcessingAjax = false;
 
-// ================= MEMBER REQUEST CONFIRMATION LOGIC =================
-let pendingRequestUrl = "";
-
-function openRequestConfirm(title, text, url) {
-    document.getElementById('reqConfirmTitle').innerText = title;
-    document.getElementById('reqConfirmText').innerText = text;
-    pendingRequestUrl = url;
-    document.getElementById('requestConfirmModal').style.display = 'flex';
-}
-
-function closeRequestConfirm() {
-    document.getElementById('requestConfirmModal').style.display = 'none';
-    pendingRequestUrl = "";
-}
-
-document.getElementById('reqConfirmOkBtn').addEventListener('click', async () => {
-    if (!pendingRequestUrl) return;
-    
-    // Close the confirm modal first
-    closeRequestConfirm();
+// ================= MEMBER REQUEST PROCESSOR =================
+async function processMemberRequest(url) {
     isProcessingAjax = true; 
-    
     try {
-        const res = await fetch(pendingRequestUrl, { method: 'GET' });
+        const res = await fetch(url, { method: 'GET' });
         const data = await res.json();
         if(data.success) {
             showAlertDialog("Success!", data.message, true, true);
@@ -439,7 +413,9 @@ document.getElementById('reqConfirmOkBtn').addEventListener('click', async () =>
         isProcessingAjax = false;
         showAlertDialog("Error", "Server Error", false, false);
     }
-});
+}
+// =============================================================
+
 
 // ================= CUSTOM ALERT RESULT FUNCTION =================
 let alertReloadFlag = false;
@@ -672,8 +648,8 @@ window.onclick = function(event) {
     
     const modals = document.querySelectorAll('.modal, .dialog-overlay');
     modals.forEach(m => {
-        // Prevent closing the confirmation dialogs by accident
-        if (event.target == m && m.id !== 'customAlertModal' && m.id !== 'requestConfirmModal') {
+        // Prevent closing the custom alert by clicking outside
+        if (event.target == m && m.id !== 'customAlertModal') {
             m.style.display = "none";
         }
     });
