@@ -121,9 +121,6 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             "INSERT INTO announcements (admin_id, added_by, who_added, role_id, title, description, attachment) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [adminId, addedBy, whoAdded, role_id, title, description, attachment]
         );
-        
-        // Broadcast to other users
-        req.io.emit('update_notifications');
 
         // Fetch the inserted record fully mapped to return to frontend for Zero Reload
         const [newAnn] = await con.query(`
@@ -139,6 +136,9 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             LEFT JOIN users usr ON a.added_by = usr.id AND a.who_added = 'USER'
             WHERE a.id = ?
         `, [result.insertId]);
+
+        // 🌟 ZERO RELOAD: SEND FULL DATA TO ALL USERS INSTEAD OF BLANK RELOAD SIGNAL
+        req.io.emit('new_announcement', newAnn[0]);
 
         res.json({ success: true, announcement: newAnn[0] });
     } catch (err) {
@@ -163,7 +163,6 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
         }
 
         await con.query(query, params);
-        req.io.emit('update_notifications');
         
         // Fetch the new role name to send to frontend
         let target_role = 'All';
@@ -171,6 +170,11 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
             const [rRows] = await con.query("SELECT role_name FROM roles WHERE id=?", [role_id]);
             if (rRows.length > 0) target_role = rRows[0].role_name;
         }
+
+        const updateData = { id: announcementId, title, description, role_id, target_role, attachment: attachmentName };
+        
+        // 🌟 ZERO RELOAD: SEND EDITED DATA TO ALL USERS 
+        req.io.emit('edit_announcement', updateData);
 
         res.json({ 
             success: true, 
@@ -191,7 +195,10 @@ router.get('/delete-announcement/:id', async (req, res) => {
     try {
         if (req.session.role === 'admin' || req.session.control_type === 'ADMIN') {
             await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
-            req.io.emit('update_notifications');
+            
+            // 🌟 ZERO RELOAD: SEND DELETED ID TO ALL USERS 
+            req.io.emit('delete_announcement', req.params.id);
+            
             res.json({ success: true });
         } else {
             res.status(403).json({ success: false, message: "Unauthorized to delete announcements" });
