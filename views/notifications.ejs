@@ -267,8 +267,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn accept-btn" onclick="location.href='/approve-member/<%= r.id %>'">Accept</button>
-                      <button class="action-btn reject-btn" onclick="location.href='/reject-member/<%= r.id %>'">Reject</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/approve-member/<%= r.id %>')">Accept</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/reject-member/<%= r.id %>')">Reject</button>
                     </div>
                   </div>
                 <% }) %>
@@ -294,8 +294,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn reject-btn" onclick="location.href='/confirm-deletion/<%= r.id %>'">Approve</button>
-                      <button class="action-btn accept-btn" onclick="location.href='/reject-deletion/<%= r.id %>'">Keep</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/confirm-deletion/<%= r.id %>')">Approve</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/reject-deletion/<%= r.id %>')">Keep</button>
                     </div>
                   </div>
                 <% }) %>
@@ -381,7 +381,76 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
     </div>
 </div>
 
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="modal-content" style="text-align: center;">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons" style="margin-top: 0;">
+        <button id="customAlertBtn" class="action-btn accept-btn" style="width: 100%; height: 44px; font-size: 15px;">Okay</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// GLOBAL ZERO RELOAD FLAG
+let isProcessingAjax = false;
+
+// ================= CUSTOM ALERT FUNCTION =================
+let alertReloadFlag = false;
+
+function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "action-btn accept-btn";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "action-btn reject-btn";
+  }
+  
+  alertReloadFlag = shouldReload;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertReloadFlag) {
+      window.location.reload();
+  } else {
+      isProcessingAjax = false; 
+  }
+});
+// =========================================================
+
+// ================= MEMBER REQUEST PROCESSOR =================
+async function processMemberRequest(url) {
+    isProcessingAjax = true; 
+    try {
+        const res = await fetch(url, { method: 'GET' });
+        const data = await res.json();
+        if(data.success) {
+            // Trigger the success modal. Clicking "Okay" will reload the page.
+            showAlertDialog("Success!", data.message, true, true);
+        } else {
+            isProcessingAjax = false;
+            showAlertDialog("Error", data.message, false, false);
+        }
+    } catch(err) {
+        console.error(err);
+        isProcessingAjax = false;
+        showAlertDialog("Error", "Server Error", false, false);
+    }
+}
+// =============================================================
+
 function openAnnounce() { document.getElementById('announceModal').style.display='flex'; }
 function closeAnnounce() { document.getElementById('announceModal').style.display='none'; }
 
@@ -403,10 +472,7 @@ function confirmDeleteAnnounce(id) {
 }
 function closeDeleteAnnounce() { document.getElementById('deleteAnnounceModal').style.display = 'none'; }
 
-// GLOBAL ZERO RELOAD FLAG
-let isProcessingAjax = false;
-
-// ================= AJAX FORMS (ZERO RELOAD IMPLEMENTED) =================
+// ================= AJAX FORMS (ANNOUNCEMENTS) =================
 
 // ADD ANNOUNCEMENT
 document.getElementById('addAnnounceForm').addEventListener('submit', async function(e) {
@@ -436,7 +502,6 @@ document.getElementById('addAnnounceForm').addEventListener('submit', async func
 
             let actionsHtml = '';
             if (isAdmin) {
-                // Ensure quotes are escaped properly for the inline onClick function
                 const safeTitle = a.title.replace(/'/g, "\\'");
                 const safeDesc = a.description.replace(/`/g, "\\`");
                 
@@ -455,7 +520,7 @@ document.getElementById('addAnnounceForm').addEventListener('submit', async func
             const newCard = document.createElement('div');
             newCard.className = 'announcement-card';
             newCard.id = 'announce-' + a.id;
-            newCard.setAttribute('data-index', '0'); // Simplification for the new item
+            newCard.setAttribute('data-index', '0'); 
             
             newCard.innerHTML = `
                 ${actionsHtml}
@@ -500,7 +565,6 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
         const data = await res.json();
         
         if(data.success) {
-            // Instantly update DOM data without reload
             const card = document.getElementById('announce-' + editTargetId);
             if(card) {
                 card.querySelector('.ann-title').textContent = data.title;
@@ -518,7 +582,6 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
                     `;
                 }
                 
-                // Update the edit button onClick parameters with new data
                 const editBtn = card.querySelector('.edit-btn-target');
                 if (editBtn) {
                     const safeTitle = data.title.replace(/'/g, "\\'");
@@ -544,7 +607,6 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async func
         const res = await fetch('/delete-announcement/' + deleteTargetId, { method: 'GET' });
         const data = await res.json();
         if(data.success) {
-            // Find HTML element and instantly remove it!
             const card = document.getElementById('announce-' + deleteTargetId);
             if (card) card.remove();
             
@@ -564,12 +626,10 @@ function toggleAnnouncements() {
     const totalCount = hidden.length;
 
     if (!isShowingAll) {
-        // Show All
         hidden.forEach(el => el.classList.remove('hidden-announcement'));
         btn.innerHTML = `Show Less <i class="fa-solid fa-chevron-up" style="font-size: 10px; margin-left: 5px;"></i>`;
         isShowingAll = true;
     } else {
-        // Show Less (hide cards from index 10 onwards)
         hidden.forEach(el => {
             if (parseInt(el.getAttribute('data-index')) >= 10) {
                 el.classList.add('hidden-announcement');
@@ -583,9 +643,12 @@ function toggleAnnouncements() {
 
 // Close modal if user clicks outside of it
 window.onclick = function(event) {
-    const modals = document.querySelectorAll('.modal');
+    // Make sure we don't close custom alert if it demands a reload
+    if (event.target.id === 'customAlertModal' && alertReloadFlag) return;
+    
+    const modals = document.querySelectorAll('.modal, .dialog-overlay');
     modals.forEach(m => {
-        if (event.target == m) m.style.display = "none";
+        if (event.target == m && m.id !== 'customAlertModal') m.style.display = "none";
     });
 }
 </script>
@@ -593,7 +656,13 @@ window.onclick = function(event) {
 <script>
     const socket = io();
     socket.on('update_notifications', () => {
-        // ONLY reload if the user didn't trigger the fetch request themselves
+        if (!isProcessingAjax) {
+            window.location.reload(); 
+        }
+    });
+    
+    // Listen for member updates from the router
+    socket.on('update_members', () => {
         if (!isProcessingAjax) {
             window.location.reload(); 
         }
