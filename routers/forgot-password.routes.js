@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db'); // your DB connection
+const bcrypt = require('bcryptjs'); // IMPORTED BCRYPT
 
 // Step 1: Check contact & generate OTP
 router.post("/check", async (req, res) => {
@@ -50,17 +51,22 @@ router.post("/reset", async (req, res) => {
     const { contact, new_password } = req.body;
 
     try {
+        // GENERATE HASHED PASSWORD
+        const hashedPassword = await bcrypt.hash(new_password, 10);
+
         // Check in admins
         let [adminRows] = await con.query("SELECT * FROM admins WHERE email=? OR phone=?", [contact, contact]);
         if(adminRows.length > 0){
-            await con.query("UPDATE admins SET password=? WHERE email=? OR phone=?", [new_password, contact, contact]);
+            // SAVE HASHED PASSWORD INSTEAD OF PLAIN TEXT
+            await con.query("UPDATE admins SET password=? WHERE email=? OR phone=?", [hashedPassword, contact, contact]);
             return res.json({ status: "success" });
         }
 
         // Check in users
         let [userRows] = await con.query("SELECT * FROM users WHERE email=? OR phone=?", [contact, contact]);
         if(userRows.length > 0){
-            await con.query("UPDATE users SET password=? WHERE email=? OR phone=?", [new_password, contact, contact]);
+            // SAVE HASHED PASSWORD INSTEAD OF PLAIN TEXT
+            await con.query("UPDATE users SET password=? WHERE email=? OR phone=?", [hashedPassword, contact, contact]);
             return res.json({ status: "success" });
         }
 
