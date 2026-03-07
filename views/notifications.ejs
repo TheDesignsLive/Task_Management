@@ -193,10 +193,10 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
           <div id="announcement-list">
             <% if (announcements.length > 0) { %>
                 <% announcements.forEach((a, index) => { %>
-                    <div class="announcement-card <%= index >= 10 ? 'hidden-announcement' : '' %>" data-index="<%= index %>">
+                    <div class="announcement-card <%= index >= 10 ? 'hidden-announcement' : '' %>" data-index="<%= index %>" id="announce-<%= a.id %>">
                         <% if (session.role === 'admin' || session.control_type === 'ADMIN') { %>
                         <div class="card-actions">
-                            <button class="icon-btn" title="Edit" onclick="openEditAnnounce('<%= a.id %>', '<%= a.title %>', `<%= a.description %>`, '<%= a.role_id %>')">
+                            <button class="icon-btn edit-btn-target" title="Edit" onclick="openEditAnnounce('<%= a.id %>', '<%= a.title.replace(/'/g, "\\'") %>', `<%= a.description.replace(/`/g, "\\`") %>`, '<%= a.role_id %>')">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                             <button class="icon-btn delete-icon" title="Delete" onclick="confirmDeleteAnnounce('<%= a.id %>')">
@@ -205,17 +205,18 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                         </div>
                         <% } %>
 
-                        <h3 style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;"><%= a.title %></h3>
+                        <h3 class="ann-title" style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;"><%= a.title %></h3>
                         <p style="color:#aaa; font-size: 11px; margin: 8px 0;">
                           <i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> <strong><%= a.added_by_name %></strong> 
                           <span style="margin: 0 8px; opacity:0.3;">|</span>
-                          <i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong><%= a.target_role || (a.role_id == 0 ? 'All' : 'Your Role') %></strong> 
+                          <i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong class="ann-role"><%= a.target_role || (a.role_id == 0 ? 'All' : 'Your Role') %></strong> 
                           <span style="margin: 0 8px; opacity:0.3;">|</span>
                           <i class="fa-regular fa-clock" style="margin-right:4px;"></i> <%= new Date(a.created_at).toLocaleDateString() %>
                         </p>
                         <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div>
-                        <p style="font-size: 13px; line-height: 1.5; color: #eee;"><%= a.description %></p>
+                        <p class="ann-desc" style="font-size: 13px; line-height: 1.5; color: #eee;"><%= a.description %></p>
                         
+                        <div class="ann-attachment-container">
                         <% if (a.attachment) { %>
                             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;">
                                 <a href="/uploads/<%= a.attachment %>" target="_blank"
@@ -224,6 +225,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                                 </a>
                             </div>
                         <% } %>
+                        </div>
                     </div>
                 <% }) %>
             
@@ -234,7 +236,7 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
             <% } %>
 
             <% } else { %>
-                <div style="padding: 40px 0; text-align: center;">
+                <div id="empty-announcements" style="padding: 40px 0; text-align: center;">
                     <i class="fa-solid fa-bullhorn" style="font-size: 30px; color: #555; margin-bottom: 10px;"></i>
                     <p style="color:#888; font-size: 13px;">No announcements found.</p>
                 </div>
@@ -265,8 +267,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn accept-btn" onclick="location.href='/approve-member/<%= r.id %>'">Accept</button>
-                      <button class="action-btn reject-btn" onclick="location.href='/reject-member/<%= r.id %>'">Reject</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/approve-member/<%= r.id %>')">Accept</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/reject-member/<%= r.id %>')">Reject</button>
                     </div>
                   </div>
                 <% }) %>
@@ -292,8 +294,8 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
                       <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
                     </div>
                     <div class="request-actions">
-                      <button class="action-btn reject-btn" onclick="location.href='/confirm-deletion/<%= r.id %>'">Approve</button>
-                      <button class="action-btn accept-btn" onclick="location.href='/reject-deletion/<%= r.id %>'">Keep</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/confirm-deletion/<%= r.id %>')">Approve</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/reject-deletion/<%= r.id %>')">Keep</button>
                     </div>
                   </div>
                 <% }) %>
@@ -379,11 +381,82 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
     </div>
 </div>
 
+<div class="modal" id="customAlertModal">
+  <div class="modal-content" style="text-align: center;">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div style="display:flex;">
+        <button id="customAlertBtn" class="action-btn accept-btn" style="flex: 1; height: 44px; font-size: 15px;">Okay</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// GLOBAL ZERO RELOAD FLAG
+let isProcessingAjax = false;
+
+// ================= MEMBER REQUEST PROCESSOR =================
+async function processMemberRequest(url) {
+    isProcessingAjax = true; 
+    try {
+        const res = await fetch(url, { method: 'GET' });
+        const data = await res.json();
+        if(data.success) {
+            showAlertDialog("Success!", data.message, true, true);
+        } else {
+            isProcessingAjax = false;
+            showAlertDialog("Error", data.message, false, false);
+        }
+    } catch(err) {
+        console.error(err);
+        isProcessingAjax = false;
+        showAlertDialog("Error", "Server Error", false, false);
+    }
+}
+// =============================================================
+
+
+// ================= CUSTOM ALERT RESULT FUNCTION =================
+let alertReloadFlag = false;
+
+function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "action-btn accept-btn";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "action-btn reject-btn";
+  }
+  
+  alertReloadFlag = shouldReload;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertReloadFlag) {
+      window.location.reload();
+  } else {
+      isProcessingAjax = false; 
+  }
+});
+// =========================================================
+
 function openAnnounce() { document.getElementById('announceModal').style.display='flex'; }
 function closeAnnounce() { document.getElementById('announceModal').style.display='none'; }
 
+let editTargetId = null;
 function openEditAnnounce(id, title, desc, roleId) {
+    editTargetId = id;
     document.getElementById('editForm').action = '/edit-announcement/' + id;
     document.getElementById('edit_title').value = title;
     document.getElementById('edit_description').value = desc;
@@ -399,34 +472,151 @@ function confirmDeleteAnnounce(id) {
 }
 function closeDeleteAnnounce() { document.getElementById('deleteAnnounceModal').style.display = 'none'; }
 
-// AJAX FORMS
+// ================= AJAX FORMS (ANNOUNCEMENTS) =================
+
+// ADD ANNOUNCEMENT
 document.getElementById('addAnnounceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    isProcessingAjax = true;
     const formData = new FormData(this);
     try {
         const res = await fetch(this.action, { method: 'POST', body: formData });
         const data = await res.json();
-        if(data.success) closeAnnounce();
-    } catch(err) { console.error(err); }
+        
+        if(data.success) {
+            const a = data.announcement;
+            const dateStr = new Date(a.created_at).toLocaleDateString();
+            const isAdmin = <%= session.role === 'admin' || session.control_type === 'ADMIN' ? 'true' : 'false' %>;
+            
+            let attachmentHtml = '';
+            if (a.attachment) {
+                attachmentHtml = `
+                    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;">
+                        <a href="/uploads/${a.attachment}" target="_blank"
+                           style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;">
+                           <i class="fa-solid fa-paperclip"></i> View Attachment
+                        </a>
+                    </div>
+                `;
+            }
+
+            let actionsHtml = '';
+            if (isAdmin) {
+                const safeTitle = a.title.replace(/'/g, "\\'");
+                const safeDesc = a.description.replace(/`/g, "\\`");
+                
+                actionsHtml = `
+                    <div class="card-actions">
+                        <button class="icon-btn edit-btn-target" title="Edit" onclick="openEditAnnounce('${a.id}', '${safeTitle}', \`${safeDesc}\`, '${a.role_id}')">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="icon-btn delete-icon" title="Delete" onclick="confirmDeleteAnnounce('${a.id}')">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            const newCard = document.createElement('div');
+            newCard.className = 'announcement-card';
+            newCard.id = 'announce-' + a.id;
+            newCard.setAttribute('data-index', '0'); 
+            
+            newCard.innerHTML = `
+                ${actionsHtml}
+                <h3 class="ann-title" style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;">${a.title}</h3>
+                <p style="color:#aaa; font-size: 11px; margin: 8px 0;">
+                  <i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> <strong>${a.added_by_name}</strong> 
+                  <span style="margin: 0 8px; opacity:0.3;">|</span>
+                  <i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong class="ann-role">${a.target_role}</strong> 
+                  <span style="margin: 0 8px; opacity:0.3;">|</span>
+                  <i class="fa-regular fa-clock" style="margin-right:4px;"></i> ${dateStr}
+                </p>
+                <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+                <p class="ann-desc" style="font-size: 13px; line-height: 1.5; color: #eee;">${a.description}</p>
+                <div class="ann-attachment-container">
+                    ${attachmentHtml}
+                </div>
+            `;
+
+            const list = document.getElementById('announcement-list');
+            const emptyMsg = document.getElementById('empty-announcements');
+            if (emptyMsg) emptyMsg.remove();
+            
+            list.prepend(newCard);
+
+            closeAnnounce();
+            this.reset();
+            setTimeout(() => isProcessingAjax = false, 500);
+        }
+    } catch(err) { 
+        console.error(err); 
+        isProcessingAjax = false; 
+    }
 });
 
+// EDIT ANNOUNCEMENT
 document.getElementById('editForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    isProcessingAjax = true;
     const formData = new FormData(this);
     try {
         const res = await fetch(this.action, { method: 'POST', body: formData });
         const data = await res.json();
-        if(data.success) closeEditAnnounce();
-    } catch(err) { console.error(err); }
+        
+        if(data.success) {
+            const card = document.getElementById('announce-' + editTargetId);
+            if(card) {
+                card.querySelector('.ann-title').textContent = data.title;
+                card.querySelector('.ann-desc').textContent = data.description;
+                card.querySelector('.ann-role').textContent = data.target_role;
+                
+                if(data.attachment) {
+                    card.querySelector('.ann-attachment-container').innerHTML = `
+                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;">
+                            <a href="/uploads/${data.attachment}" target="_blank"
+                               style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;">
+                               <i class="fa-solid fa-paperclip"></i> View Attachment
+                            </a>
+                        </div>
+                    `;
+                }
+                
+                const editBtn = card.querySelector('.edit-btn-target');
+                if (editBtn) {
+                    const safeTitle = data.title.replace(/'/g, "\\'");
+                    const safeDesc = data.description.replace(/`/g, "\\`");
+                    editBtn.setAttribute('onclick', `openEditAnnounce('${editTargetId}', '${safeTitle}', \`${safeDesc}\`, '${data.role_id}')`);
+                }
+            }
+
+            closeEditAnnounce();
+            setTimeout(() => isProcessingAjax = false, 500);
+        }
+    } catch(err) { 
+        console.error(err); 
+        isProcessingAjax = false; 
+    }
 });
 
+// DELETE ANNOUNCEMENT
 document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
     if(!deleteTargetId) return;
+    isProcessingAjax = true;
     try {
         const res = await fetch('/delete-announcement/' + deleteTargetId, { method: 'GET' });
         const data = await res.json();
-        if(data.success) closeDeleteAnnounce();
-    } catch(err) { console.error(err); }
+        if(data.success) {
+            const card = document.getElementById('announce-' + deleteTargetId);
+            if (card) card.remove();
+            
+            closeDeleteAnnounce();
+            setTimeout(() => isProcessingAjax = false, 500);
+        }
+    } catch(err) { 
+        console.error(err); 
+        isProcessingAjax = false; 
+    }
 });
 
 let isShowingAll = false;
@@ -436,12 +626,10 @@ function toggleAnnouncements() {
     const totalCount = hidden.length;
 
     if (!isShowingAll) {
-        // Show All
         hidden.forEach(el => el.classList.remove('hidden-announcement'));
         btn.innerHTML = `Show Less <i class="fa-solid fa-chevron-up" style="font-size: 10px; margin-left: 5px;"></i>`;
         isShowingAll = true;
     } else {
-        // Show Less (hide cards from index 10 onwards)
         hidden.forEach(el => {
             if (parseInt(el.getAttribute('data-index')) >= 10) {
                 el.classList.add('hidden-announcement');
@@ -449,25 +637,38 @@ function toggleAnnouncements() {
         });
         btn.innerHTML = `View All Announcements (${totalCount}) <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 5px;"></i>`;
         isShowingAll = false;
-        // Optional: Scroll back to top of the list
         document.querySelector('.main-content').scrollTop = 0;
     }
 }
 
 // Close modal if user clicks outside of it
 window.onclick = function(event) {
-    const modals = document.querySelectorAll('.modal');
+    // Make sure we don't close custom alert if it demands a reload
+    if (event.target.id === 'customAlertModal' && alertReloadFlag) return;
+    
+    const modals = document.querySelectorAll('.modal, .dialog-overlay');
     modals.forEach(m => {
-        if (event.target == m) m.style.display = "none";
+        // Prevent closing the custom alert by clicking outside
+        if (event.target == m && m.id !== 'customAlertModal') {
+            m.style.display = "none";
+        }
     });
 }
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    // Your existing socket logic will auto-refresh the page smoothly when data updates
     socket.on('update_notifications', () => {
-        window.location.reload(); 
+        if (!isProcessingAjax) {
+            window.location.reload(); 
+        }
+    });
+    
+    // Listen for member updates from the router
+    socket.on('update_members', () => {
+        if (!isProcessingAjax) {
+            window.location.reload(); 
+        }
     });
 </script>
 </body>

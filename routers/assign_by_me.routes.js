@@ -111,7 +111,7 @@ router.post('/delete-task/:id', async (req, res) => {
 
     try {
         await con.query("DELETE FROM tasks WHERE id = ?", [req.params.id]);
-        req.io.emit('update_tasks');
+        req.io.emit('update_tasks'); // Socket trigger kept for other users
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -136,7 +136,7 @@ router.post('/delete-all-completed', async (req, res) => {
             `, [req.session.userId, req.session.userId]);
         }
         
-        req.io.emit('update_tasks');
+        req.io.emit('update_tasks'); // Socket trigger kept for other users
         res.json({ success: true });
     } catch (err) {
         console.error(err);

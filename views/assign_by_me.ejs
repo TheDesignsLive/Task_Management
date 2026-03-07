@@ -238,7 +238,7 @@ html, body {
     <div class="task-list-container">
       <% if (completedTasks.length > 0) { %>
         <% completedTasks.forEach(task => { %>
-          <div class="task-item completed-task">
+          <div class="task-item completed-task" id="task-<%= task.id %>">
             <div class="task-row">
               <input type="checkbox"
                 class="task-checkbox priority-<%= task.priority %>"
@@ -300,6 +300,9 @@ html, body {
 const openTasks = <%- JSON.stringify(openTasks) %>;
 const members = <%- JSON.stringify(members) %>;
 
+// GLOBALLY FLAG FOR SOCKET REAL-TIME BEHAVIOR
+let isProcessingAjax = false;
+
 // ===== 3 DOTS MENU LOGIC =====
 let activeMenu = null;
 function toggleMenu(event, id) {
@@ -323,7 +326,7 @@ document.addEventListener('click', () => {
   }
 });
 
-// ===== SINGLE TASK DELETE =====
+// ===== SINGLE TASK DELETE (ZERO RELOAD) =====
 let taskToDeleteId = null;
 function openSingleDelete(id) {
   taskToDeleteId = id;
@@ -338,19 +341,31 @@ document.getElementById("cancelSingleDelete").addEventListener("click", function
 
 document.getElementById("confirmSingleDelete").addEventListener("click", async function () {
   if (!taskToDeleteId) return;
+  
+  isProcessingAjax = true; // Tell Socket.io to ignore the upcoming broadcast
+  
   try {
       document.getElementById("singleDeleteModal").style.display = "none";
-      await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, {
+      const response = await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, {
           method: "POST"
       });
-      taskToDeleteId = null;
-      window.location.reload();
+      const data = await response.json();
+      
+      if (data.success) {
+          // Zero Reload Magic: Remove the element directly from the screen
+          const taskElement = document.getElementById('task-' + taskToDeleteId);
+          if (taskElement) taskElement.remove();
+          
+          taskToDeleteId = null;
+          setTimeout(() => isProcessingAjax = false, 500); // Reset flag after a safe delay
+      }
   } catch (err) {
       console.error("Delete error:", err);
+      isProcessingAjax = false;
   }
 });
 
-// ===== DELETE ALL COMPLETED TASKS (ASSIGN BY ME SPECIFIC) =====
+// ===== DELETE ALL COMPLETED TASKS (ZERO RELOAD) =====
 document.getElementById('delete-completed')?.addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('deleteModal').style.display = 'flex';
@@ -361,6 +376,8 @@ document.getElementById('cancelDelete').addEventListener('click', () => {
 });
 
 document.getElementById('confirmDelete').addEventListener('click', async () => {
+    isProcessingAjax = true; // Tell Socket.io to ignore the upcoming broadcast
+    
     try {
         document.getElementById('deleteModal').style.display = 'none';
         const res = await fetch('/assign_by_me/delete-all-completed', {
@@ -368,13 +385,18 @@ document.getElementById('confirmDelete').addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
+        
         if(data.success) {
-            window.location.reload();
+            // Zero Reload Magic: Remove all completed tasks from the screen
+            document.querySelectorAll('.completed-task').forEach(task => task.remove());
+            setTimeout(() => isProcessingAjax = false, 500);
         } else {
             alert(data.message || "Failed to delete completed tasks");
+            isProcessingAjax = false;
         }
     } catch(e) {
         console.error(e);
+        isProcessingAjax = false;
     }
 });
 
@@ -398,6 +420,7 @@ return { text: text, isOverdue: taskDate.getTime() < today.getTime() };
 }
 
 async function toggleStatus(id, status) {
+    isProcessingAjax = true; 
     try {
         const res = await fetch('/update-task-status', {
             method: 'POST',
@@ -406,16 +429,20 @@ async function toggleStatus(id, status) {
         });
         const data = await res.json();
         if (data.success) {
-            window.location.reload();
+            window.location.reload(); // Status toggle structurally moves columns, safe to reload
         } else {
             alert(data.message || "Failed to update status");
+            isProcessingAjax = false;
         }
     } catch(err) {
         console.error(err);
+        isProcessingAjax = false;
     }
 }
 
+// ===== CHANGE ASSIGNEE (ZERO RELOAD) =====
 async function changeAssignee(taskId, newAssigneeId) {
+    isProcessingAjax = true; 
     try {
         const res = await fetch('/assign_by_me/update-assignee', {
             method: 'POST',
@@ -423,13 +450,17 @@ async function changeAssignee(taskId, newAssigneeId) {
             body: JSON.stringify({ taskId, newAssigneeId })
         });
         const data = await res.json();
+        
         if (data.success) {
-            window.location.reload();
+            // Zero Reload: Do nothing! The <select> dropdown already visually changed.
+            setTimeout(() => isProcessingAjax = false, 500); 
         } else {
             alert(data.message || "Failed to update assignee");
+            isProcessingAjax = false;
         }
     } catch(err) {
         console.error(err);
+        isProcessingAjax = false;
     }
 }
 
@@ -453,6 +484,7 @@ const dateStyle = dateInfo.isOverdue ? 'color: #ff4d4d; font-weight: bold; opaci
 
 const item = document.createElement('div');
 item.className = 'task-item';
+item.id = 'task-' + task.id; // Added ID here for zero-reload delete
 
 item.innerHTML = `
 <div class="task-row">
@@ -505,7 +537,10 @@ if(dateInfo.isOverdue) {
 <script>
     const socket = io();
     socket.on('update_tasks', () => {
-        window.location.reload(); 
+        // ONLY reload if this user didn't trigger the fetch request
+        if (!isProcessingAjax) {
+            window.location.reload(); 
+        }
     });
 
 
