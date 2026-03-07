@@ -40,13 +40,18 @@ const updatetask=require('./routers/edit-task-details.routes');
 
 const deleteTaskRouter = require('./routers/delete-task.routes');
 const deleteCompletedTasksRouter = require('./routers/delete-completed-task.routes');
+const MySQLStore = require('express-mysql-session')(session);
 
-// ================= MIDDLEWARES =================
+
+
+const sessionStore = new MySQLStore({}, con); // ✅ TRUE LOGO: reuse existing pool
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
     secret: 'your_secret_key',
+    store: sessionStore,  
     resave: false,
     saveUninitialized: false,   // better security
     cookie: {
@@ -97,9 +102,18 @@ cron.schedule('0 0 * * *', () => {
 // ================= ROUTES EXECUTION =================
 
 // Base & Auth
+// ================= ROUTE: SESSION CHECK ON '/' =================
 app.get('/', (req, res) => {
-    res.render('signup');
+    // ✅ TRUE LOGO: Check session before showing login/signup
+    if (req.session.role === 'admin' && req.session.adminId) {
+        return res.redirect('/home');
+    }
+    if (req.session.role === 'user' && req.session.userId) {
+        return res.redirect('/home');
+    }
+    res.render('signup'); // session empty → show signup/login page
 });
+
 app.use('/', authRoutes);
 app.use('/', logoutRoutes);
 app.use('/', homeroutes);
