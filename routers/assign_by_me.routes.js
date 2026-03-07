@@ -104,4 +104,44 @@ router.post('/update-assignee', async (req, res) => {
     }
 });
 
+
+/* ================= DELETE SINGLE TASK ================= */
+router.post('/delete-task/:id', async (req, res) => {
+    if (!req.session.role) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    try {
+        await con.query("DELETE FROM tasks WHERE id = ?", [req.params.id]);
+        req.io.emit('update_tasks');
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false });
+    }
+});
+
+/* ================= DELETE ALL COMPLETED (ASSIGN BY ME SPECIFIC) ================= */
+router.post('/delete-all-completed', async (req, res) => {
+    if (!req.session.role) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    
+    try {
+        if (req.session.role === 'admin') {
+            await con.query(`
+                DELETE FROM tasks 
+                WHERE admin_id=? AND who_assigned='admin' AND assigned_by=? AND assigned_to != 0 AND status='COMPLETED'
+            `, [req.session.adminId, req.session.adminId]);
+        } else if (req.session.role === 'user') {
+            await con.query(`
+                DELETE FROM tasks 
+                WHERE who_assigned='user' AND assigned_by=? AND assigned_to != ? AND status='COMPLETED'
+            `, [req.session.userId, req.session.userId]);
+        }
+        
+        req.io.emit('update_tasks');
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false });
+    }
+});
+
 module.exports = router;
