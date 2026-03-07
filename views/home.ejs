@@ -602,9 +602,6 @@ html, body {
 <script>
 const tasks = <%- JSON.stringify(tasks) %>;
 
-// 🌟 ZERO RELOAD GLOBAL FLAG
-let isProcessingAjax = false;
-
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const today = new Date();
@@ -641,7 +638,6 @@ async function updateTaskStatus(id, status, section=null) {
 function createTaskElement(task) {
   const div = document.createElement('div');
   div.className = 'task-item';
-  div.id = 'task-' + task.id; // 🌟 ADDED ID FOR INSTANT UPDATES
   div.dataset.id = task.id;
   div.dataset.date = task.due_date ? task.due_date.split('T')[0] : '';
 
@@ -684,7 +680,7 @@ function createTaskElement(task) {
           <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
           <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
         </select>
-        <input type="text" class="edit-date" placeholder="Due Date" >
+<input type="text" class="edit-date" placeholder="Due Date" >
       </div>
       <div class="edit-actions">
         <button class="save-btn">Save</button>
@@ -760,47 +756,22 @@ function createTaskElement(task) {
     div.querySelector('.edit-box').style.display = 'none';
   });
 
-  // 🌟 ZERO RELOAD: SAVE EDITED TASK
   div.querySelector('.save-btn').addEventListener('click', async (e) => {
     e.stopPropagation();
-    isProcessingAjax = true; // Tell socket to ignore bounce back
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
     const priority = div.querySelector('.edit-priority').value;
-    let due_date = div.querySelector('.edit-date').value.trim();
-    if (due_date === "") {
-        due_date = null;
-    }
+ let due_date = div.querySelector('.edit-date').value.trim();
+if (due_date === "") {
+  due_date = null;
+}
 
-    // Using update-task-details as defined in backend
-    const res = await fetch('/update-task-details', { 
+    const res = await fetch('/edit-task-details', { // Create this endpoint in backend
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date })
     });
-    
-    if(res.ok) {
-        // Instantly Update Screen
-        div.querySelector('.task-title').textContent = title;
-        div.querySelector('.task-desc-text').textContent = description || 'No description provided.';
-        const checkbox = div.querySelector('.task-checkbox');
-        checkbox.className = `task-checkbox ${getPriorityClass(priority)}`;
-        
-        const dateDiv = div.querySelector('.task-date');
-        dateDiv.textContent = formatDate(due_date);
-        div.dataset.date = due_date ? due_date : '';
-        
-        if (isPastDate(due_date) && task.status !== 'COMPLETED') {
-            dateDiv.classList.add('past-date');
-        } else {
-            dateDiv.classList.remove('past-date');
-        }
-
-        div.querySelector('.edit-box').style.display = 'none';
-        setTimeout(() => isProcessingAjax = false, 500);
-    } else {
-        isProcessingAjax = false;
-    }
+    if(res.ok) window.location.reload();
   });
 
   // Info icon toggle
@@ -809,27 +780,12 @@ function createTaskElement(task) {
     div.classList.toggle('expanded');
   });
 
-  // 🌟 ZERO RELOAD: CHECKBOX TOGGLE
+  // Checkbox toggle
   div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
-    isProcessingAjax = true;
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
-    const section = e.target.checked ? 'COMPLETED' : 'TASK'; // Default reopen to TASK
-    
+    const section = e.target.checked ? 'COMPLETED' : 'TASK';
     const res = await updateTaskStatus(task.id, status, section);
-    
-    if(res.success) {
-        // Move element instantly
-        div.classList.toggle('completed-task', status === 'COMPLETED');
-        if (status === 'COMPLETED') {
-            document.getElementById('completed-section').appendChild(div);
-        } else {
-            document.getElementById('task-section').appendChild(div);
-        }
-        setTimeout(() => isProcessingAjax = false, 500);
-    } else {
-        e.target.checked = !e.target.checked; // Revert visually on error
-        isProcessingAjax = false;
-    }
+    if(res.success) window.location.reload();
   });
 
   return div;
@@ -914,12 +870,12 @@ function appendTasksToContainer(container, taskArray, dateStr) {
   if(taskArray.length > 0) container.appendChild(createSeparator(dateStr));
 }
 
-// 🌟 ZERO RELOAD: ENABLE DRAG AND DROP
 function enableDragAndDrop() {
   const containers = { 
     'task-section': 'TASK', 
     'change-section': 'CHANGES', 
     'update-section': 'UPDATE'
+    
   };
 
   Object.keys(containers).forEach(containerId => {
@@ -934,46 +890,38 @@ function enableDragAndDrop() {
       const draggingId = e.dataTransfer.getData('text/plain');
       if(!draggingId) return;
 
-      isProcessingAjax = true; // Pause socket reload
-
-      // 1. Move Dom Element Instantly
+      // Find what we dropped on
       const targetEl = e.target.closest('.task-item, .date-separator');
-      const draggedEl = document.getElementById('task-' + draggingId);
       
-      if (draggedEl) {
-          if (targetEl && targetEl.classList.contains('task-item')) {
-              container.insertBefore(draggedEl, targetEl);
-          } else {
-              container.appendChild(draggedEl);
-          }
-      }
-      
-      // ✅ Pull raw string, trim, and handle null
-      let due_date = undefined;
+      // ✅ MATCH EDIT BOX LOGIC: Pull raw string, trim, and handle null
+     let due_date = undefined;
 
-      if (targetEl) {
-        let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
+if (targetEl) {
+  let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
 
-        if (rawDate && rawDate !== "") {
-          const parts = rawDate.split("-");
-          if (parts.length === 3) {
-            due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
-          } else {
-            due_date = null;
-          }
-        } else {
-          due_date = null;
-        }
-      }
+  if (rawDate && rawDate !== "") {
 
-      // 2. Update the Section (Column)
+    // ✅ Force correct YYYY-MM-DD format (like edit box)
+    const parts = rawDate.split("-");
+    if (parts.length === 3) {
+      due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
+    } else {
+      due_date = null;
+    }
+
+  } else {
+    due_date = null;
+  }
+}
+
+      // 1. Update the Section (Column)
       const sectionPromise = fetch('/update-task-section', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: draggingId, section: containers[containerId] })
       });
 
-      // 3. Update the Date 
+      // 2. Update the Date (Using the raw string extracted above)
       let datePromise = Promise.resolve();
       if (due_date !== undefined) {
         datePromise = fetch('/update-task-date', {
@@ -983,8 +931,9 @@ function enableDragAndDrop() {
         });
       }
 
+      // Wait for both to finish, then the socket or reload will refresh the UI
       await Promise.all([sectionPromise, datePromise]);
-      setTimeout(() => isProcessingAjax = false, 500);
+      window.location.reload();
     });
   });
 }
@@ -1000,7 +949,6 @@ function createSeparator(dateStr) {
   hr.style.opacity = '0.5';
   return hr;
 }
-
 // ✅ PRIORITY SORT FUNCTION
 function sortByPriority(tasks) {
   const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
@@ -1036,14 +984,13 @@ const fp = flatpickr(hiddenInput, {
     calendar.style.width = "90%";        // responsive width
     calendar.style.maxWidth = "400px";   // optional max width
   },
-  onOpen: function(selectedDates, dateStr, instance) {
-    const calendar = instance.calendarContainer;
-    calendar.classList.add("center-calendar");
-  },
-  // 🌟 ZERO RELOAD: CALENDAR UPDATE
+onOpen: function(selectedDates, dateStr, instance) {
+  const calendar = instance.calendarContainer;
+
+  calendar.classList.add("center-calendar");
+},
   onChange: function(selectedDates, dateStr) {
     if (currentTaskDiv && dateStr) {
-      isProcessingAjax = true;
       fetch('/update-task-date', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1051,19 +998,37 @@ const fp = flatpickr(hiddenInput, {
       })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-            const dateDiv = currentTaskDiv.querySelector('.task-date');
-            dateDiv.textContent = formatDate(dateStr);
-            currentTaskDiv.dataset.date = dateStr;
-            setTimeout(() => isProcessingAjax = false, 500);
-        } else {
-            isProcessingAjax = false;
-        }
-      }).catch(() => isProcessingAjax = false);
+        if (data.success) window.location.reload();
+      });
     }
     currentTaskDiv = null;
   }
 });
+
+// Delete all completed task
+document.getElementById('delete-completed').addEventListener('click', async () => {
+  if(!confirm("Are you sure you want to delete all completed tasks?")) return;
+
+  try {
+    const res = await fetch('/api/delete-completed-tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
+    });
+
+    const data = await res.json();
+    if(data.success){
+      alert(data.message);
+      window.location.reload();
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Server error while deleting tasks");
+  }
+});
+//
 
 // Attach date picker to task-date
 function attachDateEvents() {
@@ -1075,7 +1040,6 @@ function attachDateEvents() {
     });
   });
 }
-
 // Drag support
 document.addEventListener('dragstart', (e) => {
   if(e.target.classList.contains('task-item')) {
@@ -1091,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 
-// 🌟 ZERO RELOAD: DELETE ALL COMPLETED TASKS
+//Delete completed task pop up:
 document.addEventListener("DOMContentLoaded", function() {
 
   const deleteIcon = document.getElementById("delete-completed");
@@ -1099,9 +1063,11 @@ document.addEventListener("DOMContentLoaded", function() {
   const cancelBtn = document.getElementById("cancelDelete");
   const confirmBtn = document.getElementById("confirmDelete");
 
+  // 🔴 REMOVE OLD CLICK EVENTS (VERY IMPORTANT)
   const newDeleteIcon = deleteIcon.cloneNode(true);
   deleteIcon.parentNode.replaceChild(newDeleteIcon, deleteIcon);
 
+  // ✅ Now attach ONLY this event
   newDeleteIcon.addEventListener("click", function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -1113,24 +1079,19 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   confirmBtn.addEventListener("click", async function() {
-    isProcessingAjax = true;
     try {
       const response = await fetch('/api/delete-completed-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+
       const data = await response.json();
+
       modal.style.display = "none";
 
-      if(data.success) {
-          // Instantly wipe all completed tasks
-          document.querySelectorAll('.completed-task').forEach(el => el.remove());
-      }
-      setTimeout(() => isProcessingAjax = false, 500);
     } catch (error) {
       console.error("Delete error:", error);
       modal.style.display = "none";
-      isProcessingAjax = false;
     }
   });
 
@@ -1142,44 +1103,56 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
-// 🌟 ZERO RELOAD: SINGLE TASK DELETE
+//delete one task
+// ===============================
+// SINGLE TASK DELETE (GLOBAL)
+// ===============================
+
 let taskToDeleteId = null;
 
+// Open modal when clicking delete option
 document.addEventListener("click", function(e) {
   const deleteBtn = e.target.closest(".delete-opt");
+
   if (deleteBtn) {
     e.preventDefault();
     e.stopPropagation();
+
     const taskItem = deleteBtn.closest(".task-item");
     taskToDeleteId = taskItem.dataset.id;
+
     document.getElementById("singleDeleteModal").style.display = "flex";
   }
 });
 
+// Cancel button
 document.getElementById("cancelSingleDelete").addEventListener("click", function() {
   document.getElementById("singleDeleteModal").style.display = "none";
   taskToDeleteId = null;
 });
 
+// Confirm delete
 document.getElementById("confirmSingleDelete").addEventListener("click", async function () {
+
   if (!taskToDeleteId) return;
-  isProcessingAjax = true;
+
   try {
+    // Close modal immediately
     document.getElementById("singleDeleteModal").style.display = "none";
+
     await fetch(`/tasks/delete-task/${taskToDeleteId}`, {
       method: "POST"
     });
-    
-    // Instantly remove from screen
-    const taskEl = document.getElementById('task-' + taskToDeleteId);
-    if(taskEl) taskEl.remove();
 
     taskToDeleteId = null;
-    setTimeout(() => isProcessingAjax = false, 500);
+
+    // ❌ DO NOT reload here
+    // Socket will reload automatically
+
   } catch (err) {
     console.error("Delete error:", err);
-    isProcessingAjax = false;
   }
+
 });
 
 </script>
@@ -1187,92 +1160,11 @@ document.getElementById("confirmSingleDelete").addEventListener("click", async f
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    
-    // 🌟 ZERO RELOAD MULTI-USER SOCKET EVENT RECEIVERS
-    
-    // On Add Task
-    socket.on('task_added', (task) => {
-        if (document.getElementById('task-' + task.id)) return;
-        
-        const el = createTaskElement(task);
-        const targetSection = task.status === 'COMPLETED' ? 'completed-section' : 
-                      (task.section === 'CHANGES' ? 'change-section' : 
-                      (task.section === 'UPDATE' ? 'update-section' : 
-                      (task.section === 'OTHERS' ? 'other-section' : 'task-section')));
-        const container = document.getElementById(targetSection);
-        if (container) container.appendChild(el);
-    });
-
-    // On Delete Task
-    socket.on('task_deleted', (id) => {
-        const el = document.getElementById('task-' + id);
-        if (el) el.remove();
-    });
-
-    // On Delete Completed
-    socket.on('completed_deleted', () => {
-        document.querySelectorAll('.completed-task').forEach(el => el.remove());
-    });
-
-    // On Edit Details
-    socket.on('task_edited', (data) => {
-        if(isProcessingAjax) return;
-        const el = document.getElementById('task-' + data.id);
-        if (el) {
-            el.querySelector('.task-title').textContent = data.title;
-            el.querySelector('.task-desc-text').textContent = data.description || 'No description provided.';
-            el.querySelector('.edit-desc').value = data.description;
-            el.querySelector('.task-checkbox').className = `task-checkbox ${getPriorityClass(data.priority)}`;
-            el.querySelector('.task-date').textContent = formatDate(data.due_date);
-            el.dataset.date = data.due_date ? data.due_date.split('T')[0] : '';
-        }
-    });
-
-    // On Status Change
-    socket.on('task_status_changed', (data) => {
-        if(isProcessingAjax) return;
-        const el = document.getElementById('task-' + data.id);
-        if (el) {
-            el.classList.toggle('completed-task', data.status === 'COMPLETED');
-            el.querySelector('.task-checkbox').checked = (data.status === 'COMPLETED');
-            const sec = data.status === 'COMPLETED' ? 'completed-section' : 
-                        (data.section === 'CHANGES' ? 'change-section' : 
-                        (data.section === 'UPDATE' ? 'update-section' : 
-                        (data.section === 'OTHERS' ? 'other-section' : 'task-section')));
-            const container = document.getElementById(sec);
-            if(container) container.appendChild(el);
-        }
-    });
-
-    // On Section Drag & Drop Change
-    socket.on('task_section_changed', (data) => {
-        if(isProcessingAjax) return;
-        const el = document.getElementById('task-' + data.id);
-        if (el) {
-            const sec = data.section === 'CHANGES' ? 'change-section' : 
-                        (data.section === 'UPDATE' ? 'update-section' : 
-                        (data.section === 'OTHERS' ? 'other-section' : 'task-section'));
-            const container = document.getElementById(sec);
-            if(container) container.appendChild(el);
-        }
-    });
-
-    // On Date Change
-    socket.on('task_date_changed', (data) => {
-        if(isProcessingAjax) return;
-        const el = document.getElementById('task-' + data.id);
-        if (el) {
-            el.querySelector('.task-date').textContent = formatDate(data.due_date);
-            el.dataset.date = data.due_date ? data.due_date.split('T')[0] : '';
-        }
-    });
-
-    // Generic Backup Fallback (if any raw update_tasks comes through)
-    socket.on('update_tasks', () => {
-        if (!isProcessingAjax) {
-            setTimeout(() => window.location.reload(), 100);
-        }
-    });
+   socket.on('update_tasks', () => {
+    setTimeout(() => {
+        window.location.reload();
+    }, 100);
+});
 </script>
 
 </body>
