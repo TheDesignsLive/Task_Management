@@ -7,7 +7,7 @@ const con = require('../config/db');
 router.get('/approve-member/:id', async (req, res) => {
 
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
+        return res.status(401).json({ success: false, message: 'Unauthorized Action.' });
     }
 
     const requestId = req.params.id;
@@ -20,7 +20,7 @@ router.get('/approve-member/:id', async (req, res) => {
         );
 
         if (rows.length === 0) {
-            return res.json({ success: false, message: 'Request not found' });
+            return res.json({ success: false, message: 'This request is no longer available or has already been processed.' });
         }
 
         const request = rows[0];
@@ -32,7 +32,7 @@ router.get('/approve-member/:id', async (req, res) => {
         );
 
         if (existingUser.length > 0) {
-            return res.json({ success: false, message: 'Email already exists in users' });
+            return res.json({ success: false, message: 'A user with this email address already exists in the system.' });
         }
 
         //  INSERT INTO USERS TABLE
@@ -56,21 +56,22 @@ router.get('/approve-member/:id', async (req, res) => {
             "UPDATE member_requests SET status='APPROVED' WHERE id=?",
             [requestId]
         );
-         // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+        req.io.emit('update_members');
+        
         //  DELETE REQUEST AFTER APPROVE
         await con.query(
             "DELETE FROM member_requests WHERE id=?",
             [requestId]
         );
-                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+        req.io.emit('update_members');
 
-        return res.json({ success: true, message: 'Member approved successfully' });
+        return res.json({ success: true, message: 'The member has been successfully approved and added to the system.' });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: 'Error approving member' });
+        res.status(500).json({ success: false, message: 'An error occurred while approving this member. Please try again.' });
     }
 });
 
@@ -80,7 +81,7 @@ router.get('/approve-member/:id', async (req, res) => {
 router.get('/reject-member/:id', async (req, res) => {
 
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
+        return res.status(401).json({ success: false, message: 'Unauthorized Action.' });
     }
 
     const requestId = req.params.id;
@@ -91,29 +92,29 @@ router.get('/reject-member/:id', async (req, res) => {
             "UPDATE member_requests SET status='REJECTED' WHERE id=?",
             [requestId]
         );
-                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+        req.io.emit('update_members');
 
         //  DELETE REQUEST AFTER REJECT
         await con.query(
             "DELETE FROM member_requests WHERE id=?",
             [requestId]
         );
-                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+        req.io.emit('update_members');
 
-        return res.json({ success: true, message: 'Member rejected successfully' });
+        return res.json({ success: true, message: 'The member request has been rejected and removed.' });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: 'Error rejecting member' });
+        res.status(500).json({ success: false, message: 'An error occurred while rejecting this request. Please try again.' });
     }
 });
 
 // ================= CONFIRM DELETION REQUEST =================
 router.get('/confirm-deletion/:id', async (req, res) => {
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
+        return res.status(401).json({ success: false, message: 'Unauthorized Action.' });
     }
 
     const requestId = req.params.id;
@@ -130,26 +131,26 @@ router.get('/confirm-deletion/:id', async (req, res) => {
 
             // 2. Delete the actual user from the users table
             await con.query("DELETE FROM users WHERE email=?", [userEmail]);
-                     // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+            // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+            req.io.emit('update_members');
 
             // 3. Delete the request from member_requests table
             await con.query("DELETE FROM member_requests WHERE id=?", [requestId]);
-                     // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+            // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+            req.io.emit('update_members');
         }
 
-        return res.json({ success: true, message: 'Deletion confirmed successfully' });
+        return res.json({ success: true, message: 'The member profile has been permanently deleted.' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: 'Error confirming deletion' });
+        res.status(500).json({ success: false, message: 'An error occurred while processing the deletion. Please try again.' });
     }
 });
 
 // ================= REJECT DELETION REQUEST =================
 router.get('/reject-deletion/:id', async (req, res) => {
     if (!req.session.role || req.session.role !== 'admin') {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
+        return res.status(401).json({ success: false, message: 'Unauthorized Action.' });
     }
 
     const requestId = req.params.id;
@@ -159,13 +160,13 @@ router.get('/reject-deletion/:id', async (req, res) => {
         // This keeps the member safely in the users table.
         await con.query("DELETE FROM member_requests WHERE id=?", [requestId]);
 
-                 // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
-    req.io.emit('update_members');
+        // 🔴 AUTO REFRESH FOR ALL USERS (ROLE UPDATED)
+        req.io.emit('update_members');
 
-        return res.json({ success: true, message: 'Deletion request rejected' });
+        return res.json({ success: true, message: 'Deletion rejected. The member profile has been preserved.' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: 'Error rejecting deletion request' });
+        res.status(500).json({ success: false, message: 'An error occurred while rejecting the deletion request. Please try again.' });
     }
 });
 
