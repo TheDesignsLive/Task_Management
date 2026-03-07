@@ -39,12 +39,12 @@ router.get('/', async (req, res) => {
 
 /* ================= CHANGE PASSWORD ================= */
 router.post('/change-password', async (req, res) => {
-    if (!req.session.role) return res.redirect('/');
+    if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
 
     const { current_password, new_password, confirm_password } = req.body;
 
     if (new_password !== confirm_password)
-        return res.send("<script>alert('Password mismatch'); window.location=document.referrer;</script>");
+        return res.json({ success: false, message: 'New passwords do not match' });
 
     try {
         let table = req.session.role === "admin" ? "admins" : "users";
@@ -52,12 +52,12 @@ router.post('/change-password', async (req, res) => {
 
         const [rows] = await con.query(`SELECT password FROM ${table} WHERE id=?`, [id]);
 
-        if (!rows.length) return res.send("<script>alert('Account not found'); window.location=document.referrer;</script>");
+        if (!rows.length) return res.json({ success: false, message: 'Account not found' });
 
-        // Verify current password (assuming current password in DB is already hashed)
+        // Verify current password 
         const match = await bcrypt.compare(current_password, rows[0].password);
         if (!match)
-            return res.send("<script>alert('Wrong current password'); window.location=document.referrer;</script>");
+            return res.json({ success: false, message: 'Incorrect current password' });
 
         // HASH THE NEW PASSWORD
         const saltRounds = 10;
@@ -65,17 +65,17 @@ router.post('/change-password', async (req, res) => {
 
         await con.query(`UPDATE ${table} SET password=? WHERE id=?`, [hashedNewPassword, id]);
 
-        res.send("<script>alert('Password changed successfully'); window.location='/settings';</script>");
+        res.json({ success: true, message: 'Your password has been successfully updated.' });
 
     } catch (err) {
         console.log(err);
-        res.send("<script>alert('Password change failed'); window.location=document.referrer;</script>");
+        res.json({ success: false, message: 'Failed to update password due to a server error.' });
     }
 });
 
 /* ================= CHANGE GMAIL ================= */
 router.post('/change-email', async (req, res) => {
-    if (!req.session.role) return res.redirect('/');
+    if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
     const { new_email } = req.body;
 
     try {
@@ -86,33 +86,34 @@ router.post('/change-email', async (req, res) => {
         const [userCheck] = await con.query("SELECT id FROM users WHERE email=?", [new_email]);
 
         if (adminCheck.length > 0 || userCheck.length > 0) {
-            return res.send("<script>alert('Email already in use by another account!'); window.location='/settings';</script>");
+            return res.json({ success: false, message: 'This email address is already registered to another account.' });
         }
 
         await con.query(`UPDATE ${table} SET email=? WHERE id=?`, [new_email, id]);
         req.session.email = new_email;
-        res.send("<script>alert('Gmail changed successfully'); window.location='/settings';</script>");
+        
+        res.json({ success: true, message: 'Your email address has been successfully updated.', newEmail: new_email });
     } catch (err) {
         console.log(err);
-        res.send("<script>alert('Gmail change failed'); window.location='/settings';</script>");
+        res.json({ success: false, message: 'Failed to change email due to a server error.' });
     }
 });
 
 /* ================= DELETE PROFILE ================= */
 router.get('/delete-profile', async (req, res) => {
-    if (!req.session.role) return res.redirect('/');
+    if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
     if (req.session.role !== "admin") {
-        return res.send("<script>alert('You cannot delete your account.'); window.location='/settings';</script>");
+        return res.json({ success: false, message: 'Only admins can delete their profile.' });
     }
 
     try {
         let adminId = req.session.adminId;
         await con.query(`DELETE FROM admins WHERE id=?`, [adminId]);
         req.session.destroy();
-        res.send("<script>alert('Account deleted successfully.'); window.location='/';</script>");
+        res.json({ success: true, message: 'Your profile and all associated data have been permanently deleted.' });
     } catch (err) {
         console.log(err);
-        res.send("<script>alert('Failed to delete profile.'); window.location='/settings';</script>");
+        res.json({ success: false, message: 'Failed to delete profile due to a server error.' });
     }
 });
 

@@ -67,6 +67,8 @@ button:hover{background:#0b7373;}
     transition: 0.2s;
     box-sizing: border-box; /* Ensures border/padding doesn't add to height */
 }
+.btn-success { background-color: #0F8989; color: #fff; } 
+.btn-success:hover { background-color: #0c7575; }
 .btn-danger { background-color: #d9534f; color: #fff; }
 .btn-danger:hover { background-color: #c9302c; }
 .btn-cancel { background-color: #f1f1f1; color: #333; }
@@ -98,7 +100,7 @@ button:hover{background:#0b7373;}
     <div class="dialog-box">
         <span class="close-btn" onclick="closePasswordDialog()">✖</span>
         <h3 style="margin-top:0;">Change Password</h3>
-        <form method="POST" action="/settings/change-password">
+        <form id="changePasswordForm">
             <div class="input-group">
                 <input type="password" name="current_password" id="currPwd" placeholder="Current Password" required>
                 <i class="fa-solid fa-eye-slash" onclick="togglePwd('currPwd', this)"></i>
@@ -121,7 +123,7 @@ button:hover{background:#0b7373;}
         <span class="close-btn" onclick="closeEmailDialog()">✖</span>
         <h3 style="margin-top:0;">Change Gmail</h3>
         <div id="email-step1">
-            <p style="font-size: 14px; color: #555;">Current Email: <strong><%= session.email %></strong></p>
+            <p style="font-size: 14px; color: #555;">Current Email: <strong id="currentEmailDisplay"><%= session.email %></strong></p>
             <button type="button" onclick="sendOtpToCurrent('<%= session.email %>')">Send OTP to Current Email</button>
         </div>
         <div id="email-step2" style="display:none;">
@@ -136,7 +138,7 @@ button:hover{background:#0b7373;}
         </div>
         <div id="email-step4" style="display:none;">
             <p style="color:green; font-size:14px;">OTP sent to new email.</p>
-            <form method="POST" action="/settings/change-email" id="changeEmailForm" onsubmit="return verifyNewOtpAndSubmit(event)">
+            <form id="changeEmailForm" onsubmit="return verifyNewOtpAndSubmit(event)">
                 <input type="hidden" name="new_email" id="finalNewEmail">
                 <input type="text" id="newOtpInput" placeholder="Enter OTP" required>
                 <button type="submit">Confirm & Change Gmail</button>
@@ -161,7 +163,7 @@ button:hover{background:#0b7373;}
     <h2 style="margin-top:0; color:#d9534f;">Delete Profile</h2>
     <p style="color:#555;">Are you sure? All associated employee data will be permanently lost.</p>
     <div class="modal-buttons">
-      <button type="button" onclick="location.href='/settings/delete-profile'" class="btn btn-danger">Yes, Delete</button>
+      <button type="button" onclick="confirmDeleteProfile()" class="btn btn-danger">Yes, Delete</button>
       <button type="button" onclick="closeDeleteDialogs()" class="btn btn-cancel">Cancel</button>
     </div>
   </div>
@@ -177,7 +179,50 @@ button:hover{background:#0b7373;}
   </div>
 </div>
 
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="modal-content" style="text-align: center;">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons" style="margin-top: 0;">
+        <button id="customAlertBtn" class="btn btn-success" style="width: 100%;">Okay</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ================= CUSTOM ALERT FUNCTION =================
+let alertRedirectUrl = null;
+
+function showAlertDialog(title, message, isSuccess, redirectUrl = null) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  
+  alertRedirectUrl = redirectUrl;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertRedirectUrl) {
+      window.location.href = alertRedirectUrl;
+  }
+});
+// =========================================================
+
 function openPasswordDialog() { document.getElementById('passwordDialog').style.display = 'flex'; }
 function closePasswordDialog() { document.getElementById('passwordDialog').style.display = 'none'; }
 
@@ -211,6 +256,46 @@ function togglePwd(id, icon) {
         icon.classList.replace("fa-eye", "fa-eye-slash");
     }
 }
+
+// ===== AJAX FOR CHANGE PASSWORD (ZERO RELOAD) =====
+document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const currPwd = document.getElementById('currPwd').value;
+    const newPwd = document.getElementById('newPwd').value;
+    const confPwd = document.getElementById('confPwd').value;
+
+    if (newPwd !== confPwd) {
+        showAlertDialog("Error", "New Passwords do not match.", false);
+        return;
+    }
+
+    try {
+        const res = await fetch('/settings/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                current_password: currPwd, 
+                new_password: newPwd, 
+                confirm_password: confPwd 
+            })
+        });
+        const data = await res.json();
+        
+        closePasswordDialog();
+        
+        if(data.success) {
+            showAlertDialog("Success!", data.message, true);
+            this.reset();
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        console.error(err);
+        showAlertDialog("Error", "Server connection failed.", false);
+    }
+});
+
 
 let generatedCurrentOtp = "";
 let generatedNewOtp = "";
@@ -251,11 +336,59 @@ async function sendOtpToNew() {
     }
 }
 
-function verifyNewOtpAndSubmit(e) {
+// ===== AJAX FOR CHANGE EMAIL (ZERO RELOAD) =====
+async function verifyNewOtpAndSubmit(e) {
+    e.preventDefault();
     if (document.getElementById('newOtpInput').value !== generatedNewOtp) {
-        e.preventDefault(); alert('Invalid OTP'); return false;
+        alert('Invalid OTP'); return false;
     }
-    return true; 
+    
+    const newEmail = document.getElementById('finalNewEmail').value;
+    
+    try {
+        const res = await fetch('/settings/change-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_email: newEmail })
+        });
+        const data = await res.json();
+        
+        closeEmailDialog();
+        
+        if (data.success) {
+            // Instantly update email text on the screen without reloading!
+            document.getElementById('currentEmailDisplay').innerText = data.newEmail;
+            showAlertDialog("Success!", data.message, true);
+            document.getElementById('changeEmailForm').reset();
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        console.error(err);
+        showAlertDialog("Error", "Server Error.", false);
+    }
+    
+    return false; 
+}
+
+// ===== AJAX FOR DELETE PROFILE =====
+async function confirmDeleteProfile() {
+    try {
+        const res = await fetch('/settings/delete-profile');
+        const data = await res.json();
+        
+        closeDeleteDialogs();
+        
+        if(data.success) {
+            // Once OK is clicked, redirect to the login page (since they are deleted)
+            showAlertDialog("Profile Deleted", data.message, true, '/');
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        console.error(err);
+        showAlertDialog("Error", "Server Error.", false);
+    }
 }
 </script>
 
