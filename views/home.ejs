@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <style>
-  /* ===== PREVENT FULL PAGE SCROLL ===== */
+/* ===== PREVENT FULL PAGE SCROLL ===== */
 html, body {
   margin: 0;
   padding: 0;
@@ -23,425 +23,272 @@ html, body {
   height: calc(100% - 60px);
 }
 
- .sidebar-container {
+.sidebar-container {
   width: 55px;
 }
 
-
-.main-content {
-  flex: 1;
+/* Ensure the container inside main-content fills the height */
+.main-content > div {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+/* Content wrapper */
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  height: auto;
+  align-items: stretch;
+}
+
+/* Right section */
+.right-section {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-x: visible; 
+  overflow-y: hidden;
+}
+
+/* Top columns (task containers) */
+.top-columns {
+  display: flex;
+  flex: 1;
+  min-width: 1200px;
+  align-items: stretch;
+  gap: 1px; 
+  flex-wrap: nowrap; 
+  overflow-x: hidden;
+}
+
+/* Allow scroll on hover if content overflows */
+.task-change:hover,
+.task-update:hover,
+.task-other:hover,
+.completed-section:hover {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Task sections height and overflow */
+.task-main,
+.task-change,
+.task-update,
+.task-other,
+.completed-section {
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 /* ===== SUB HEADER ===== */
 .sub-header {
   display: flex;
-  background-color: #CDF4F4;
-  padding: 6px;
-  gap: 10px;
+  background: #CDF4F4;
   font-size: 14px;
+  min-width: 1350px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 12px 0;
 }
 
-
-/* Sub-header sections */
-.sub-header {
+.sub-header > div {
   display: flex;
-  background-color: #CDF4F4;
-  font-size: 14px;
+  justify-content: center;
+  align-items: center;
 }
 
-.task-header {
-  flex: 1.5;              /* Reduced from 3 to 1.5 */
-  text-align: center;
-  padding: 6px;
-}
-
-.right-header {
-  flex: 3;              /* Reduced from 5 to 3 */
-  display: flex;
-}
-
-.right-header .change,
-.right-header .update,
-.right-header .other-task {
-  flex: 1;              /* Reduced from 2 to 1 */
-  text-align: center;
-  padding: 6px;
-}
-
-
-/* sub-header over */
-
-/* ===== MAIN CONTENT LAYOUT ===== */
-.content-wrapper {
+.task-header { flex: 1.5; min-width: 250px; }
+.change, .update, .other-task, .completed-header {
   flex: 1;
-  display: flex;
-  overflow: hidden;
+  min-width: 250px;
 }
 
-/* LEFT TASK SECTION */
+/* ===== LEFT TASK SECTION ===== */
 .task-main {
-  flex: 1.5;            /* Matches .task-header */
+  flex: 1.5;
   padding: 10px;
   overflow-y: auto;
 }
 
 /* Vertical divider */
 .vertical-line {
-  width: 1.5px;
+  width: 1px;
   background-color: #7C7B7B;
+  height: 100%;
 }
 
-/* RIGHT SIDE */
-.right-section {
-  flex: 3;            /* Matches .right-header */
-  display: flex;
-  flex-direction: column;
+/* ===== RIGHT SIDE ===== */
+.task-change,
+.task-update,
+.task-other,
+.completed-section {
+  flex: 1;
+  min-width: 250px;
 }
 
-/* TOP COLUMNS */
-.top-columns {
- height: 70%;
-  display: flex;
-  overflow: hidden;
-}
+.task-change { padding: 10px; overflow-y: auto; }
+.task-update { padding: 10px; overflow-y: auto; }
+.task-other  { padding: 10px; overflow-y: auto; }
 
-.task-change {
-  flex: 1;            /* Matches .change */
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.task-update {
-  flex: 1;            /* Matches .update */
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.task-other {
-  flex: 1;            /* Matches .other-task */
-  padding: 10px;
-  overflow-y: auto;
-}
-
-/* COMPLETED SECTION */
+/* ===== COMPLETED SECTION (beside Others) ===== */
 .completed-wrapper {
-  height: 30%;
   display: flex;
   flex-direction: column;
   background-color: #2E2D2D;
-  border-top: 1px solid #666;
+  border-left: 1px solid #666;
+  min-width: 250px;    /* matches other columns */
 }
-
-.completed-header {
-  margin: 8px;
-  border-radius: 50px;
-  background-color: #0F8989;
-  padding: 8px 15px;
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: white;
-}
-
-
 
 .completed-section {
   flex: 1;
+  padding: 10px;
   overflow-y: auto;
-  padding-left: 10px;
   color: white;
-  margin-top: -5px;
 }
 
-
-
+/* Completed header */
+.completed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-height: 30px;      /* limit height */
+  height: 30px;          /* force exact height */
+  padding: 0 6px;        /* reduce padding */
+  margin: 8px;
+  border-radius: 100px;   /* smaller curve */
+  background-color: #0F8989;
+  font-size: 12px;       /* smaller text */
+  font-weight: 600;
+  color: white;
+  line-height: 20px;     /* vertically center text */
+  box-sizing: border-box;
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-bottom: -10px;
+}
 /* Dustbin icon */
 #delete-completed {
-    cursor: pointer;
-    transition: transform 0.2s, fill 0.2s;
-    fill: #e74c3c; /* Red color for dustbin */
+  cursor: pointer;
+  transition: transform 0.2s, fill 0.2s;
+  fill: #e74c3c;
 }
 
 #delete-completed:hover {
-    transform: scale(1.2);   /* Slight enlarge on hover */
-    fill: #c0392b;           /* Darker red on hover */
+  transform: scale(1.2);
+  fill: #c0392b;
 }
 
-
-
-  /* ===== TASK ITEM ===== */
-  .task-item {
-    font-size: 13px;
-    padding: 6px;
-    margin: 6px 0;
-    background-color: #444;
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s;
-    overflow: visible; 
-    position: relative;
-  }
-
-  .task-item:hover {
-    background-color: #555;
-  }
-
-  .completed-task {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  .task-checkbox {
-    width: 12px;
-    height: 12px;
-    appearance: none;
-    border: 2px solid white; 
-    border-radius: 3px;
-    background: transparent;
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;  
-  }
-
-  .task-checkbox:checked::after {
-    content: "✔";                
-    position: absolute;
-    top: 0;
-    left: 1px;
-    font-size: 7px;
-    color: white;                
-  }
-
-  .priority-red { border-color: #ff4d4d; }
-  .priority-yellow { border-color: #ffd633; }
-  .priority-blue { border-color: #4da6ff; }
-      
-      
-      .info-icon{
-          width: 14px;         
-        height: 14px;
-        stroke: #959494;       
-        flex-shrink: 0;
-        margin-left: 8px;      
-        vertical-align: middle;
-
-          margin-left: auto; 
-
-      }
-      .info-icon:hover{
-  stroke:white;
-}
-      
-  .task-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .task-title { flex: 1; min-width: 0; word-break: break-word; }
-  .task-name { flex: 0 1 auto; font-size: 11px; opacity: 0.7; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-date { flex: 0 0 50px; font-size: 11px; opacity: 0.8; white-space: nowrap; text-align: center; }
-
-  /* ===== 3 DOT MENU ===== */
-  .dots-btn { cursor: pointer; padding: 0 5px; color: #959494; font-size: 14px; margin-left: auto; }
-  .dots-btn:hover { color: white; }
-
-  .task-options-menu {
-    display: none;
-    position: absolute;
-    right: 5px; top: 25px;
-    background: white; color: #333;
-    border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    z-index: 1000;
-     min-width: 100px;
-  }
-
-  .task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-  .task-options-menu div:hover { background-color: #f0f0f0; }
-
-  /* ===== EDIT BOX - WIDTH SYNCED ===== */
-  .edit-box {
-    display: none;
-    background: #555;
-    padding: 10px;
-    border-radius: 4px;
-    margin-top: 5px;
-    flex-direction: column;
-    gap: 8px;
-    box-sizing: border-box; /* Critical for width alignment */
-  }
-
-  .edit-box input, .edit-box textarea, .edit-box select {
-    background: #3C3A3A; color: white; border: 1px solid #7C7B7B;
-    padding: 5px; border-radius: 4px; font-size: 12px;
-    box-sizing: border-box; /* Ensures padding doesn't affect width */
-  }
-
-  .edit-box input.edit-title, 
-  .edit-box textarea.edit-desc {
-    width: 100% !important;   /* Force same width */
-    display: block;
-  }
-
-  /* Auto-adjusting Textarea */
-  .edit-box textarea.edit-desc {
-    min-height: 80px;
-    resize: none;
-    overflow: hidden;
-    line-height: 1.5;
-  }
-
-  .edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
-  .save-btn { background: #0F8989; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
-  .cancel-btn { background: #7C7B7B; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
-
-  /* ===== DESCRIPTION DETAILS ===== */
-  .task-details { display: none; padding-top: 8px; border-top: 1px solid #666; margin-top: 8px; font-size: 12px; }
-  .task-desc-text { color: #ccc; line-height: 1.4; margin-bottom: 8px; }
-
-
-  /* ===== CALENDAR OVERRIDE ===== */
-
-
-  /* Class to show details when active */
-  .task-item.expanded .task-details {
-    display: block;
-  }
-
-  
-  .task-date-picker {
-  width: 0;
-  height: 0;
-  opacity: 0;
-  position: absolute;
-}
-
-/* TRUE LOGO: calendar style for task-date */
-.flatpickr-calendar.task-calendar {
-  margin-top: 0 !important;
-  width: 330px !important;
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-  font-family: Segoe UI, sans-serif;
-}
-
-
-
-/* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
-/* ✅ Apply only to task calendar, NOT navbar */
-.flatpickr-calendar.task-calendar.open {
-  position: fixed !important;
-  top: 190px !important;
-  left: 60% !important;
-  right: 20px !important;
-  transform: translateX(-50%) !important;
-  bottom: auto !important;
-}
-
-
-
-.flatpickr-months .flatpickr-month {
-  height: 32px !important;
-}
-
-.flatpickr-weekdays {
-  font-size: 10px !important;
-}
-
-
-.flatpickr-days {
-  width: 100% !important;
-}
-
-.numInputWrapper input {
-  font-size: 12px !important;
-}
-
-.past-date {
-  color: #ff4d4d !important;   /* 🔴 red color */
-  font-weight:500;
-}
-
-.center-calendar {
-  position: fixed !important;
-  top: 20% !important;            /* change this value */
-  left: 60% !important;
-  transform: translateX(-50%) !important;
-  z-index: 10000 !important;
-}
-
-.flatpickr-calendar {
-  font-size: 12px;              /* overall small text */
-  width: 280px !important;      /* smaller width */
-  border-radius: 12px;
-}
-
-/* FIX MONTH DROPDOWN WHITE BOX ISSUE - MATCHING NAV STYLE */
-.flatpickr-monthDropdown-months {
-  background: transparent !important;
-  color: white !important;
-  border: none !important;
-  outline: none !important;
-  appearance: none;
-  -webkit-appearance: none;
-  font-weight: 600;
-  padding: 2px 4px !important;
-}
-
-.flatpickr-monthDropdown-months:hover,
-.flatpickr-monthDropdown-months:focus {
-  background: transparent !important;
-}
-
-/* Ensure the actual options inside the dropdown have a background so they are readable */
-.flatpickr-monthDropdown-months option {
-  background-color: white !important;
-  color: #333 !important;
-}
-
-.flatpickr-current-month .numInputWrapper input.cur-year {
-  color: white !important;
-  background: transparent !important;
-  font-weight: 600;
-}
-
-.flatpickr-day {
-  height: 30px;
-  line-height: 30px;
-  font-size: 12px;
-}
-
-.flatpickr-weekday {
-  font-size: 11px;
-}
-
-.flatpickr-current-month {
+/* ===== TASK ITEM ===== */
+.task-item {
   font-size: 13px;
-  color: white !important;
+  padding: 6px;
+  margin: 6px 0;
+  background-color: #444;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  overflow: visible; 
+  position: relative;
 }
 
-.flatpickr-monthDropdown-months,
-.numInputWrapper {
-  font-size: 12px;
+.task-item:hover { background-color: #555; }
+.completed-task { opacity: 0.6; cursor: default; }
+
+.task-checkbox {
+  width: 12px; height: 12px;
+  appearance: none;
+  border: 2px solid white; 
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;  
 }
 
-.flatpickr-months {
-  background: linear-gradient(to right, #0f9d9a, #14b8a6);
-  border-radius: 12px 12px 0 0;
+.task-checkbox:checked::after {
+  content: "✔";                
+  position: absolute;
+  top: 0;
+  left: 1px;
+  font-size: 7px;
+  color: white;                
 }
 
-.flatpickr-prev-month, .flatpickr-next-month {
-  color: white !important;
-  fill: white !important;
+.priority-red { border-color: #ff4d4d; }
+.priority-yellow { border-color: #ffd633; }
+.priority-blue { border-color: #4da6ff; }
+
+.info-icon { width: 14px; height: 14px; stroke: #959494; flex-shrink: 0; margin-left: auto; }
+.info-icon:hover { stroke:white; }
+
+.task-row { display: flex; align-items: center; gap: 6px; }
+.task-title { flex: 1; min-width: 0; word-break: break-word; }
+.task-name { flex: 0 1 auto; font-size: 11px; opacity: 0.7; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-date { flex: 0 0 50px; font-size: 11px; opacity: 0.8; white-space: nowrap; text-align: center; }
+
+/* 3 DOT MENU */
+.dots-btn { cursor: pointer; padding: 0 5px; color: #959494; font-size: 14px; margin-left: auto; }
+.dots-btn:hover { color: white; }
+
+.task-options-menu {
+  display: none;
+  position: absolute;
+  right: 5px; top: 25px;
+  background: white; color: #333;
+  border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  z-index: 1000;
+  min-width: 100px;
 }
 
-/* */
+.task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.task-options-menu div:hover { background-color: #f0f0f0; }
+
+/* EDIT BOX */
+.edit-box {
+  display: none;
+  background: #555;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 5px;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.edit-box input, .edit-box textarea, .edit-box select {
+  background: #3C3A3A; color: white; border: 1px solid #7C7B7B;
+  padding: 5px; border-radius: 4px; font-size: 12px;
+  box-sizing: border-box;
+}
+
+.edit-box input.edit-title, .edit-box textarea.edit-desc {
+  width: 100% !important;
+  display: block;
+}
+
+.edit-box textarea.edit-desc {
+  min-height: 80px;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.save-btn { background: #0F8989; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+.cancel-btn { background: #7C7B7B; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+
+/* DESCRIPTION DETAILS */
+.task-details { display: none; padding-top: 8px; border-top: 1px solid #666; margin-top: 8px; font-size: 12px; }
+.task-desc-text { color: #ccc; line-height: 1.4; margin-bottom: 8px; }
+.task-item.expanded .task-details { display: block; }
+
+/* MODAL */
 .modal {
   display: none;
   position: fixed;
@@ -464,139 +311,125 @@ html, body {
   animation: pop 0.3s ease;
 }
 
-.modal-content h3 {
-  color: #d32f2f;
-  margin-bottom: 10px;
-}
+.modal-content h3 { color: #d32f2f; margin-bottom: 10px; }
 
-.modal-buttons {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.btn {
-  padding: 8px 15px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.cancel {
-  background: #ccc;
-}
-
-.cancel:hover {
-  background: #aaa;
-}
-
-.delete {
-  background: #d32f2f;
-  color: white;
-}
-
-.delete:hover {
-  background: #b71c1c;
-}
+.modal-buttons { margin-top: 20px; display: flex; justify-content: space-between; }
+.btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+.cancel { background: #ccc; }
+.cancel:hover { background: #aaa; }
+.delete { background: #d32f2f; color: white; }
+.delete:hover { background: #b71c1c; }
 
 @keyframes pop {
   from { transform: scale(0.7); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ==== BOARD SCROLL CONTAINERS ==== */
+.main-content { flex:1; overflow:hidden; }
+.board-scroll { width:100%; height:100%; overflow-x:auto; overflow-y:hidden; }
+.board-container { width:100%; min-width:1350px; height:100%; display:flex; flex-direction:column; }
+
+
+
+
+.sub-header > div {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* center the content */
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+.sub-header-inner {
+  display: flex;
+  gap: 20px; /* space between columns */
+}
+.other-task .task-text {
+  padding-right: 50px;
+}
 </style>
 </head>
-
 <body>
-<%- include('navbar') %>
+  <%- include('navbar') %>
 
-<div class="layout">
-  <div class="sidebar-container">
+  <div class="layout">
+    <div class="sidebar-container">
       <%- include('sidebar') %>
-  </div>
-
-  <div class="main-content">
-  <div class="sub-header">
-
-  <div class="task-header">Task</div>
-
-
-
-  <div class="right-header">
-    <div class="change">Change</div>
- 
-    <div class="update">Update</div>
-
-    <div class="other-task">Others</div>
-  </div>
-
-</div>
-<div class="content-wrapper">
-
-  <div class="task-main" id="task-section"></div>
-
-  <div class="vertical-line"></div>
-
-  <div class="right-section">
-
-    <div class="top-columns">
-
-      <div class="task-change" id="change-section"></div>
-
-      <div class="vertical-line"></div>
-
-      <div class="task-update" id="update-section"></div>
-
-      <div class="vertical-line"></div>
-
-      <div class="task-other" id="other-section"></div>
-
     </div>
 
-    <div class="completed-wrapper">
-      <div class="completed-header">
-        Completed Tasks
-        <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
-          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-        </svg>
+    <div class="main-content">
+      <div class="board-scroll">
+        <div class="board-container">
+
+          <!-- Header -->
+          <div class="sub-header">
+            <div class="task-header">Task</div>
+            <div class="change">Change</div>
+            <div class="update">Update</div>
+            <div class="other-task"><span class="task-text">Others</span></div>
+          </div>
+
+          <!-- Content -->
+          <div class="content-wrapper">
+
+            <!-- Task Section -->
+            <div class="task-main" id="task-section"></div>
+            <div class="vertical-line"></div>
+
+            <!-- Right Section -->
+            <div class="right-section">
+              <div class="top-columns">
+                <div class="task-change" id="change-section"></div>
+                <div class="vertical-line"></div>
+                <div class="task-update" id="update-section"></div>
+                <div class="vertical-line"></div>
+                <div class="task-other" id="other-section"></div>
+         
+
+                <!-- Completed Tasks beside Others -->
+                <div class="completed-wrapper">
+                  <div class="completed-header">
+                    Completed Tasks
+                    <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
+                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                  </div>
+                  <div class="completed-section" id="completed-section"></div>
+                </div>
+
+              </div>
+            </div>
+
+          </div> <!-- End Content Wrapper -->
+
+        </div>
       </div>
-
-      <div class="completed-section" id="completed-section"></div>
-    </div>
-
-  </div>
-
-</div>
-
-
-  </div>
-</div>
-
-<div id="singleDeleteModal" class="modal">
-  <div class="modal-content">
-    <h3>Delete This Task?</h3>
-    <p>This task will be permanently removed.</p>
-
-    <div class="modal-buttons">
-      <button id="confirmSingleDelete" class="btn delete">Delete</button>
-      <button id="cancelSingleDelete" class="btn cancel">Cancel</button>
     </div>
   </div>
-</div>
 
-<div id="deleteModal" class="modal">
-  <div class="modal-content">
-    <h3>Delete Completed Tasks?</h3>
-    <p>This action cannot be undone.</p>
+  <!-- Delete Single Task Modal -->
+  <div id="singleDeleteModal" class="modal">
+    <div class="modal-content">
+      <h3>Delete This Task?</h3>
+      <p>This task will be permanently removed.</p>
+      <div class="modal-buttons">
+        <button id="confirmSingleDelete" class="btn delete">Delete</button>
+        <button id="cancelSingleDelete" class="btn cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
-    <div class="modal-buttons">
-    
-      <button id="confirmDelete" class="btn delete">Delete</button>
+  <!-- Delete Completed Tasks Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <h3>Delete Completed Tasks?</h3>
+      <p>This action cannot be undone.</p>
+      <div class="modal-buttons">
+        <button id="confirmDelete" class="btn delete">Delete</button>
         <button id="cancelDelete" class="btn cancel">Cancel</button>
+      </div>
     </div>
   </div>
-</div>
 
 
 <script>
