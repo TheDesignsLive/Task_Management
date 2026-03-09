@@ -72,15 +72,16 @@ html, body {
   overflow-y: hidden;
 }
 
-/* Task sections height and overflow */
-.task-main,
-.task-change,
-.task-update,
-.task-other,
-.completed-section {
+/* ===== TASK SECTIONS VERTICAL SCROLL ===== */
+.task-main, /* 🔴 Added overflow-y auto */
+.task-change, /* 🔴 Added overflow-y auto */
+.task-update, /* 🔴 Added overflow-y auto */
+.task-other, /* 🔴 Added overflow-y auto */
+.completed-section { /* 🔴 Added overflow-y auto */
   height: 100%;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow-y: auto; /* 🔴 Vertical scroll when content full */
+  overflow-x: hidden;
 }
 
 /* ===== SUB HEADER ===== */
@@ -109,12 +110,13 @@ html, body {
 }
 
 /* ===== LEFT TASK SECTION ===== */
+/* ===== LEFT TASK SECTION ===== */
 .task-main {
   flex: 1.5;
   padding: 10px;
   overflow-y: auto;
+  max-height: 100%; /* ensure it can use parent's height */
 }
-
 /* Vertical divider */
 .vertical-line {
   width: 1px;
@@ -143,13 +145,13 @@ html, body {
   border-left: 1px solid #666;
   min-width: 250px;    /* matches other columns */
 }
-
 .completed-section {
   flex: 1;
   padding: 10px;
-  overflow-y: auto;
+  overflow-y: auto; /* 🔴 Vertical scroll enabled */
   color: white;
 }
+
 
 /* Completed header */
 .completed-header {
@@ -327,7 +329,12 @@ html, body {
 
 /* ==== BOARD SCROLL CONTAINERS ==== */
 .main-content { flex:1; overflow:hidden; }
-.board-scroll { width:100%; height:100%; overflow-x:auto; overflow-y:hidden; }
+.board-scroll {
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: visible; /* allow child scrolling */
+}
 .board-container { width:100%; min-width:1350px; height:100%; display:flex; flex-direction:column; }
 
 
@@ -347,6 +354,142 @@ html, body {
 .other-task .task-text {
   padding-right: 50px;
 }
+
+
+/* TRUE LOGO: calendar style for task-date */
+.flatpickr-calendar.task-calendar {
+  margin-top: 0 !important;
+  width: 330px !important;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  font-family: Segoe UI, sans-serif;
+}
+
+
+
+/* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
+/* ✅ Apply only to task calendar, NOT navbar */
+.flatpickr-calendar.task-calendar.open {
+  position: fixed !important;
+  top: 190px !important;
+  left: 60% !important;
+  right: 20px !important;
+  transform: translateX(-50%) !important;
+  bottom: auto !important;
+}
+
+
+
+.flatpickr-months .flatpickr-month {
+  height: 32px !important;
+}
+
+.flatpickr-weekdays {
+  font-size: 10px !important;
+}
+
+
+.flatpickr-days {
+  width: 100% !important;
+}
+
+.numInputWrapper input {
+  font-size: 12px !important;
+}
+
+.past-date {
+  color: #ff4d4d !important;   /* 🔴 red color */
+  font-weight:500;
+}
+
+.center-calendar {
+  position: fixed !important;
+  top: 20% !important;            /* change this value */
+  left: 60% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10000 !important;
+}
+
+.flatpickr-calendar {
+  font-size: 12px;              /* overall small text */
+  width: 280px !important;      /* smaller width */
+  border-radius: 12px;
+}
+
+/* FIX MONTH DROPDOWN WHITE BOX ISSUE - MATCHING NAV STYLE */
+.flatpickr-monthDropdown-months {
+  background: transparent !important;
+  color: white !important;
+  border: none !important;
+  outline: none !important;
+  appearance: none;
+  -webkit-appearance: none;
+  font-weight: 600;
+  padding: 2px 4px !important;
+}
+
+.flatpickr-monthDropdown-months:hover,
+.flatpickr-monthDropdown-months:focus {
+  background: transparent !important;
+}
+
+/* Ensure the actual options inside the dropdown have a background so they are readable */
+.flatpickr-monthDropdown-months option {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.flatpickr-current-month .numInputWrapper input.cur-year {
+  color: white !important;
+  background: transparent !important;
+  font-weight: 600;
+}
+
+.flatpickr-day {
+  height: 30px;
+  line-height: 30px;
+  font-size: 12px;
+}
+
+.flatpickr-weekday {
+  font-size: 11px;
+}
+
+.flatpickr-current-month {
+  font-size: 13px;
+  color: white !important;
+}
+
+.flatpickr-monthDropdown-months,
+.numInputWrapper {
+  font-size: 12px;
+}
+
+.flatpickr-months {
+  background: linear-gradient(to right, #0f9d9a, #14b8a6);
+  border-radius: 12px 12px 0 0;
+}
+
+.flatpickr-prev-month, .flatpickr-next-month {
+  color: white !important;
+  fill: white !important;
+}
+
+
+.content-wrapper {
+  display: flex;
+  flex: 1 1 0;
+  align-items: stretch;
+  height: 100%; /* ensure children can take full height */
+}
+
+.board-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* same here */
+}
+
 </style>
 </head>
 <body>
