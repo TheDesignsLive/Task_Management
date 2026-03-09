@@ -20,8 +20,6 @@ const addmemberRoutes = require('./routers/add-member.routes');
 const editmember = require('./routers/edit-member.routes');
 const delete_member = require('./routers/delete-member.routes');
 const suspendmember = require('./routers/suspend-member.routes');
-const taskRoutes = require('./routers/task.routes');
-const updateTaskRoute = require('./routers/update-task-status');
 const addrole = require('./routers/add-role.routes');
 const viewrole = require('./routers/view-role.routes');
 const delete_role = require('./routers/delete-role.routes');
@@ -34,12 +32,10 @@ const settings = require('./routers/settings.routes');
 const forgotPasswordRoutes = require('./routers/forgot-password.routes');
 const SentMailRoutes = require('./routers/sent-mail.routes');
 const changePassword = require("./routers/change-password.routes");
-const updateTaskDate = require('./routers/update-task-date.routes');
-const allMemberTask=require('./routers/all-member-task.routes');
-const updatetask=require('./routers/edit-task-details.routes');
 
-const deleteTaskRouter = require('./routers/delete-task.routes');
-const deleteCompletedTasksRouter = require('./routers/delete-completed-task.routes');
+const allMemberTask=require('./routers/all-member-task.routes');
+
+const ma=require('./routers/master.routes');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -103,6 +99,7 @@ app.get('/', (req, res) => {
 app.use('/', authRoutes);
 app.use('/', logoutRoutes);
 app.use('/', homeroutes);
+app.use('/',ma)
 
 // Member Management
 app.use('/view_member', viewMemberRoutes);
@@ -119,16 +116,11 @@ app.use('/', editrole);
 app.use('/', delete_role);
 
 // Tasks & Features
-app.use('/add-task', taskRoutes);
-app.use('/edit-task-details',updatetask);
-app.use('/tasks', deleteTaskRouter);
 app.use('/assign_by_me', AssignByMe);
 app.use('/', notification);
 app.use('/profile', profile);
 app.use('/settings', settings);
-app.use('/', updateTaskDate);
 app.use('/',allMemberTask);
-app.use('/api', deleteCompletedTasksRouter);
 
 
 // Forgot Password Workflow

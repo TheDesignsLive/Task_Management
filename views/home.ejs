@@ -1010,7 +1010,7 @@ document.getElementById('delete-completed').addEventListener('click', async () =
   if(!confirm("Are you sure you want to delete all completed tasks?")) return;
 
   try {
-    const res = await fetch('/api/delete-completed-tasks', {
+    const res = await fetch('/delete-completed-tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
@@ -1080,7 +1080,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   confirmBtn.addEventListener("click", async function() {
     try {
-      const response = await fetch('/api/delete-completed-tasks', {
+      const response = await fetch('/delete-completed-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -1140,7 +1140,7 @@ document.getElementById("confirmSingleDelete").addEventListener("click", async f
     // Close modal immediately
     document.getElementById("singleDeleteModal").style.display = "none";
 
-    await fetch(`/tasks/delete-task/${taskToDeleteId}`, {
+    await fetch(`/delete-task/${taskToDeleteId}`, {
       method: "POST"
     });
 
