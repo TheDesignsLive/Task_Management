@@ -234,7 +234,7 @@ html, body {
         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
       </svg>
     </div>
-    <div class="task-list-container">
+    <div class="task-list-container" id="completed-task-list">
       <% if (completedTasks.length > 0) { %>
         <% completedTasks.forEach(task => { %>
           <div class="task-item completed-task" id="task-<%= task.id %>">
@@ -242,12 +242,17 @@ html, body {
               <input type="checkbox"
                 class="task-checkbox priority-<%= task.priority %>"
                 checked
-                onchange="toggleStatus('<%= task.id %>', 'OPEN')">
+                onchange="toggleCheckboxStatus('<%= task.id %>', this)">
+                
               <div class="task-title"><%= task.title %></div>
               <div class="task-desc">
                 <%= (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description %>
               </div>
-              <div class="task-assign" style="font-size: 11px;"><%= task.assigned_to %></div>
+              
+              <div class="task-assign" data-assignee-id="<%= task.assignee_id %>">
+                 <span style="font-size: 11px;"><%= task.assigned_to %></span>
+              </div>
+
               <div class="task-date date-display"><%= task.due_date %></div>
 
               <div class="dots-btn" onclick="toggleMenu(event, '<%= task.id %>')">
@@ -262,8 +267,6 @@ html, body {
             </div>
           </div>
         <% }) %>
-      <% } else { %>
-        <div style="color:#888; padding:10px; text-align:center; font-size: 12px;">No completed tasks.</div>
       <% } %>
     </div>
   </div>
@@ -294,12 +297,11 @@ html, body {
   </div>
 </div>
 
-
 <script>
 const openTasks = <%- JSON.stringify(openTasks) %>;
 const members = <%- JSON.stringify(members) %>;
 
-// GLOBALLY FLAG FOR SOCKET REAL-TIME BEHAVIOR
+// 🌟 ZERO RELOAD GLOBAL FLAG
 let isProcessingAjax = false;
 
 // ===== 3 DOTS MENU LOGIC =====
@@ -340,9 +342,7 @@ document.getElementById("cancelSingleDelete").addEventListener("click", function
 
 document.getElementById("confirmSingleDelete").addEventListener("click", async function () {
   if (!taskToDeleteId) return;
-  
-  isProcessingAjax = true; // Tell Socket.io to ignore the upcoming broadcast
-  
+  isProcessingAjax = true; 
   try {
       document.getElementById("singleDeleteModal").style.display = "none";
       const response = await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, {
@@ -351,16 +351,14 @@ document.getElementById("confirmSingleDelete").addEventListener("click", async f
       const data = await response.json();
       
       if (data.success) {
-          // Zero Reload Magic: Remove the element directly from the screen
           const taskElement = document.getElementById('task-' + taskToDeleteId);
           if (taskElement) taskElement.remove();
-          
           taskToDeleteId = null;
-          setTimeout(() => isProcessingAjax = false, 500); // Reset flag after a safe delay
       }
   } catch (err) {
       console.error("Delete error:", err);
-      isProcessingAjax = false;
+  } finally {
+      setTimeout(() => isProcessingAjax = false, 500); 
   }
 });
 
@@ -375,8 +373,7 @@ document.getElementById('cancelDelete').addEventListener('click', () => {
 });
 
 document.getElementById('confirmDelete').addEventListener('click', async () => {
-    isProcessingAjax = true; // Tell Socket.io to ignore the upcoming broadcast
-    
+    isProcessingAjax = true; 
     try {
         document.getElementById('deleteModal').style.display = 'none';
         const res = await fetch('/assign_by_me/delete-all-completed', {
@@ -386,56 +383,105 @@ document.getElementById('confirmDelete').addEventListener('click', async () => {
         const data = await res.json();
         
         if(data.success) {
-            // Zero Reload Magic: Remove all completed tasks from the screen
             document.querySelectorAll('.completed-task').forEach(task => task.remove());
-            setTimeout(() => isProcessingAjax = false, 500);
-        } else {
-            alert(data.message || "Failed to delete completed tasks");
-            isProcessingAjax = false;
         }
     } catch(e) {
         console.error(e);
-        isProcessingAjax = false;
+    } finally {
+        setTimeout(() => isProcessingAjax = false, 500);
     }
 });
 
 
 function formatDate(dateStr) {
-if (!dateStr || dateStr === 'null') return { text: '', isOverdue: false };
-const today = new Date();
-const tomorrow = new Date();
-tomorrow.setDate(today.getDate() + 1);
-const taskDate = new Date(dateStr);
-today.setHours(0,0,0,0);
-tomorrow.setHours(0,0,0,0);
-taskDate.setHours(0,0,0,0);
+    if (!dateStr || dateStr === 'null') return { text: '', isOverdue: false };
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+    const taskDate = new Date(dateStr);
+    today.setHours(0,0,0,0);
+    tomorrow.setHours(0,0,0,0);
+    taskDate.setHours(0,0,0,0);
 
-let text = "";
-if (taskDate.getTime() === today.getTime()) text = "Today";
-else if (taskDate.getTime() === tomorrow.getTime()) text = "Tom";
-else text = taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    let text = "";
+    if (taskDate.getTime() === today.getTime()) text = "Today";
+    else if (taskDate.getTime() === tomorrow.getTime()) text = "Tom";
+    else text = taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
-return { text: text, isOverdue: taskDate.getTime() < today.getTime() };
+    return { text: text, isOverdue: taskDate.getTime() < today.getTime() };
 }
 
-async function toggleStatus(id, status) {
+
+// ========================================================
+// 🌟 INTELLIGENT DOM MOVER: SWAPS DROPDOWN TO TEXT & BACK
+// ========================================================
+function moveTaskDOM(id, status) {
+    const taskEl = document.getElementById('task-' + id);
+    if (!taskEl) return;
+    
+    const assignDiv = taskEl.querySelector('.task-assign');
+    const cb = taskEl.querySelector('.task-checkbox');
+    if (cb) cb.checked = (status === 'COMPLETED');
+
+    if (status === 'COMPLETED') {
+        taskEl.classList.add('completed-task');
+        document.getElementById('completed-task-list').appendChild(taskEl);
+        
+        // Convert Dropdown -> Static Text
+        if (assignDiv) {
+            const selectEl = assignDiv.querySelector('select');
+            if (selectEl) {
+                const selectedText = selectEl.options[selectEl.selectedIndex].text;
+                assignDiv.dataset.assigneeId = selectEl.value; // Store ID securely
+                assignDiv.innerHTML = `<span style="font-size: 11px;">${selectedText}</span>`;
+            }
+        }
+
+    } else {
+        taskEl.classList.remove('completed-task');
+        document.getElementById('open-task-list').appendChild(taskEl);
+
+        // Convert Static Text -> Dropdown
+        if (assignDiv) {
+            if (!assignDiv.querySelector('select')) {
+                const currentId = assignDiv.dataset.assigneeId || '';
+                let memberOptions = members.map(m => 
+                    `<option value="${m.id}" ${m.id == currentId ? 'selected' : ''}>${m.name}</option>`
+                ).join('');
+                assignDiv.innerHTML = `<select onchange="changeAssignee('${id}', this.value)">${memberOptions}</select>`;
+            }
+        }
+    }
+}
+
+// ===== SMART TOGGLE STATUS (ZERO RELOAD) =====
+async function toggleCheckboxStatus(id, checkboxEl) {
+    if(isProcessingAjax) {
+        checkboxEl.checked = !checkboxEl.checked; // Prevent clicking multiple times fast
+        return;
+    }
+    
     isProcessingAjax = true; 
+    const newStatus = checkboxEl.checked ? 'COMPLETED' : 'OPEN';
+    
     try {
         const res = await fetch('/update-task-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status })
+            body: JSON.stringify({ id, status: newStatus, section: newStatus === 'COMPLETED' ? 'COMPLETED' : 'TASK' })
         });
         const data = await res.json();
+        
         if (data.success) {
-            window.location.reload(); // Status toggle structurally moves columns, safe to reload
+            moveTaskDOM(id, newStatus);
         } else {
-            alert(data.message || "Failed to update status");
-            isProcessingAjax = false;
+            checkboxEl.checked = !checkboxEl.checked; // Revert visually
         }
     } catch(err) {
         console.error(err);
-        isProcessingAjax = false;
+        checkboxEl.checked = !checkboxEl.checked; // Revert visually
+    } finally {
+        setTimeout(() => isProcessingAjax = false, 500);
     }
 }
 
@@ -451,94 +497,134 @@ async function changeAssignee(taskId, newAssigneeId) {
         const data = await res.json();
         
         if (data.success) {
-            // Zero Reload: Do nothing! The <select> dropdown already visually changed.
-            setTimeout(() => isProcessingAjax = false, 500); 
+            // Update the hidden data-attribute on the parent div so it's ready if converted to text later
+            const taskEl = document.getElementById('task-' + taskId);
+            if (taskEl) {
+                const assignDiv = taskEl.querySelector('.task-assign');
+                if (assignDiv) assignDiv.dataset.assigneeId = newAssigneeId;
+            }
         } else {
             alert(data.message || "Failed to update assignee");
-            isProcessingAjax = false;
         }
     } catch(err) {
         console.error(err);
-        isProcessingAjax = false;
+    } finally {
+        setTimeout(() => isProcessingAjax = false, 500); 
     }
 }
 
 function renderOpenTasks() {
-const container = document.getElementById('open-task-list');
+    const container = document.getElementById('open-task-list');
 
-if (openTasks.length === 0) {
-container.innerHTML = '<div style="color:#aaa; padding:20px; text-align:center; font-size: 12px;">No open tasks assigned by you.</div>';
-return;
-}
+    if (openTasks.length === 0) {
+        return;
+    }
 
-openTasks.forEach(task => {
+    openTasks.forEach(task => {
+        let memberOptions = members.map(m =>
+        `<option value="${m.id}" ${m.id == task.assignee_id ? 'selected' : ''}>${m.name}</option>`
+        ).join('');
 
-let memberOptions = members.map(m =>
-`<option value="${m.id}" ${m.id == task.assignee_id ? 'selected' : ''}>${m.name}</option>`
-).join('');
+        const displayDesc = (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description;
+        const dateInfo = formatDate(task.due_date);
+        const dateStyle = dateInfo.isOverdue ? 'color: #ff4d4d; font-weight: bold; opacity: 1;' : '';
 
-const displayDesc = (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description;
-const dateInfo = formatDate(task.due_date);
-const dateStyle = dateInfo.isOverdue ? 'color: #ff4d4d; font-weight: bold; opacity: 1;' : '';
+        const item = document.createElement('div');
+        item.className = 'task-item';
+        item.id = 'task-' + task.id; // Added ID here for zero-reload
 
-const item = document.createElement('div');
-item.className = 'task-item';
-item.id = 'task-' + task.id; // Added ID here for zero-reload delete
+        item.innerHTML = `
+        <div class="task-row">
+        <input type="checkbox"
+        class="task-checkbox priority-${task.priority}"
+        onchange="toggleCheckboxStatus('${task.id}', this)">
 
-item.innerHTML = `
-<div class="task-row">
-<input type="checkbox"
-class="task-checkbox priority-${task.priority}"
-onchange="toggleStatus('${task.id}', 'COMPLETED')">
+        <div class="task-title">${task.title}</div>
 
-<div class="task-title">${task.title}</div>
+        <div class="task-desc">${displayDesc}</div>
 
-<div class="task-desc">${displayDesc}</div>
+        <div class="task-assign" data-assignee-id="${task.assignee_id}">
+            <select onchange="changeAssignee('${task.id}', this.value)">
+                ${memberOptions}
+            </select>
+        </div>
 
-<div class="task-assign">
-<select onchange="changeAssignee('${task.id}', this.value)">
-${memberOptions}
-</select>
-</div>
+        <div class="task-date" style="${dateStyle}">${dateInfo.text}</div>
 
-<div class="task-date" style="${dateStyle}">${dateInfo.text}</div>
+        <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')">
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </div>
+        <div class="task-options-menu" id="menu-${task.id}">
+          <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">
+            <i class="fa-solid fa-trash"></i> Delete
+          </div>
+        </div>
 
-<div class="dots-btn" onclick="toggleMenu(event, '${task.id}')">
-  <i class="fa-solid fa-ellipsis-vertical"></i>
-</div>
-<div class="task-options-menu" id="menu-${task.id}">
-  <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">
-    <i class="fa-solid fa-trash"></i> Delete
-  </div>
-</div>
+        </div>
+        `;
 
-</div>
-`;
-
-container.appendChild(item);
-});
+        container.appendChild(item);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-renderOpenTasks();
-document.querySelectorAll('.date-display').forEach(el => {
-const dateInfo = formatDate(el.innerText);
-el.innerText = dateInfo.text;
-if(dateInfo.isOverdue) {
-    el.style.color = '#ff4d4d';
-    el.style.fontWeight = 'bold';
-    el.style.opacity = '1';
-}
-});
+    renderOpenTasks();
+    document.querySelectorAll('.date-display').forEach(el => {
+        const dateInfo = formatDate(el.innerText);
+        el.innerText = dateInfo.text;
+        if(dateInfo.isOverdue) {
+            el.style.color = '#ff4d4d';
+            el.style.fontWeight = 'bold';
+            el.style.opacity = '1';
+        }
+    });
 });
 </script>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
+    
+    // 🌟 ZERO RELOAD MULTI-USER SOCKET EVENT RECEIVERS 
+    
+    socket.on('task_status_changed', (data) => {
+        if (isProcessingAjax) return;
+        // Directly reuse the intelligent dom mover function
+        moveTaskDOM(data.id, data.status);
+    });
+
+    socket.on('abm_task_deleted', (id) => {
+        const taskEl = document.getElementById('task-' + id);
+        if (taskEl) taskEl.remove();
+    });
+
+    socket.on('abm_completed_deleted', () => {
+        document.querySelectorAll('.completed-task').forEach(el => el.remove());
+    });
+
+    socket.on('abm_assignee_changed', (data) => {
+        if (isProcessingAjax) return;
+        const taskEl = document.getElementById('task-' + data.id);
+        if (taskEl) {
+            const assignDiv = taskEl.querySelector('.task-assign');
+            if (assignDiv) {
+                assignDiv.dataset.assigneeId = data.newAssigneeId;
+                const sel = assignDiv.querySelector('select');
+                if (sel) {
+                    sel.value = data.newAssigneeId;
+                } else {
+                    // If it's static text in completed
+                    const memberName = members.find(m => m.id == data.newAssigneeId)?.name || '';
+                    assignDiv.innerHTML = `<span style="font-size: 11px;">${memberName}</span>`;
+                }
+            }
+        }
+    });
+
+    // Fallback generic reload for safety (if triggered by some other external action)
     socket.on('update_tasks', () => {
-        // ONLY reload if this user didn't trigger the fetch request
         if (!isProcessingAjax) {
-            window.location.reload(); 
+            setTimeout(() => window.location.reload(), 100); 
         }
     });
 </script>

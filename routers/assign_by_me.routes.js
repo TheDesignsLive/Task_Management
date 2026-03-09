@@ -96,7 +96,8 @@ router.post('/update-assignee', async (req, res) => {
             "UPDATE tasks SET assigned_to = ? WHERE id = ?",
             [newAssigneeId, taskId]
         );
-        req.io.emit('update_tasks');
+        // 🌟 ZERO RELOAD MAGIC: Send specific data
+        req.io.emit('abm_assignee_changed', { id: taskId, newAssigneeId });
         res.json({ success: true, message: 'Assignee updated' });
     } catch (err) {
         console.error(err);
@@ -111,7 +112,8 @@ router.post('/delete-task/:id', async (req, res) => {
 
     try {
         await con.query("DELETE FROM tasks WHERE id = ?", [req.params.id]);
-        req.io.emit('update_tasks'); // Socket trigger kept for other users
+        // 🌟 ZERO RELOAD MAGIC: Send deleted ID
+        req.io.emit('abm_task_deleted', req.params.id); 
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -136,7 +138,8 @@ router.post('/delete-all-completed', async (req, res) => {
             `, [req.session.userId, req.session.userId]);
         }
         
-        req.io.emit('update_tasks'); // Socket trigger kept for other users
+        // 🌟 ZERO RELOAD MAGIC: Specific Event
+        req.io.emit('abm_completed_deleted'); 
         res.json({ success: true });
     } catch (err) {
         console.error(err);
