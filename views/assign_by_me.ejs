@@ -102,7 +102,6 @@ let isProcessingAjax = false;
 // Helpers
 function getAssigneeOptions(currentId) {
     let options = "";
-    // Admin Option logic: User dekh raha hai toh Admin dikhao, Admin dekh raha hai toh Admin mat dikhao (kyunki t.assigned_to != 0 query admin ke liye hai)
     if (userRole === 'user') {
         options += `<option value="0" ${currentId == '0' ? 'selected' : ''}>${adminName} (Admin)</option>`;
     }
@@ -213,7 +212,11 @@ document.getElementById("confirmSingleDelete").onclick = async () => {
     try {
         const res = await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, { method: "POST" });
         const data = await res.json();
-        if (data.success) { document.getElementById('task-' + taskToDeleteId).remove(); document.getElementById("singleDeleteModal").style.display = "none"; }
+        if (data.success) { 
+            document.getElementById('task-' + taskToDeleteId)?.remove(); 
+            document.getElementById("singleDeleteModal").style.display = "none"; 
+            if (activeMenu) activeMenu.style.display = 'none';
+        }
     } catch (err) {}
 };
 
@@ -223,7 +226,10 @@ document.getElementById('confirmDelete').onclick = async () => {
     try {
         const res = await fetch('/assign_by_me/delete-all-completed', { method: 'POST' });
         const data = await res.json();
-        if(data.success) { document.querySelectorAll('.completed-task').forEach(t => t.remove()); document.getElementById('deleteModal').style.display = 'none'; }
+        if(data.success) { 
+            document.querySelectorAll('.completed-task').forEach(t => t.remove()); 
+            document.getElementById('deleteModal').style.display = 'none'; 
+        }
     } catch(e) {}
 };
 
@@ -248,10 +254,13 @@ document.addEventListener('DOMContentLoaded', renderOpenTasks);
         if (taskEl) {
             const assignDiv = taskEl.querySelector('.task-assign');
             const sel = assignDiv.querySelector('select');
-            if (sel) sel.value = data.newAssigneeId;
-            else {
+            if (sel) {
+                sel.value = data.newAssigneeId;
+                assignDiv.dataset.assigneeId = data.newAssigneeId;
+            } else {
                 const name = data.newAssigneeId == '0' ? adminName + ' (Admin)' : (members.find(m => m.id == data.newAssigneeId)?.name || '');
                 assignDiv.innerHTML = `<span style="font-size: 11px;">${name}</span>`;
+                assignDiv.dataset.assigneeId = data.newAssigneeId;
             }
         }
     });
