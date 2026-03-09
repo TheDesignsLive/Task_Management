@@ -49,6 +49,8 @@ body{
   align-items:center;
   max-width:900px;
   height:34px;
+
+  gap:10px; 
 }
 
 textarea{
@@ -113,6 +115,7 @@ select::-ms-expand {
   position:relative;
   display:flex;
   align-items:center;
+  
 }
 
 /* keep icon position SAME */
@@ -131,6 +134,17 @@ select::-ms-expand {
   font-size:14px;
 }
 
+
+.date-display{
+  font-size:8px;
+  color:#0f9d9a;
+  font-weight:600;
+  margin-right:8px;
+  white-space:nowrap;
+  background:#e6f7f5;
+  padding:3px 8px;
+  border-radius:10px;
+}
 /* ========================= */
 /* ✅ CHANGED: CLEAN CALENDAR POSITION */
 /* ========================= */
@@ -289,19 +303,20 @@ select::-ms-expand {
     
     <textarea id="taskInput" placeholder="Add Task here (Press Shift+Enter for description)"></textarea>
 
- <div class="calendar-wrapper">
+<div class="calendar-wrapper">
+
+  <span id="dateDisplay" class="date-display"></span>
+
   <input type="text" id="datePicker">
 
   <i class="fa-regular fa-calendar"
      onclick="openDate()"
-     style="position:absolute;
-            right:15px;
-            top:50%;
-            transform:translateY(-50%);
-            cursor:pointer;
+     style="cursor:pointer;
             color:#14b8a6;
-            font-size:16px;">
+            font-size:16px;
+            margin-left:-5px;">
   </i>
+
 </div>
 
     <select id="flag">
@@ -334,18 +349,68 @@ select::-ms-expand {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
+
 const textarea = document.getElementById("taskInput");
 const dateInput = document.getElementById("datePicker");
+const dateDisplay = document.getElementById("dateDisplay");
 
-flatpickr("#datePicker", {
+/* ADD HERE */
+function formatDate(date){
+  const d = new Date(date);
+  const day = d.getDate().toString().padStart(2,"0");
+  const month = d.toLocaleString("en-US",{month:"short"});
+  return day + " " + month;
+}
+
+function displayDate(date){
+
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  const selected = new Date(date);
+
+  // remove time part
+  today.setHours(0,0,0,0);
+  tomorrow.setHours(0,0,0,0);
+  selected.setHours(0,0,0,0);
+
+  if(selected.getTime() === today.getTime()){
+    return "Today";
+  }
+
+  if(selected.getTime() === tomorrow.getTime()){
+    return "Tom";
+  }
+
+  return formatDate(selected);
+}
+
+// today date
+const today = new Date().toISOString().split("T")[0];
+
+// show today date in badge
+dateDisplay.innerText = displayDate(today);
+dateInput.value = today;
+
+const picker = flatpickr("#datePicker", {
   minDate: "today",
   dateFormat: "Y-m-d",
+  defaultDate: today,
   position: "below",
+onChange: function(selectedDates) {
+  dateDisplay.innerText = displayDate(selectedDates[0]);
+},
+
   onClose: function() {
-    // Return focus to textarea after date selection
     textarea.focus();
   }
 });
+
+// open calendar when icon clicked
+function openDate(){
+  dateInput._flatpickr.open();
+}
 
 // Function to handle task submission
 function submitTask() {
@@ -379,7 +444,8 @@ function submitTask() {
   .catch(err => console.error(err));
 
   textarea.value = '';
-  dateInput.value = '';
+  dateInput.value = today;
+dateDisplay.innerText = displayDate(today);
 }
 
 // Global listener to catch Enter key even if dropdowns are focused
