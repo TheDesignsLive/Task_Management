@@ -18,9 +18,12 @@ router.get('/notifications', async (req, res) => {
     let adminName = null;
     let adminId = req.session.adminId;
     let memberRequests = [];
-    let deletionRequests = []; // New array for deletion requests
+    let deletionRequests = []; 
     let roles = [];
     let announcements = [];
+    let controlType = null;
+    const sessionRole = req.session.role;
+    const sessionUserId = req.session.userId;
 
     try {
         const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
@@ -29,13 +32,45 @@ router.get('/notifications', async (req, res) => {
         const [rRows] = await con.query("SELECT id, role_name FROM roles WHERE admin_id=?", [adminId]);
         roles = rRows;
 
-        const isControlAdmin = req.session.control_type === 'ADMIN';
-
-        if (req.session.role === "admin" || isControlAdmin) {
-            const [mRows] = await con.query("SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", [adminId]);
+        // ================= NAVBAR DROPDOWN (MEMBERS) LOGIC =================
+        // Everyone can assign tasks to everyone EXCEPT self (and users can't assign to Admin). No control-type restriction here.
+        if (sessionRole === "admin") {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", 
+                [adminId]
+            );
             members = mRows;
+        } else {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?", 
+                [adminId, sessionUserId]
+            );
+            members = mRows;
+        }
 
-            if (req.session.role === "admin") {
+        // ================= PAGE SPECIFIC LOGIC (REQUESTS & ANNOUNCEMENTS) =================
+        
+        if (sessionRole === "user") {
+            const [currentUser] = await con.query("SELECT role_id FROM users WHERE id=?", [sessionUserId]);
+            if (currentUser.length > 0) {
+                const roleId = currentUser[0].role_id;
+                const [roleData] = await con.query("SELECT control_type FROM roles WHERE id=?", [roleId]);
+                if (roleData.length > 0) {
+                    controlType = roleData[0].control_type;
+                } else {
+                    controlType = "NONE";
+                }
+            } else {
+                controlType = "NONE";
+            }
+        } else if (sessionRole === "admin") {
+            controlType = "ADMIN";
+        }
+
+
+        if (sessionRole === "admin" || controlType === 'ADMIN') {
+            
+            if (sessionRole === "admin") {
                 // Fetch ADD member requests
                 const [reqRows] = await con.query(`
                     SELECT mr.*, r.role_name, u.name AS requested_by_name
@@ -75,7 +110,7 @@ router.get('/notifications', async (req, res) => {
             `, [adminId]);
             announcements = annRows;
 
-        } else if (req.session.role === "user") {
+        } else if (sessionRole === "user") {
             const [annRows] = await con.query(`
                 SELECT a.*, 
                 CASE 
@@ -95,7 +130,7 @@ router.get('/notifications', async (req, res) => {
             members,
             adminName,
             memberRequests,
-            deletionRequests, // Passing to EJS
+            deletionRequests, 
             roles,
             announcements,
             session: req.session
@@ -137,7 +172,6 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             WHERE a.id = ?
         `, [result.insertId]);
 
-        // 🌟 ZERO RELOAD: SEND FULL DATA TO ALL USERS INSTEAD OF BLANK RELOAD SIGNAL
         req.io.emit('new_announcement', newAnn[0]);
 
         res.json({ success: true, announcement: newAnn[0] });
@@ -173,7 +207,6 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
 
         const updateData = { id: announcementId, title, description, role_id, target_role, attachment: attachmentName };
         
-        // 🌟 ZERO RELOAD: SEND EDITED DATA TO ALL USERS 
         req.io.emit('edit_announcement', updateData);
 
         res.json({ 
@@ -196,7 +229,6 @@ router.get('/delete-announcement/:id', async (req, res) => {
         if (req.session.role === 'admin' || req.session.control_type === 'ADMIN') {
             await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
             
-            // 🌟 ZERO RELOAD: SEND DELETED ID TO ALL USERS 
             req.io.emit('delete_announcement', req.params.id);
             
             res.json({ success: true });

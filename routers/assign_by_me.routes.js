@@ -12,30 +12,33 @@ router.get('/', async (req, res) => {
     let adminName = null;
     let openTasks = [];
     let completedTasks = [];
+    let adminId = req.session.adminId;
+    const sessionRole = req.session.role;
+    const sessionUserId = req.session.userId;
 
     try {
-        let adminId = req.session.adminId;
-
-        // Fetch members (employees)
-        const [mRows] = await con.query(
-            "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
-            [adminId]
-        );
-        
-        // Fetch admin name
-        const [aRows] = await con.query("SELECT id, name FROM admins WHERE id=?", [adminId]);
+        // Fetch admin name (Exactly like notification router)
+        const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
         if (aRows.length > 0) adminName = aRows[0].name;
 
-        // Logic for Dropdown Members - REMOVED MANUAL ADMIN ADDITION
-        if (req.session.role === "admin") {
-            members = mRows; 
+        // ================= NAVBAR DROPDOWN (MEMBERS) LOGIC =================
+        // Exactly like notification router logic
+        if (sessionRole === "admin") {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", 
+                [adminId]
+            );
+            members = mRows;
         } else {
-            // User sees all other employees except themselves
-            members = mRows.filter(m => m.id != req.session.userId);
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?", 
+                [adminId, sessionUserId]
+            );
+            members = mRows;
         }
 
-        // ================= ADMIN =================
-        if (req.session.role === "admin") {
+        // ================= ADMIN TASKS =================
+        if (sessionRole === "admin") {
             const [rows] = await con.query(`
                 SELECT 
                     t.id, t.title, t.description, t.priority, t.status, t.due_date, t.created_at, t.assigned_to AS assignee_id,
@@ -45,15 +48,15 @@ router.get('/', async (req, res) => {
                 LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0
                 WHERE t.who_assigned='admin' AND t.assigned_by=? AND t.assigned_to != 0
                 ORDER BY t.due_date ASC
-            `, [req.session.adminId]);
+            `, [adminId]);
 
             rows.forEach(task => {
                 if (task.status === 'COMPLETED') completedTasks.push(task);
                 else openTasks.push(task);
             });
         }
-        // ================= USER =================
-        else if (req.session.role === "user") {
+        // ================= USER TASKS =================
+        else if (sessionRole === "user") {
             const [rows] = await con.query(`
                 SELECT 
                     t.id, t.title, t.description, t.priority, t.status, t.due_date, t.created_at, t.assigned_to AS assignee_id,
@@ -63,7 +66,7 @@ router.get('/', async (req, res) => {
                 LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0
                 WHERE t.who_assigned='user' AND t.assigned_by=? AND t.assigned_to != ?
                 ORDER BY t.due_date ASC
-            `, [req.session.userId, req.session.userId]);
+            `, [sessionUserId, sessionUserId]);
 
             rows.forEach(task => {
                 if (task.status === 'COMPLETED') completedTasks.push(task);

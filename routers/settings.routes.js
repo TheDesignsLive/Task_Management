@@ -9,20 +9,29 @@ router.get('/', async (req, res) => {
 
     let members = [];
     let adminName = null;
+    let adminId = req.session.adminId;
+    const sessionRole = req.session.role;
+    const sessionUserId = req.session.userId;
 
     try {
-        if (req.session.role === "admin") {
+        // Fetch Admin Name (Exactly like notification router)
+        const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
+        if (aRows.length > 0) adminName = aRows[0].name;
+
+        // ================= NAVBAR DROPDOWN (MEMBERS) LOGIC =================
+        // Exactly like notification router logic
+        if (sessionRole === "admin") {
             const [mRows] = await con.query(
-                "SELECT id,name FROM users WHERE admin_id=? AND status='ACTIVE'",
-                [req.session.adminId]
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", 
+                [adminId]
             );
             members = mRows;
-
-            const [aRows] = await con.query(
-                "SELECT name FROM admins WHERE id=?",
-                [req.session.adminId]
+        } else {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?", 
+                [adminId, sessionUserId]
             );
-            if (aRows.length) adminName = aRows[0].name;
+            members = mRows;
         }
 
         res.render('settings', {

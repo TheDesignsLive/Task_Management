@@ -15,6 +15,7 @@ router.get('/all-member-task', async (req, res) => {
         let roles = [];
         let adminName = null;
         let tasks = [];
+        let controlType = null;
 
         const selectedUser = req.query.user_id || 'all';
         const adminId = req.session.adminId;
@@ -32,9 +33,26 @@ router.get('/all-member-task', async (req, res) => {
             adminName = adminRows[0].name;
         }
 
+        // ================= NAVBAR DROPDOWN (MEMBERS) LOGIC =================
+        // Everyone can assign tasks to everyone EXCEPT self (and users can't assign to Admin)
+        if (sessionRole === "admin") {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", 
+                [adminId]
+            );
+            members = mRows;
+        } else {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?", 
+                [adminId, sessionUserId]
+            );
+            members = mRows;
+        }
+
         // ================= ROLE BASED USER LIST =================
 
         if (sessionRole === "admin") {
+            controlType = "ADMIN"; 
 
             const [userRows] = await con.query(
                 "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
@@ -42,7 +60,6 @@ router.get('/all-member-task', async (req, res) => {
             );
 
             users = userRows;
-            members = userRows;
 
         } else if (sessionRole === "user") {
 
@@ -58,20 +75,25 @@ router.get('/all-member-task', async (req, res) => {
                 [roleId]
             );
 
-            const controlType = roleData[0].control_type;
+            if (roleData.length > 0) {
+                controlType = roleData[0].control_type;
+            } else {
+                controlType = "NONE";
+            }
 
             if (controlType === "ADMIN") {
 
+                // 🌟 REMOVED 'SELF' FROM DROPDOWN
                 const [userRows] = await con.query(
-                    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
-                    [adminId]
+                    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?",
+                    [adminId, sessionUserId]
                 );
 
                 users = userRows;
-                members = userRows;
 
             } else if (controlType === "PARTIAL") {
 
+                // 🌟 REMOVED 'SELF' FROM DROPDOWN
                 const [userRows] = await con.query(`
                     SELECT u.id, u.name
                     FROM users u
@@ -79,14 +101,13 @@ router.get('/all-member-task', async (req, res) => {
                     WHERE u.admin_id = ?
                     AND r.control_type IN ('PARTIAL','NONE')
                     AND u.status='ACTIVE'
-                `, [adminId]);
+                    AND u.id != ?
+                `, [adminId, sessionUserId]);
 
                 users = userRows;
-                members = userRows;
 
             } else {
                 users = [];
-                members = [];
             }
         }
 
@@ -94,39 +115,57 @@ router.get('/all-member-task', async (req, res) => {
         // ================= SINGLE TASK QUERY (NO DUPLICATE) =========
         // ============================================================
 
-        let taskQuery = `
-            SELECT 
-                t.*,
-                CASE
-                    WHEN t.status = 'COMPLETED' THEN 'COMPLETED'
-                    WHEN t.assigned_to != t.assigned_by THEN 'OTHERS'
-                    ELSE t.section
-                END AS section,
-                u1.name AS assigned_to_name,
-                CASE 
-                    WHEN t.who_assigned = 'admin' THEN a.name
-                    ELSE u2.name
-                END AS assigned_by_name
-            FROM tasks t
-            JOIN users u1 ON t.assigned_to = u1.id
-            LEFT JOIN users u2 ON t.assigned_by = u2.id
-            LEFT JOIN admins a ON t.assigned_by = a.id
-            WHERE t.admin_id = ?
-        `;
+        // If user is NONE, they see nothing. Otherwise fetch based on permissions.
+        if (controlType === "NONE") {
+            tasks = [];
+        } else {
+            // Notice LEFT JOIN for users u1 so that Admin tasks (assigned_to = 0) are also fetched properly!
+            let taskQuery = `
+                SELECT 
+                    t.*,
+                    CASE
+                        WHEN t.status = 'COMPLETED' THEN 'COMPLETED'
+                        WHEN t.assigned_to != t.assigned_by THEN 'OTHERS'
+                        ELSE t.section
+                    END AS section,
+                    COALESCE(u1.name, 'Admin') AS assigned_to_name,
+                    CASE 
+                        WHEN t.who_assigned = 'admin' THEN a.name
+                        ELSE u2.name
+                    END AS assigned_by_name
+                FROM tasks t
+                LEFT JOIN users u1 ON t.assigned_to = u1.id
+                LEFT JOIN users u2 ON t.assigned_by = u2.id
+                LEFT JOIN admins a ON t.assigned_by = a.id
+                WHERE t.admin_id = ?
+            `;
 
-        let params = [adminId];
+            let params = [adminId];
 
-        // Dropdown filter
-        if (selectedUser !== 'all') {
-            taskQuery += " AND t.assigned_to = ?";
-            params.push(selectedUser);
+            // Dropdown filter
+            if (selectedUser !== 'all') {
+                taskQuery += " AND t.assigned_to = ?";
+                params.push(selectedUser);
+            } else {
+                // If it is a PARTIAL user, restrict 'All' to only show allowed users tasks
+                if (controlType === "PARTIAL") {
+                    if (users.length > 0) {
+                        const allowedIds = users.map(u => u.id);
+                        taskQuery += " AND t.assigned_to IN (?)";
+                        params.push(allowedIds);
+                    } else {
+                        taskQuery += " AND 1=0"; // Fallback to hide everything
+                    }
+                }
+                // If ADMIN, it skips this block and fetches EVERYTHING.
+            }
+
+            taskQuery += " ORDER BY t.due_date ASC";
+
+            const [taskRows] = await con.query(taskQuery, params);
+
+            tasks = taskRows;
         }
-
-        taskQuery += " ORDER BY t.due_date ASC";
-
-        const [taskRows] = await con.query(taskQuery, params);
-
-        tasks = taskRows;
 
         // ================= RENDER =================
 

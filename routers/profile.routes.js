@@ -15,29 +15,47 @@ const upload = multer({ storage });
 router.get('/', async (req, res) => {
     if (!req.session.role) return res.redirect('/');
 
-    let members = []; // default empty array
+    let members = []; 
     let adminName = null;
     let profilePic = null;
     let name = "", email = "", phone = "", company = "", role = "", userRoleName = "";
+    
+    let adminId = req.session.adminId;
+    const sessionRole = req.session.role;
+    const sessionUserId = req.session.userId;
 
     try {
-        if (req.session.role === "admin") {
-            role = "Admin";
-            const adminId = req.session.adminId;
+        // Fetch admin name (Exactly like notification router)
+        const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
+        if (aRows.length > 0) adminName = aRows[0].name;
 
-            // Get members under this admin
-            const [mRows] = await con.query("SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", [adminId]);
+        // ================= NAVBAR DROPDOWN (MEMBERS) LOGIC =================
+        // Exactly like notification router logic
+        if (sessionRole === "admin") {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'", 
+                [adminId]
+            );
             members = mRows;
+        } else {
+            const [mRows] = await con.query(
+                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?", 
+                [adminId, sessionUserId]
+            );
+            members = mRows;
+        }
 
-            // Get admin profile
-            const [aRows] = await con.query("SELECT name,email,phone,company_name,profile_pic FROM admins WHERE id=?", [adminId]);
-            if (aRows.length) {
-                adminName = aRows[0].name;
-                name = aRows[0].name;
-                email = aRows[0].email;
-                phone = aRows[0].phone;
-                company = aRows[0].company_name;
-                profilePic = aRows[0].profile_pic;
+        // ================= PROFILE DATA LOGIC =================
+        if (sessionRole === "admin") {
+            role = "Admin";
+            // Get admin profile details
+            const [profileRows] = await con.query("SELECT name,email,phone,company_name,profile_pic FROM admins WHERE id=?", [adminId]);
+            if (profileRows.length) {
+                name = profileRows[0].name;
+                email = profileRows[0].email;
+                phone = profileRows[0].phone;
+                company = profileRows[0].company_name;
+                profilePic = profileRows[0].profile_pic;
             }
         } else {
             role = "User";
@@ -47,7 +65,7 @@ router.get('/', async (req, res) => {
                  FROM users u 
                  LEFT JOIN roles r ON u.role_id = r.id 
                  WHERE u.id=?`, 
-                [req.session.userId]
+                [sessionUserId]
             );
 
             if (uRows.length) {
@@ -63,9 +81,8 @@ router.get('/', async (req, res) => {
             }
         }
 
-        // ✅ Render profile.ejs and safely pass members
         res.render('profile', {
-            members: members || [],
+            members,
             adminName,
             profilePic,
             session: req.session,
