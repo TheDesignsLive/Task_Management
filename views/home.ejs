@@ -600,7 +600,17 @@ html, body {
 
 
 <script>
-const tasks = <%- JSON.stringify(tasks) %>;
+// Logic to Refresh UI without reload
+async function refreshTasksUI() {
+  const res = await fetch('/api/get-all-tasks'); // We'll add this lightweight route in part 3
+  const data = await res.json();
+  if(data.success) {
+      currentTasks = data.tasks;
+      renderAllSections(data.tasks);
+  }
+}
+
+let currentTasks = <%- JSON.stringify(tasks) %>;
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -653,7 +663,7 @@ function createTaskElement(task) {
       
       <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="8.5"></line>
+        <line x1="12" x1="12" y1="8" x2="12" y2="8.5"></line>
         <line x1="12" y1="11" x2="12" y2="16"></line>
       </svg>
 
@@ -695,49 +705,25 @@ function createTaskElement(task) {
 
   if (task.status !== 'COMPLETED') div.draggable = true;
 
-  // Function to handle textarea auto-resize
   const autoResizeTextarea = (textarea) => {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
   };
 
-  // Toggle Edit Box on Double Click
   div.addEventListener('dblclick', () => {
     if (task.status === 'COMPLETED') return;
-
     const editBox = div.querySelector('.edit-box');
     editBox.style.display = 'flex';
-
     const descTextarea = editBox.querySelector('.edit-desc');
     const dateInput = editBox.querySelector('.edit-date');
-
-    // Auto-resize once opened
     autoResizeTextarea(descTextarea);
-
-    // Attach resize listener
     descTextarea.addEventListener('input', () => autoResizeTextarea(descTextarea));
-
-    // Destroy old flatpickr if exists
-    if (dateInput._flatpickr) {
-      dateInput._flatpickr.destroy();
-    }
-
-    // ✅ Get date from database (already in task object)
+    if (dateInput._flatpickr) dateInput._flatpickr.destroy();
     let dbDate = task.due_date;
-
-    // If date exists, set it
-    if (dbDate) {
-      dateInput.value = dbDate.split('T')[0];  // format must be YYYY-MM-DD
-    }
-
-    // Initialize flatpickr with same date
-    flatpickr(dateInput, {
-      dateFormat: "Y-m-d",
-      defaultDate: dateInput.value || null
-    });
+    if (dbDate) dateInput.value = dbDate.split('T')[0];
+    flatpickr(dateInput, { dateFormat: "Y-m-d", defaultDate: dateInput.value || null });
   });
 
-  // Dots Menu logic
   const dotsBtn = div.querySelector('.dots-btn');
   const menu = div.querySelector('.task-options-menu');
   dotsBtn.addEventListener('click', (e) => {
@@ -761,31 +747,27 @@ function createTaskElement(task) {
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
     const priority = div.querySelector('.edit-priority').value;
- let due_date = div.querySelector('.edit-date').value.trim();
-if (due_date === "") {
-  due_date = null;
-}
+    let due_date = div.querySelector('.edit-date').value.trim();
+    if (due_date === "") due_date = null;
 
-    const res = await fetch('/edit-task-details', { // Create this endpoint in backend
+    const res = await fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date })
     });
-    if(res.ok) window.location.reload();
+    // Removed reload. Socket update_tasks will trigger refresh.
   });
 
-  // Info icon toggle
   div.querySelector('.info-icon').addEventListener('click', (e) => {
     e.stopPropagation();
     div.classList.toggle('expanded');
   });
 
-  // Checkbox toggle
   div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
-    const res = await updateTaskStatus(task.id, status, section);
-    if(res.success) window.location.reload();
+    await updateTaskStatus(task.id, status, section);
+    // Removed reload. Socket update_tasks will trigger refresh.
   });
 
   return div;
@@ -804,8 +786,7 @@ function isPastDate(dateStr) {
   return taskDate < today;
 }
 
-// ✅ INIT SECTIONS AND SORT ASCENDING BY DATE + PRIORITY
-function initSections() {
+function renderAllSections(taskList) {
   const sections = {
     'TASK': document.getElementById('task-section'),
     'CHANGES': document.getElementById('change-section'),
@@ -814,142 +795,80 @@ function initSections() {
     'COMPLETED': document.getElementById('completed-section')
   };
 
+  Object.values(sections).forEach(s => s.innerHTML = '');
+
   const sectionTasks = { 'TASK': [], 'CHANGES': [], 'UPDATE': [], 'OTHERS': [], 'COMPLETED': [] };
 
-  tasks.forEach(task => {
+  taskList.forEach(task => {
     const targetSection = task.status === 'COMPLETED' ? 'COMPLETED' : (task.section || 'TASK');
     if (sectionTasks[targetSection]) sectionTasks[targetSection].push(task);
   });
 
- ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
-
-  const taskList = sectionTasks[sec];
-  if (!taskList.length) return;
-
-  const taskGroups = {};
-  const noDateTasks = [];
-
-  taskList.forEach(task => {
-    const dateKey = task.due_date ? task.due_date.split('T')[0] : null;
-
-    if (!dateKey) {
-      noDateTasks.push(task);
-    } else {
-      if (!taskGroups[dateKey]) taskGroups[dateKey] = [];
-      taskGroups[dateKey].push(task);
-    }
+  ['TASK','CHANGES','UPDATE','OTHERS'].forEach(sec => {
+    const list = sectionTasks[sec];
+    if (!list.length) return;
+    const taskGroups = {};
+    const noDateTasks = [];
+    list.forEach(t => {
+      const d = t.due_date ? t.due_date.split('T')[0] : null;
+      if (!d) noDateTasks.push(t);
+      else { if (!taskGroups[d]) taskGroups[d] = []; taskGroups[d].push(t); }
+    });
+    Object.keys(taskGroups).sort().forEach(d => {
+      appendTasksToContainer(sections[sec], sortByPriority(taskGroups[d]), d);
+    });
+    appendTasksToContainer(sections[sec], sortByPriority(noDateTasks), null);
   });
-
-  // ✅ Sort dates ascending (YYYY-MM-DD auto sorts correctly)
-  const sortedDates = Object.keys(taskGroups).sort();
-
-  sortedDates.forEach(dateStr => {
-    appendTasksToContainer(
-      sections[sec],
-      sortByPriority(taskGroups[dateStr]),
-      dateStr
-    );
-  });
-
-  // Tasks without date at end
-  appendTasksToContainer(
-    sections[sec],
-    sortByPriority(noDateTasks),
-    null
-  );
-
-});
-
-  // Completed tasks
   sectionTasks['COMPLETED'].forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
+  attachDateEvents();
 }
 
-// Append tasks
 function appendTasksToContainer(container, taskArray, dateStr) {
   taskArray.forEach(task => container.appendChild(createTaskElement(task)));
   if(taskArray.length > 0) container.appendChild(createSeparator(dateStr));
 }
 
 function enableDragAndDrop() {
-  const containers = { 
-    'task-section': 'TASK', 
-    'change-section': 'CHANGES', 
-    'update-section': 'UPDATE'
-    
-  };
-
+  const containers = { 'task-section': 'TASK', 'change-section': 'CHANGES', 'update-section': 'UPDATE' };
   Object.keys(containers).forEach(containerId => {
     const container = document.getElementById(containerId);
-    
-    container.addEventListener('dragover', e => {
-      e.preventDefault();
-    });
-
+    container.addEventListener('dragover', e => e.preventDefault());
     container.addEventListener('drop', async (e) => {
       e.preventDefault();
       const draggingId = e.dataTransfer.getData('text/plain');
       if(!draggingId) return;
-
-      // Find what we dropped on
       const targetEl = e.target.closest('.task-item, .date-separator');
-      
-      // ✅ MATCH EDIT BOX LOGIC: Pull raw string, trim, and handle null
-     let due_date = undefined;
-
-if (targetEl) {
-  let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
-
-  if (rawDate && rawDate !== "") {
-
-    // ✅ Force correct YYYY-MM-DD format (like edit box)
-    const parts = rawDate.split("-");
-    if (parts.length === 3) {
-      due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
-    } else {
-      due_date = null;
-    }
-
-  } else {
-    due_date = null;
-  }
-}
-
-      // 1. Update the Section (Column)
+      let due_date = undefined;
+      if (targetEl) {
+        let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
+        if (rawDate && rawDate !== "") {
+          const parts = rawDate.split("-");
+          due_date = parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
+        } else due_date = null;
+      }
       const sectionPromise = fetch('/update-task-section', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: draggingId, section: containers[containerId] })
       });
-
-      // 2. Update the Date (Using the raw string extracted above)
-      let datePromise = Promise.resolve();
-      if (due_date !== undefined) {
-        datePromise = fetch('/update-task-date', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: draggingId, due_date: due_date })
-        });
-      }
-
-      // Wait for both to finish, then the socket or reload will refresh the UI
+      let datePromise = due_date !== undefined ? fetch('/update-task-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: draggingId, due_date: due_date })
+      }) : Promise.resolve();
       await Promise.all([sectionPromise, datePromise]);
-      window.location.reload();
     });
   });
 }
 
-// Separator line
 function createSeparator(dateStr) {
   const hr = document.createElement('div');
   hr.className = 'date-separator';
-  hr.dataset.date = dateStr || ''; // Store date in separator
-  hr.style.height = '12px';
-  hr.style.borderBottom = '1px solid #7C7B7B';
-  hr.style.margin = '6px 0';
-  hr.style.opacity = '0.5';
+  hr.dataset.date = dateStr || '';
+  hr.style.height = '12px'; hr.style.borderBottom = '1px solid #7C7B7B'; hr.style.margin = '6px 0'; hr.style.opacity = '0.5';
   return hr;
 }
-// ✅ PRIORITY SORT FUNCTION
+
 function sortByPriority(tasks) {
   const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
   return tasks.sort((a, b) => {
@@ -959,78 +878,26 @@ function sortByPriority(tasks) {
   });
 }
 
-// ✅ HIDDEN INPUT FOR FLATPICKR CENTER TOP
 const hiddenInput = document.createElement('input');
-hiddenInput.type = 'text';
-hiddenInput.className = 'task-date-picker';
+hiddenInput.type = 'text'; hiddenInput.className = 'task-date-picker';
 document.body.appendChild(hiddenInput);
-
 let currentTaskDiv = null;
 
 const fp = flatpickr(hiddenInput, {
-  dateFormat: "Y-m-d",
-  minDate: "today",
-  clickOpens: false,
-  appendTo: document.body,
-  static: false,
-  onReady: function(selectedDates, dateStr, instance) {
-    const calendar = instance.calendarContainer;
-    calendar.style.position = "fixed";
-    calendar.style.top = "-10%";          // vertical center
-    calendar.style.left = "50%";         // horizontal center
-    calendar.style.transform = "translate(-50%, -50%)";
-    calendar.style.margin = "0";
-    calendar.style.zIndex = "10000";
-    calendar.style.width = "90%";        // responsive width
-    calendar.style.maxWidth = "400px";   // optional max width
-  },
-onOpen: function(selectedDates, dateStr, instance) {
-  const calendar = instance.calendarContainer;
-
-  calendar.classList.add("center-calendar");
-},
+  dateFormat: "Y-m-d", minDate: "today", clickOpens: false, appendTo: document.body,
+  onOpen: (s, d, i) => i.calendarContainer.classList.add("center-calendar"),
   onChange: function(selectedDates, dateStr) {
     if (currentTaskDiv && dateStr) {
       fetch('/update-task-date', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: currentTaskDiv.dataset.id, due_date: dateStr })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) window.location.reload();
       });
     }
     currentTaskDiv = null;
   }
 });
 
-// Delete all completed task
-document.getElementById('delete-completed').addEventListener('click', async () => {
-  if(!confirm("Are you sure you want to delete all completed tasks?")) return;
-
-  try {
-    const res = await fetch('/delete-completed-tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: <%= session.adminId %> }) // ✅ EJS will render the adminId
-    });
-
-    const data = await res.json();
-    if(data.success){
-      alert(data.message);
-      window.location.reload();
-    } else {
-      alert(data.message);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Server error while deleting tasks");
-  }
-});
-//
-
-// Attach date picker to task-date
 function attachDateEvents() {
   document.querySelectorAll('.task-date').forEach(div => {
     div.addEventListener('click', (e) => {
@@ -1040,119 +907,49 @@ function attachDateEvents() {
     });
   });
 }
-// Drag support
+
 document.addEventListener('dragstart', (e) => {
-  if(e.target.classList.contains('task-item')) {
-    e.dataTransfer.setData('text/plain', e.target.dataset.id);
-  }
+  if(e.target.classList.contains('task-item')) e.dataTransfer.setData('text/plain', e.target.dataset.id);
 });
 
-// INIT ON LOAD
 document.addEventListener('DOMContentLoaded', ()=>{
-  initSections();
+  renderAllSections(currentTasks);
   enableDragAndDrop();
-  attachDateEvents(); 
 });
 
-
-//Delete completed task pop up:
+// Delete Modal Logic
 document.addEventListener("DOMContentLoaded", function() {
-
   const deleteIcon = document.getElementById("delete-completed");
   const modal = document.getElementById("deleteModal");
-  const cancelBtn = document.getElementById("cancelDelete");
   const confirmBtn = document.getElementById("confirmDelete");
+  const cancelBtn = document.getElementById("cancelDelete");
 
-  // 🔴 REMOVE OLD CLICK EVENTS (VERY IMPORTANT)
-  const newDeleteIcon = deleteIcon.cloneNode(true);
-  deleteIcon.parentNode.replaceChild(newDeleteIcon, deleteIcon);
-
-  // ✅ Now attach ONLY this event
-  newDeleteIcon.addEventListener("click", function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    modal.style.display = "flex";
-  });
-
-  cancelBtn.addEventListener("click", function() {
+  deleteIcon.addEventListener("click", () => modal.style.display = "flex");
+  cancelBtn.addEventListener("click", () => modal.style.display = "none");
+  confirmBtn.addEventListener("click", async () => {
+    await fetch('/delete-completed-tasks', { method: 'POST' });
     modal.style.display = "none";
   });
-
-  confirmBtn.addEventListener("click", async function() {
-    try {
-      const response = await fetch('/delete-completed-tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const data = await response.json();
-
-      modal.style.display = "none";
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      modal.style.display = "none";
-    }
-  });
-
-  window.addEventListener("click", function(e) {
-    if (e.target === modal) {
-      modal.style.display = "none";
-    }
-  });
-
 });
 
-//delete one task
-// ===============================
-// SINGLE TASK DELETE (GLOBAL)
-// ===============================
-
 let taskToDeleteId = null;
-
-// Open modal when clicking delete option
 document.addEventListener("click", function(e) {
   const deleteBtn = e.target.closest(".delete-opt");
-
   if (deleteBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const taskItem = deleteBtn.closest(".task-item");
-    taskToDeleteId = taskItem.dataset.id;
-
+    taskToDeleteId = deleteBtn.closest(".task-item").dataset.id;
     document.getElementById("singleDeleteModal").style.display = "flex";
   }
 });
 
-// Cancel button
-document.getElementById("cancelSingleDelete").addEventListener("click", function() {
-  document.getElementById("singleDeleteModal").style.display = "none";
-  taskToDeleteId = null;
+document.getElementById("confirmSingleDelete").addEventListener("click", async () => {
+  if (taskToDeleteId) {
+    await fetch(`/delete-task/${taskToDeleteId}`, { method: "POST" });
+    document.getElementById("singleDeleteModal").style.display = "none";
+  }
 });
 
-// Confirm delete
-document.getElementById("confirmSingleDelete").addEventListener("click", async function () {
-
-  if (!taskToDeleteId) return;
-
-  try {
-    // Close modal immediately
-    document.getElementById("singleDeleteModal").style.display = "none";
-
-    await fetch(`/delete-task/${taskToDeleteId}`, {
-      method: "POST"
-    });
-
-    taskToDeleteId = null;
-
-    // ❌ DO NOT reload here
-    // Socket will reload automatically
-
-  } catch (err) {
-    console.error("Delete error:", err);
-  }
-
+document.getElementById("cancelSingleDelete").addEventListener("click", () => {
+  document.getElementById("singleDeleteModal").style.display = "none";
 });
 
 </script>
@@ -1160,12 +957,9 @@ document.getElementById("confirmSingleDelete").addEventListener("click", async f
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-   socket.on('update_tasks', () => {
-    setTimeout(() => {
-        window.location.reload();
-    }, 100);
-});
+    socket.on('update_tasks', () => {
+       refreshTasksUI();
+    });
 </script>
-
 </body>
 </html>

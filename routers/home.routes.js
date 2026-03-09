@@ -3,6 +3,45 @@ const router = express.Router();
 const con = require('../config/db');
 
 /* ===============================
+   NEW API ENDPOINT FOR NO-RELOAD
+================================ */
+router.get('/api/get-all-tasks', async (req, res) => {
+    if (!req.session.role) return res.status(401).json({ success: false });
+    const adminId = req.session.adminId;
+    const userId = req.session.userId;
+    let tasks = [];
+
+    try {
+        if (req.session.role === "admin") {
+            const [taskRows] = await con.query(
+                "SELECT id, title, description, priority, due_date, status, section FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
+                [adminId]
+            );
+            const [otherTaskRows] = await con.query(
+                "SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, 'OTHERS' AS section, u.name AS assigned_by_name FROM tasks t JOIN users u ON t.assigned_by = u.id WHERE t.admin_id=? AND t.assigned_to=0 AND t.who_assigned='user' ORDER BY due_date ASC",
+                [adminId]
+            );
+            tasks = [...taskRows, ...otherTaskRows];
+        } else {
+            const [adminTasksRows] = await con.query(
+                "SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, 'OTHERS' AS section, a.name AS assigned_by_name FROM tasks t JOIN admins a ON t.assigned_by = a.id WHERE t.admin_id=? AND t.assigned_to=? AND t.who_assigned='admin' ORDER BY due_date ASC",
+                [adminId, userId]
+            );
+            const [userTasksRows] = await con.query(
+                "SELECT id, title, description, priority, due_date, status, section FROM tasks WHERE admin_id=? AND assigned_to=? AND who_assigned='user' ORDER BY due_date ASC",
+                [adminId, userId]
+            );
+            const [otherUserTasksRows] = await con.query(
+                "SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, 'OTHERS' AS section, u.name AS assigned_by_name FROM tasks t JOIN users u ON t.assigned_by = u.id WHERE t.admin_id=? AND t.assigned_to=? AND t.who_assigned='user' AND t.assigned_by != ? ORDER BY due_date ASC",
+                [adminId, userId, userId]
+            );
+            tasks = [...userTasksRows, ...adminTasksRows, ...otherUserTasksRows];
+        }
+        res.json({ success: true, tasks });
+    } catch (err) { res.status(500).json({ success: false }); }
+});
+
+/* ===============================
    HOME PAGE (ADMIN + USER)
 ================================ */
 router.get('/home', async (req, res) => {
