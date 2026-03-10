@@ -33,30 +33,31 @@ html,body{
 }
 
 /* ===== SUB HEADER ===== */
+
+
+
 .sub-header{
   display:flex;
   background:#CDF4F4;
   font-size:14px;
 }
 
-.task-header{
-  flex:3;
-  text-align:center;
-  padding:6px;
-}
-
-.right-header{
-  flex:5;
+.sub-header div{
   display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:6px;
+  flex-shrink:0;
 }
 
-.right-header .change,
-.right-header .update,
-.right-header .other-task{
-  flex:2;
-  text-align:center;
-  padding:6px;
-}
+/* match column widths */
+.task-header{ width:475px; }
+
+.change{ width:300px; }
+
+.update{ width:300px; }
+
+.other-task{ width:300px; }
 
 /* ===== MAIN LAYOUT ===== */
 .content-wrapper{
@@ -75,7 +76,7 @@ html,body{
 
 /* LEFT TASK */
 .task-main{
-  flex:3;
+  flex:4;
   padding:8px;
   overflow-y:auto;
   min-width:350px;
@@ -135,7 +136,7 @@ html,body{
   color:white;
   font-weight:600;
   font-size:12px;
-  width:calc(100% - 16px);   /* always full width */
+  width:calc(100% - 38px);   /* always full width */
   text-align:center;
 }
 
@@ -248,7 +249,7 @@ html,body{
   text-align:right;
 }
 
-.task-main{min-width:350px;}
+.task-main{min-width:475px;}
 .task-change{min-width:300px;}
 .task-update{min-width:300px;}
 .task-other{min-width:300px;}
