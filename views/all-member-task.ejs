@@ -188,7 +188,6 @@ html,body{
   stroke:white;
 }
 
-
 /* Make card vertical */
 .task-card{
   display:flex;
@@ -231,7 +230,6 @@ html,body{
 
 </style>
 </head>
-
 <body>
 
 <%- include('navbar') %>
@@ -267,7 +265,6 @@ html,body{
 </div>
 
 <div class="content-wrapper">
-
 <div class="task-main">
  <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
  <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
