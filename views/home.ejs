@@ -73,14 +73,14 @@ html, body {
 }
 
 /* ===== TASK SECTIONS VERTICAL SCROLL ===== */
-.task-main, /* 🔴 Added overflow-y auto */
-.task-change, /* 🔴 Added overflow-y auto */
-.task-update, /* 🔴 Added overflow-y auto */
-.task-other, /* 🔴 Added overflow-y auto */
-.completed-section { /* 🔴 Added overflow-y auto */
+.task-main, 
+.task-change, 
+.task-update, 
+.task-other, 
+.completed-section { 
   height: 100%;
   box-sizing: border-box;
-  overflow-y: auto; /* 🔴 Vertical scroll when content full */
+  overflow-y: auto; 
   overflow-x: hidden;
 }
 
@@ -120,15 +120,12 @@ html, body {
   align-items: center;
 }
 
-
-
-/* ===== LEFT TASK SECTION ===== */
 /* ===== LEFT TASK SECTION ===== */
 .task-main {
   flex: 1.5;
   padding: 10px;
   overflow-y: auto;
-  max-height: 100%; /* ensure it can use parent's height */
+  max-height: 100%;
 }
 /* Vertical divider */
 .vertical-line {
@@ -156,31 +153,30 @@ html, body {
   flex-direction: column;
   background-color: #2E2D2D;
   border-left: 1px solid #666;
-  min-width: 250px;    /* matches other columns */
+  min-width: 250px;
 }
 .completed-section {
   flex: 1;
   padding: 10px;
-  overflow-y: auto; /* 🔴 Vertical scroll enabled */
+  overflow-y: auto;
   color: white;
 }
-
 
 /* Completed header */
 .completed-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-height: 30px;      /* limit height */
-  height: 30px;          /* force exact height */
-  padding: 0 6px;        /* reduce padding */
+  max-height: 30px;
+  height: 30px;
+  padding: 0 6px;
   margin: 8px;
-  border-radius: 100px;   /* smaller curve */
+  border-radius: 100px;
   background-color: #0F8989;
-  font-size: 12px;       /* smaller text */
+  font-size: 12px;
   font-weight: 600;
   color: white;
-  line-height: 20px;     /* vertically center text */
+  line-height: 20px;
   box-sizing: border-box;
   padding-left: 12px;
   padding-right: 12px;
@@ -346,28 +342,24 @@ html, body {
   width: 100%;
   height: 100%;
   overflow-x: auto;
-  overflow-y: visible; /* allow child scrolling */
+  overflow-y: visible;
 }
 .board-container { width:100%; min-width:1350px; height:100%; display:flex; flex-direction:column; }
-
-
-
 
 .sub-header > div {
   display: flex;
   align-items: center;
-  justify-content: center; /* center the content */
+  justify-content: center;
   padding: 0 12px;
   box-sizing: border-box;
 }
 .sub-header-inner {
   display: flex;
-  gap: 20px; /* space between columns */
+  gap: 20px;
 }
 .other-task .task-text {
   padding-right: 50px;
 }
-
 
 /* TRUE LOGO: calendar style for task-date */
 .flatpickr-calendar.task-calendar {
@@ -379,10 +371,7 @@ html, body {
   font-family: Segoe UI, sans-serif;
 }
 
-
-
 /* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
-/* ✅ Apply only to task calendar, NOT navbar */
 .flatpickr-calendar.task-calendar.open {
   position: fixed !important;
   top: 190px !important;
@@ -392,45 +381,30 @@ html, body {
   bottom: auto !important;
 }
 
-
-
-.flatpickr-months .flatpickr-month {
-  height: 32px !important;
-}
-
-.flatpickr-weekdays {
-  font-size: 10px !important;
-}
-
-
-.flatpickr-days {
-  width: 100% !important;
-}
-
-.numInputWrapper input {
-  font-size: 12px !important;
-}
+.flatpickr-months .flatpickr-month { height: 32px !important; }
+.flatpickr-weekdays { font-size: 10px !important; }
+.flatpickr-days { width: 100% !important; }
+.numInputWrapper input { font-size: 12px !important; }
 
 .past-date {
-  color: #ff4d4d !important;   /* 🔴 red color */
+  color: #ff4d4d !important;
   font-weight:500;
 }
 
 .center-calendar {
   position: fixed !important;
-  top: 20% !important;            /* change this value */
+  top: 20% !important;
   left: 60% !important;
   transform: translateX(-50%) !important;
   z-index: 10000 !important;
 }
 
 .flatpickr-calendar {
-  font-size: 12px;              /* overall small text */
-  width: 280px !important;      /* smaller width */
+  font-size: 12px;
+  width: 280px !important;
   border-radius: 12px;
 }
 
-/* FIX MONTH DROPDOWN WHITE BOX ISSUE - MATCHING NAV STYLE */
 .flatpickr-monthDropdown-months {
   background: transparent !important;
   color: white !important;
@@ -442,12 +416,6 @@ html, body {
   padding: 2px 4px !important;
 }
 
-.flatpickr-monthDropdown-months:hover,
-.flatpickr-monthDropdown-months:focus {
-  background: transparent !important;
-}
-
-/* Ensure the actual options inside the dropdown have a background so they are readable */
 .flatpickr-monthDropdown-months option {
   background-color: white !important;
   color: #333 !important;
@@ -459,50 +427,24 @@ html, body {
   font-weight: 600;
 }
 
-.flatpickr-day {
-  height: 30px;
-  line-height: 30px;
-  font-size: 12px;
-}
-
-.flatpickr-weekday {
-  font-size: 11px;
-}
-
-.flatpickr-current-month {
-  font-size: 13px;
-  color: white !important;
-}
-
-.flatpickr-monthDropdown-months,
-.numInputWrapper {
-  font-size: 12px;
-}
-
-.flatpickr-months {
-  background: linear-gradient(to right, #0f9d9a, #14b8a6);
-  border-radius: 12px 12px 0 0;
-}
-
-.flatpickr-prev-month, .flatpickr-next-month {
-  color: white !important;
-  fill: white !important;
-}
-
+.flatpickr-day { height: 30px; line-height: 30px; font-size: 12px; }
+.flatpickr-weekday { font-size: 11px; }
+.flatpickr-current-month { font-size: 13px; color: white !important; }
+.flatpickr-months { background: linear-gradient(to right, #0f9d9a, #14b8a6); border-radius: 12px 12px 0 0; }
+.flatpickr-prev-month, .flatpickr-next-month { color: white !important; fill: white !important; }
 
 .content-wrapper {
   display: flex;
   flex: 1 1 0;
   align-items: stretch;
-  height: 100%; /* ensure children can take full height */
+  height: 100%;
 }
 
 .board-container {
   display: flex;
   flex-direction: column;
-  height: 100%; /* same here */
+  height: 100%;
 }
-
 </style>
 </head>
 <body>
@@ -516,26 +458,17 @@ html, body {
     <div class="main-content">
       <div class="board-scroll">
         <div class="board-container">
+          <div class="sub-header">
+            <div class="task-header">Task</div>
+            <div class="change">Change</div>
+            <div class="update">Update</div>
+            <div class="other-task">Others</div>
+          </div>
 
-                <!-- Header -->
-            <div class="sub-header">
-        <div class="task-header">Task</div>
-       
-        <div class="change">Change</div>
-      
-        <div class="update">Update</div>
-       
-        <div class="other-task">Others</div>
-      </div>
-
-          <!-- Content -->
           <div class="content-wrapper">
-
-            <!-- Task Section -->
             <div class="task-main" id="task-section"></div>
             <div class="vertical-line"></div>
 
-            <!-- Right Section -->
             <div class="right-section">
               <div class="top-columns">
                 <div class="task-change" id="change-section"></div>
@@ -543,9 +476,7 @@ html, body {
                 <div class="task-update" id="update-section"></div>
                 <div class="vertical-line"></div>
                 <div class="task-other" id="other-section"></div>
-         
 
-                <!-- Completed Tasks beside Others -->
                 <div class="completed-wrapper">
                   <div class="completed-header">
                     Completed Tasks
@@ -555,18 +486,14 @@ html, body {
                   </div>
                   <div class="completed-section" id="completed-section"></div>
                 </div>
-
               </div>
             </div>
-
-          </div> <!-- End Content Wrapper -->
-
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Delete Single Task Modal -->
   <div id="singleDeleteModal" class="modal">
     <div class="modal-content">
       <h3>Delete This Task?</h3>
@@ -578,7 +505,6 @@ html, body {
     </div>
   </div>
 
-  <!-- Delete Completed Tasks Modal -->
   <div id="deleteModal" class="modal">
     <div class="modal-content">
       <h3>Delete Completed Tasks?</h3>
@@ -590,11 +516,9 @@ html, body {
     </div>
   </div>
 
-
 <script>
-// Logic to Refresh UI without reload
 async function refreshTasksUI() {
-  const res = await fetch('/api/get-all-tasks'); // We'll add this lightweight route in part 3
+  const res = await fetch('/api/get-all-tasks');
   const data = await res.json();
   if(data.success) {
       currentTasks = data.tasks;
@@ -742,12 +666,11 @@ function createTaskElement(task) {
     let due_date = div.querySelector('.edit-date').value.trim();
     if (due_date === "") due_date = null;
 
-    const res = await fetch('/edit-task-details', {
+    await fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date })
     });
-    // Removed reload. Socket update_tasks will trigger refresh.
   });
 
   div.querySelector('.info-icon').addEventListener('click', (e) => {
@@ -759,7 +682,6 @@ function createTaskElement(task) {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
     await updateTaskStatus(task.id, status, section);
-    // Removed reload. Socket update_tasks will trigger refresh.
   });
 
   return div;
@@ -872,6 +794,7 @@ function sortByPriority(tasks) {
 
 const hiddenInput = document.createElement('input');
 hiddenInput.type = 'text'; hiddenInput.className = 'task-date-picker';
+hiddenInput.style.display = 'none';
 document.body.appendChild(hiddenInput);
 let currentTaskDiv = null;
 
@@ -909,7 +832,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   enableDragAndDrop();
 });
 
-// Delete Modal Logic
 document.addEventListener("DOMContentLoaded", function() {
   const deleteIcon = document.getElementById("delete-completed");
   const modal = document.getElementById("deleteModal");
@@ -919,8 +841,8 @@ document.addEventListener("DOMContentLoaded", function() {
   deleteIcon.addEventListener("click", () => modal.style.display = "flex");
   cancelBtn.addEventListener("click", () => modal.style.display = "none");
   confirmBtn.addEventListener("click", async () => {
+    modal.style.display = "none"; // Close immediately
     await fetch('/delete-completed-tasks', { method: 'POST' });
-    modal.style.display = "none";
   });
 });
 
@@ -935,8 +857,9 @@ document.addEventListener("click", function(e) {
 
 document.getElementById("confirmSingleDelete").addEventListener("click", async () => {
   if (taskToDeleteId) {
+    document.getElementById("singleDeleteModal").style.display = "none"; // Close immediately
     await fetch(`/delete-task/${taskToDeleteId}`, { method: "POST" });
-    document.getElementById("singleDeleteModal").style.display = "none";
+    taskToDeleteId = null;
   }
 });
 
