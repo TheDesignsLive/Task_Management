@@ -177,7 +177,7 @@ function renderOpenTasks() {
             <div class="task-date">${formatDate(task.due_date).text}</div>
             <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
             <div class="task-options-menu" id="menu-${task.id}">
-                <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
+                <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')"><i class="fa-solid fa-trash"></i> Delete</div>
             </div>
         </div>`;
         container.appendChild(item);
