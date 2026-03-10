@@ -8,14 +8,19 @@ html,body{
   margin:0;
   padding:0;
   height:100%;
-  overflow:hidden;
+  overflow:hidden;   /* prevents page scroll */
   background:#3C3A3A;
   font-family:Arial;
 }
 
 .layout{display:flex;height:calc(100% - 60px);}
 .sidebar-container{width:55px;}
-.main-content{flex:1;display:flex;flex-direction:column;}
+.main-content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;   /* prevent main-content from expanding */
+}
 
 .filter-section{padding:10px;}
 .filter-section select{
@@ -57,7 +62,15 @@ html,body{
 .content-wrapper{
   flex:1;
   display:flex;
-  overflow:hidden;
+  overflow-x:auto;   /* horizontal scroll here */
+  overflow-y:hidden;
+  align-items:stretch;
+}
+
+
+.completed-wrapper{
+  min-width:180px;
+  flex-shrink:0;
 }
 
 /* LEFT TASK */
@@ -65,6 +78,15 @@ html,body{
   flex:3;
   padding:8px;
   overflow-y:auto;
+  min-width:350px;
+}
+.task-main,
+.task-change,
+.task-update,
+.task-other,
+.completed-section{
+  overflow-y:auto;
+  height:100%;
 }
 
 /* RIGHT SIDE */
@@ -72,30 +94,33 @@ html,body{
   flex:5;
   display:flex;
   flex-direction:column;
+  height:100%;
+    min-height:0;   /* IMPORTANT */
 }
 
 .top-columns{
-  height:70%;
+  flex:1;
   display:flex;
-  overflow:hidden;
+  align-items:stretch;   /* IMPORTANT */
+    min-height:0;   /* IMPORTANT */
 }
-
 .task-change,
 .task-update,
 .task-other{
   flex:2;
   padding:8px;
   overflow-y:auto;
+  min-width:300px;
 }
-
 .vertical-line{
   width:1px;
   background:#777;
+  align-self:stretch;    /* IMPORTANT */
+  flex-shrink: 0;
 }
 
 /* COMPLETED */
 .completed-wrapper{
-  height:30%;
   display:flex;
   flex-direction:column;
   background:#2E2D2D;
@@ -108,7 +133,10 @@ html,body{
   background:#0F8989;
   padding:6px 15px;
   color:white;
-  font-weight:bold;
+  font-weight:600;
+  font-size:12px;
+  width:calc(100% - 16px);   /* always full width */
+  text-align:center;
 }
 
 .completed-section{
@@ -127,8 +155,7 @@ html,body{
   border-radius:4px;
   font-size:13px;
   display:flex;
-    flex-direction:column;
-
+  flex-direction:column;
 }
 
 .priority-red{border-left:4px solid red;}
@@ -139,7 +166,7 @@ html,body{
   display:flex;
   align-items:center;
   gap:6px;
-    flex:1;   
+  flex:1;   
 }
 
 .task-date{
@@ -180,18 +207,11 @@ html,body{
   height:14px;
   stroke:#959494;
   cursor:pointer;
-
   margin:0 10px;      /* space left & right */
   flex-shrink:0;
 }
 .info-icon:hover{
   stroke:white;
-}
-
-/* Make card vertical */
-.task-card{
-  display:flex;
-  flex-direction:column;
 }
 
 /* Header row */
@@ -228,6 +248,15 @@ html,body{
   text-align:right;
 }
 
+.task-main{min-width:350px;}
+.task-change{min-width:300px;}
+.task-update{min-width:300px;}
+.task-other{min-width:300px;}
+.completed-wrapper{
+  min-width:10%;
+  max-width:100%;
+  flex-shrink:0;
+}
 </style>
 </head>
 <body>
@@ -265,196 +294,152 @@ html,body{
 </div>
 
 <div class="content-wrapper">
-<div class="task-main">
- <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
- <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
-<div class="task-card priority-<%= task.priority.toLowerCase() %>">
 
-  <div class="task-card-header">
-
-    <div class="task-row">
-      <input type="checkbox" disabled class="task-checkbox 
-      <%= task.priority==='HIGH'?'checkbox-red':'' %>
-      <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
-      <%= task.priority==='LOW'?'checkbox-blue':'' %>">
-
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        <%= task.title %>
+  <div class="task-main">
+  <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
+  <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
+  <div class="task-card priority-<%= task.priority.toLowerCase() %>">
+    <div class="task-card-header">
+      <div class="task-row">
+        <input type="checkbox" disabled class="task-checkbox 
+        <%= task.priority==='HIGH'?'checkbox-red':'' %>
+        <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+        <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+        <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          <%= task.title %>
+        </div>
+      </div>
+        <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="8.5"></line>
+          <line x1="12" y1="11" x2="12" y2="16"></line>
+        </svg>
+      <div class="task-date"><%= taskDate %></div>
+    </div>
+    <div class="task-details">
+      <div class="task-desc-text">
+        <%= task.description || "No description provided." %>
       </div>
     </div>
-
-        
-      <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="8.5"></line>
-        <line x1="12" y1="11" x2="12" y2="16"></line>
-      </svg>
-    <div class="task-date"><%= taskDate %></div>
-
+  </div>
+  <% }) %>
   </div>
 
-  <div class="task-details">
-    <div class="task-desc-text">
-      <%= task.description || "No description provided." %>
-    </div>
-  </div>
+  <div class="vertical-line"></div> 
 
-</div>
- <% }) %>
-</div>
-
-<div class="vertical-line"></div>
-
-<div class="right-section">
-
-<div class="top-columns">
-
-<div class="task-change">
-<% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
-<% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
-<div class="task-card priority-<%= task.priority.toLowerCase() %>">
-
-  <div class="task-card-header">
-
-    <div class="task-row">
-      <input type="checkbox" disabled class="task-checkbox 
-      <%= task.priority==='HIGH'?'checkbox-red':'' %>
-      <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
-      <%= task.priority==='LOW'?'checkbox-blue':'' %>">
-
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        <%= task.title %>
+  <div class="right-section">
+    <div class="top-columns">
+      
+      <div class="task-change">
+      <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
+      <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
+      <div class="task-card priority-<%= task.priority.toLowerCase() %>">
+        <div class="task-card-header">
+          <div class="task-row">
+            <input type="checkbox" disabled class="task-checkbox 
+            <%= task.priority==='HIGH'?'checkbox-red':'' %>
+            <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+            <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+            <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <%= task.title %>
+            </div>
+          </div>
+          <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="8.5"></line>
+            <line x1="12" y1="11" x2="12" y2="16"></line>
+          </svg>
+          <div class="task-date"><%= taskDate %></div>
+        </div>
+        <div class="task-details">
+          <div class="task-desc-text">
+            <%= task.description || "No description provided." %>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-      fill="none" stroke="currentColor" stroke-width="2"
-      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="12" y1="8" x2="12" y2="8.5"></line>
-      <line x1="12" y1="11" x2="12" y2="16"></line>
-    </svg>
-
-    <div class="task-date"><%= taskDate %></div>
-
-  </div>
-
-  <div class="task-details">
-    <div class="task-desc-text">
-      <%= task.description || "No description provided." %>
-    </div>
-  </div>
-
-</div>
-<% }) %>
-</div>
-
-<div class="vertical-line"></div>
-
-<div class="task-update">
-<% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
-<% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
-<div class="task-card priority-<%= task.priority.toLowerCase() %>">
-<div class="task-row">
-<input type="checkbox" disabled class="task-checkbox 
-<%= task.priority==='HIGH'?'checkbox-red':'' %>
-<%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
-<%= task.priority==='LOW'?'checkbox-blue':'' %>">
-<%= task.title %>
-<div class="task-date"><%= taskDate %></div>
-</div>
-
-</div>
-<% }) %>
-</div>
-
-<div class="vertical-line"></div>
-
-<div class="task-other">
-
-<% tasks.filter(t=>t.section==='OTHERS' && t.status==='OPEN').forEach(task=>{ %>
-
-<div class="task-card priority-<%= (task.priority||'').toLowerCase() %>">
-
-  <div class="task-row">
-
-    <div style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
-      <input type="checkbox" disabled class="task-checkbox 
-      <%= task.priority==='HIGH'?'checkbox-red':'' %>
-      <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
-      <%= task.priority==='LOW'?'checkbox-blue':'' %>">
-
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        <%= task.title %>
+      <% }) %>
       </div>
-    </div>
 
-    <div class="other-name">
-      <% if(selected_user === 'all'){ %>
-        <%= task.assigned_by_name %> → <%= task.assigned_to_name %>
-      <% } else { %>
-        <%= task.assigned_by_name %>
-      <% } %>
-    </div>
+      <div class="vertical-line"></div> 
 
-  </div>
+      <div class="task-update">
+      <% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
+      <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
+      <div class="task-card priority-<%= task.priority.toLowerCase() %>">
+        <div class="task-row">
+          <input type="checkbox" disabled class="task-checkbox 
+          <%= task.priority==='HIGH'?'checkbox-red':'' %>
+          <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+          <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+          <%= task.title %>
+          <div class="task-date"><%= taskDate %></div>
+        </div>
+      </div>
+      <% }) %>
+      </div>
 
-</div>
+      <div class="vertical-line"></div> 
 
-<% }) %>
+      <div class="task-other">
+      <% tasks.filter(t=>t.section==='OTHERS' && t.status==='OPEN').forEach(task=>{ %>
+      <div class="task-card priority-<%= (task.priority||'').toLowerCase() %>">
+        <div class="task-row">
+          <div style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
+            <input type="checkbox" disabled class="task-checkbox 
+            <%= task.priority==='HIGH'?'checkbox-red':'' %>
+            <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+            <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+            <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <%= task.title %>
+            </div>
+          </div>
+          <div class="other-name">
+            <% if(selected_user === 'all'){ %>
+              <%= task.assigned_by_name %> → <%= task.assigned_to_name %>
+            <% } else { %>
+              <%= task.assigned_by_name %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+      </div>
 
-</div>
+      <div class="vertical-line"></div> 
 
-</div>
+      <div class="completed-wrapper">
+        <div class="completed-header">Completed Tasks</div>
+        <div class="completed-section">
+        <% tasks.filter(t=>t.status==='COMPLETED').forEach(task=>{ %>
+        <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
+        <div class="task-card priority-<%= task.priority.toLowerCase() %>">
+          <div class="task-row">
+            <input type="checkbox" checked disabled class="task-checkbox 
+            <%= task.priority==='HIGH'?'checkbox-red':'' %>
+            <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
+            <%= task.priority==='LOW'?'checkbox-blue':'' %>">
+            <%= task.title %> - <%= task.assigned_to_name %>
+            <div class="task-date"><%= taskDate %></div>
+          </div>
+        </div>
+        <% }) %>
+        </div>
+      </div>
 
-<div class="completed-wrapper">
-<div class="completed-header">Completed Tasks</div>
-<div class="completed-section">
-<% tasks.filter(t=>t.status==='COMPLETED').forEach(task=>{ %>
-<% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
-<div class="task-card priority-<%= task.priority.toLowerCase() %>">
-<div class="task-row">
-<input type="checkbox" checked disabled class="task-checkbox 
-<%= task.priority==='HIGH'?'checkbox-red':'' %>
-<%= task.priority==='MEDIUM'?'checkbox-yellow':'' %>
-<%= task.priority==='LOW'?'checkbox-blue':'' %>">
-<%= task.title %> - <%= task.assigned_to_name %>
-<div class="task-date"><%= taskDate %></div>
-</div>
-
-</div>
-<% }) %>
-</div>
-</div>
-
-</div>
-</div>
-
-</div>
-</div>
+    </div> </div> </div> </div>
 </div>
 
 <script>
-
-// 🌟 Extract icon logic into a function so we can re-attach it after silent HTML fetch
 function attachIconEvents() {
-  const cards = document.querySelectorAll(".task-card");
-  
-  // Clean old events by replacing the node to avoid double clicks
   document.querySelectorAll(".info-icon").forEach(icon => {
       icon.replaceWith(icon.cloneNode(true));
   });
-
-  // Attach fresh events
   document.querySelectorAll(".info-icon").forEach(icon => {
     icon.addEventListener("click", function(e){
       e.stopPropagation();
       const card = this.closest(".task-card");
-      
       document.querySelectorAll(".task-card").forEach(c=>{
-        if(c !== card) {
-          c.classList.remove("expanded");
-        }
+        if(c !== card) c.classList.remove("expanded");
       });
       card.classList.toggle("expanded");
     });
@@ -463,8 +448,6 @@ function attachIconEvents() {
 
 document.addEventListener("DOMContentLoaded", function(){
   attachIconEvents();
-
-  // CLICK ANYWHERE ELSE → CLOSE ALL
   document.addEventListener("click", function(){
     document.querySelectorAll(".task-card").forEach(c=>{
       c.classList.remove("expanded");
@@ -472,36 +455,31 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 });
 
-// 🌟 MAGIC ZERO RELOAD FUNCTION
-// Fetch new HTML in background and swap only the task list!
 let silentReloadTimer = null;
 function silentReload() {
     clearTimeout(silentReloadTimer);
     silentReloadTimer = setTimeout(() => {
-        fetch(window.location.href) // Fetches current URL with active user filters
+        fetch(window.location.href) 
         .then(res => res.text())
         .then(html => {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const newContent = doc.querySelector('.content-wrapper');
-            
             if (newContent) {
                 document.querySelector('.content-wrapper').innerHTML = newContent.innerHTML;
-                attachIconEvents(); // Reattach clicks to the newly drawn HTML elements!
+                attachIconEvents(); 
             }
         })
         .catch(err => console.error("Silent reload failed", err));
-    }, 300); // 300ms debounce
+    }, 300);
 }
 
 function markCompleted(taskId){
   fetch(`/complete-task/${taskId}`, { method:'POST' })
   .then(res=>res.json())
   .then(data=>{
-    if(data.success){ 
-        silentReload(); // Call silent fetch instead of normal reload
-    }
-    else{ alert('Error completing task'); }
+    if(data.success) silentReload();
+    else alert('Error completing task');
   });
 }
 </script>
@@ -509,26 +487,8 @@ function markCompleted(taskId){
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
-
-// 🌟 TRIGGER SILENT RELOAD ON ANY TASK ACTION IN THE COMPANY
-const eventsToWatch = [
-    'update_tasks', 
-    'task_added', 
-    'task_edited', 
-    'task_deleted', 
-    'task_status_changed', 
-    'task_section_changed', 
-    'task_assignee_changed', 
-    'completed_deleted', 
-    'abm_task_deleted', 
-    'abm_completed_deleted', 
-    'abm_assignee_changed'
-];
-
-eventsToWatch.forEach(evt => {
-    socket.on(evt, silentReload);
-});
-
+const eventsToWatch = ['update_tasks', 'task_added', 'task_edited', 'task_deleted', 'task_status_changed', 'task_section_changed', 'task_assignee_changed', 'completed_deleted', 'abm_task_deleted', 'abm_completed_deleted', 'abm_assignee_changed'];
+eventsToWatch.forEach(evt => { socket.on(evt, silentReload); });
 </script>
 
 </body>
