@@ -90,24 +90,37 @@ html, body {
   background: #CDF4F4;
   font-size: 14px;
   min-width: 1350px;
-  flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 10;
   padding: 12px 0;
 }
 
+.task-header {
+  flex: 1.5;
+  display: flex;
+  justify-content: center;
+}
+
+.change,
+.update,
+.other-task {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.sub-header .vertical-line {
+  width: 1px;
+  background: #7C7B7B;
+}
 .sub-header > div {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.task-header { flex: 1.5; min-width: 250px; }
-.change, .update, .other-task, .completed-header {
-  flex: 1;
-  min-width: 250px;
-}
+
 
 /* ===== LEFT TASK SECTION ===== */
 /* ===== LEFT TASK SECTION ===== */
@@ -504,13 +517,16 @@ html, body {
       <div class="board-scroll">
         <div class="board-container">
 
-          <!-- Header -->
-          <div class="sub-header">
-            <div class="task-header">Task</div>
-            <div class="change">Change</div>
-            <div class="update">Update</div>
-            <div class="other-task"><span class="task-text">Others</span></div>
-          </div>
+                <!-- Header -->
+            <div class="sub-header">
+        <div class="task-header">Task</div>
+       
+        <div class="change">Change</div>
+      
+        <div class="update">Update</div>
+       
+        <div class="other-task">Others</div>
+      </div>
 
           <!-- Content -->
           <div class="content-wrapper">
