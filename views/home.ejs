@@ -445,6 +445,32 @@ html, body {
   flex-direction: column;
   height: 100%;
 }
+
+
+
+/* ===== CUSTOM SCROLLBAR ===== */
+
+/* scrollbar size */
+::-webkit-scrollbar{
+  width:2px;
+  height:6px;
+}
+
+/* scrollbar track */
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+/* scrollbar thumb */
+::-webkit-scrollbar-thumb{
+  background:#777;
+  border-radius:10px;
+}
+
+/* hover effect */
+::-webkit-scrollbar-thumb:hover{
+  background:#aaa;
+}
 </style>
 </head>
 <body>
