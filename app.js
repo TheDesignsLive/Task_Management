@@ -94,8 +94,13 @@ cron.schedule('0 0 * * *', () => {
 
 // Base & Auth
 app.get('/', (req, res) => {
+    // ✅ If session exists, redirect to home without login
+    if (req.session.adminId || req.session.userId) {
+        return res.redirect('/home'); // ✅
+    }
     res.render('signup');
 });
+
 app.use('/', authRoutes);
 app.use('/', logoutRoutes);
 app.use('/', homeroutes);

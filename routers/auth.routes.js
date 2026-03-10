@@ -69,7 +69,8 @@ router.post("/signup", (req, res) => {
 
             const [result] = await con.query(sql, [name, company_name, email, phone, hashedPassword, profilePic]);
 
-            req.session.adminId = result.insertId;
+         
+            req.session.adminId = result.insertId; // ✅ Save session
             req.session.role = "admin";
             req.session.email = email;
 
@@ -112,6 +113,11 @@ router.post("/check-email", async (req, res) => {
 router.post("/login", async (req, res) => {
     const { email, password, login_type } = req.body;
 
+     // ✅ Check if session already exists
+    if (req.session.adminId && login_type === 'admin') return res.redirect('/home'); 
+    if (req.session.userId && login_type === 'user') return res.redirect('/home');
+
+
     if (!email || !password || !login_type) {
         return res.send("Please fill all fields ❌");
     }
@@ -133,7 +139,7 @@ router.post("/login", async (req, res) => {
                     return res.send("Invalid Admin Email or Password ❌");
                 }
 
-                req.session.adminId = rows[0].id;
+               req.session.adminId = rows[0].id; // ✅ Save session
                 req.session.role = "admin";
                 req.session.email = rows[0].email;
                 req.session.adminName = rows[0].name;
@@ -162,7 +168,7 @@ router.post("/login", async (req, res) => {
                     return res.send("Invalid User Email or Password ❌");
                 }
 
-                req.session.userId = rows[0].id;
+                      req.session.userId = rows[0].id; // ✅ Save session
                 req.session.role = "user";
                 req.session.email = rows[0].email;
 
