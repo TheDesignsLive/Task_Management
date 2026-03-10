@@ -10,7 +10,6 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .layout { display: flex; height: calc(100% - 60px); }
 .sidebar-container { width: 55px; }
 .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-/* Removed .sub-header styles */
 .content-wrapper { flex: 1; display: flex; gap: 10px; padding: 10px; overflow: hidden; }
 .task-column { flex: 1; display: flex; flex-direction: column; background-color: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden; }
 .task-list-container { flex: 1; overflow-y: auto; padding: 5px 10px; }
@@ -54,25 +53,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
   </div>
   <div class="task-column">
     <div class="column-header">Completed Tasks <svg id="delete-completed" viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
-    <div class="task-list-container" id="completed-task-list">
-      <% if (completedTasks.length > 0) { %>
-        <% completedTasks.forEach(task => { %>
-          <div class="task-item completed-task" id="task-<%= task.id %>">
-            <div class="task-row">
-              <input type="checkbox" class="task-checkbox priority-<%= task.priority %>" checked onchange="toggleCheckboxStatus('<%= task.id %>', this)">
-              <div class="task-title"><%= task.title %></div>
-              <div class="task-desc"><%= (task.description == null || task.description == "" || task.description == "null") ? "_" : task.description %></div>
-              <div class="task-assign" data-assignee-id="<%= task.assignee_id %>"><span style="font-size: 11px;"><%= task.assigned_to %></span></div>
-              <div class="task-date date-display"><%= task.due_date %></div>
-              <div class="dots-btn" onclick="toggleMenu(event, '<%= task.id %>')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
-              <div class="task-options-menu" id="menu-<%= task.id %>">
-                <div class="delete-opt" style="color:red" onclick="openSingleDelete('<%= task.id %>')"><i class="fa-solid fa-trash"></i> Delete</div>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      <% } %>
-    </div>
+    <div class="task-list-container" id="completed-task-list"></div>
   </div>
 </div>
 </div>
@@ -81,15 +62,21 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 <div id="singleDeleteModal" class="modal"><div class="modal-content"><h3>Delete This Task?</h3><div class="modal-buttons"><button id="confirmSingleDelete" class="btn delete">Delete</button><button id="cancelSingleDelete" class="btn cancel">Cancel</button></div></div></div>
 <div id="deleteModal" class="modal"><div class="modal-content"><h3>Delete Completed Tasks?</h3><div class="modal-buttons"><button id="confirmDelete" class="btn delete">Delete</button><button id="cancelDelete" class="btn cancel">Cancel</button></div></div></div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
-const openTasks = <%- JSON.stringify(openTasks) %>;
 const members = <%- JSON.stringify(members) %>;
 const adminName = "<%= adminName %>";
 const userRole = "<%= session.role %>";
-
 let isProcessingAjax = false;
 
-// Helpers
+async function refreshABMUI() {
+    const res = await fetch(window.location.pathname, { headers: { 'Accept': 'application/json', 'x-requested-with': 'XMLHttpRequest' } });
+    const data = await res.json();
+    if(data.success) {
+        renderTasks(data.openTasks, data.completedTasks);
+    }
+}
+
 function getAssigneeOptions(currentId) {
     let options = "";
     if (userRole === 'user') {
@@ -99,69 +86,42 @@ function getAssigneeOptions(currentId) {
     return options;
 }
 
-function moveTaskDOM(id, status) {
-    const taskEl = document.getElementById('task-' + id);
-    if (!taskEl) return;
-    const assignDiv = taskEl.querySelector('.task-assign');
-    const cb = taskEl.querySelector('.task-checkbox');
-    if (cb) cb.checked = (status === 'COMPLETED');
-    if (status === 'COMPLETED') {
-        taskEl.classList.add('completed-task');
-        document.getElementById('completed-task-list').appendChild(taskEl);
-        if (assignDiv) {
-            const selectEl = assignDiv.querySelector('select');
-            if (selectEl) {
-                const selectedText = selectEl.options[selectEl.selectedIndex].text;
-                assignDiv.dataset.assigneeId = selectEl.value;
-                assignDiv.innerHTML = `<span style="font-size: 11px;">${selectedText}</span>`;
-            }
-        }
-    } else {
-        taskEl.classList.remove('completed-task');
-        document.getElementById('open-task-list').appendChild(taskEl);
-        if (assignDiv && !assignDiv.querySelector('select')) {
-            const currentId = assignDiv.dataset.assigneeId || '';
-            assignDiv.innerHTML = `<select onchange="changeAssignee('${id}', this.value)">${getAssigneeOptions(currentId)}</select>`;
-        }
-    }
+function formatDate(dateStr) {
+    if (!dateStr || dateStr === 'null') return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
 async function toggleCheckboxStatus(id, checkboxEl) {
-    if(isProcessingAjax) { checkboxEl.checked = !checkboxEl.checked; return; }
+    if(isProcessingAjax) return;
     isProcessingAjax = true; 
     const newStatus = checkboxEl.checked ? 'COMPLETED' : 'OPEN';
     try {
-        const res = await fetch('/update-task-status', {
+        await fetch('/update-task-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, status: newStatus, section: 'COMPLETED' })
         });
-        const data = await res.json();
-        if (data.success) moveTaskDOM(id, newStatus);
-        else checkboxEl.checked = !checkboxEl.checked;
-    } catch(err) { checkboxEl.checked = !checkboxEl.checked; }
-    finally { setTimeout(() => isProcessingAjax = false, 500); }
-}
-
-async function changeAssignee(taskId, newAssigneeId) {
-    isProcessingAjax = true; 
-    try {
-        const res = await fetch('/assign_by_me/update-assignee', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ taskId, newAssigneeId })
-        });
-        const data = await res.json();
-        if (data.success) {
-            const taskEl = document.getElementById('task-' + taskId);
-            if (taskEl) taskEl.querySelector('.task-assign').dataset.assigneeId = newAssigneeId;
-        }
     } catch(err) { console.error(err); }
     finally { setTimeout(() => isProcessingAjax = false, 500); }
 }
 
-function renderOpenTasks() {
-    const container = document.getElementById('open-task-list');
+async function changeAssignee(taskId, newAssigneeId) {
+    try {
+        await fetch('/assign_by_me/update-assignee', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ taskId, newAssigneeId })
+        });
+    } catch(err) { console.error(err); }
+}
+
+function renderTasks(openTasks, completedTasks) {
+    const openContainer = document.getElementById('open-task-list');
+    const compContainer = document.getElementById('completed-task-list');
+    openContainer.innerHTML = '';
+    compContainer.innerHTML = '';
+
     openTasks.forEach(task => {
         const item = document.createElement('div');
         item.className = 'task-item';
@@ -171,16 +131,35 @@ function renderOpenTasks() {
             <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleCheckboxStatus('${task.id}', this)">
             <div class="task-title">${task.title}</div>
             <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
-            <div class="task-assign" data-assignee-id="${task.assignee_id}">
+            <div class="task-assign">
                 <select onchange="changeAssignee('${task.id}', this.value)">${getAssigneeOptions(task.assignee_id)}</select>
             </div>
-            <div class="task-date">${formatDate(task.due_date).text}</div>
+            <div class="task-date">${formatDate(task.due_date)}</div>
             <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
             <div class="task-options-menu" id="menu-${task.id}">
                 <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
             </div>
         </div>`;
-        container.appendChild(item);
+        openContainer.appendChild(item);
+    });
+
+    completedTasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'task-item completed-task';
+        item.id = 'task-' + task.id;
+        item.innerHTML = `
+        <div class="task-row">
+            <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
+            <div class="task-title">${task.title}</div>
+            <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
+            <div class="task-assign"><span style="font-size: 11px;">${task.assigned_to}</span></div>
+            <div class="task-date">${formatDate(task.due_date)}</div>
+            <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+            <div class="task-options-menu" id="menu-${task.id}">
+                <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
+            </div>
+        </div>`;
+        compContainer.appendChild(item);
     });
 }
 
@@ -198,61 +177,23 @@ let taskToDeleteId = null;
 function openSingleDelete(id) { taskToDeleteId = id; document.getElementById("singleDeleteModal").style.display = "flex"; }
 document.getElementById("cancelSingleDelete").onclick = () => document.getElementById("singleDeleteModal").style.display = "none";
 document.getElementById("confirmSingleDelete").onclick = async () => {
-    try {
-        const res = await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, { method: "POST" });
-        const data = await res.json();
-        if (data.success) { 
-            document.getElementById('task-' + taskToDeleteId)?.remove(); 
-            document.getElementById("singleDeleteModal").style.display = "none"; 
-            if (activeMenu) activeMenu.style.display = 'none';
-        }
-    } catch (err) {}
+    await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, { method: "POST" });
+    document.getElementById("singleDeleteModal").style.display = "none";
 };
 
 document.getElementById('delete-completed').onclick = () => document.getElementById('deleteModal').style.display = 'flex';
 document.getElementById('cancelDelete').onclick = () => document.getElementById('deleteModal').style.display = 'none';
 document.getElementById('confirmDelete').onclick = async () => {
-    try {
-        const res = await fetch('/assign_by_me/delete-all-completed', { method: 'POST' });
-        const data = await res.json();
-        if(data.success) { 
-            document.querySelectorAll('.completed-task').forEach(t => t.remove()); 
-            document.getElementById('deleteModal').style.display = 'none'; 
-        }
-    } catch(e) {}
+    await fetch('/assign_by_me/delete-all-completed', { method: 'POST' });
+    document.getElementById('deleteModal').style.display = 'none';
 };
 
-function formatDate(dateStr) {
-    if (!dateStr || dateStr === 'null') return { text: '' };
-    const d = new Date(dateStr);
-    return { text: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) };
-}
+const socket = io();
+socket.on('update_tasks', () => { refreshABMUI(); });
 
-document.addEventListener('DOMContentLoaded', renderOpenTasks);
-</script>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    socket.on('task_status_changed', (data) => { if (!isProcessingAjax) moveTaskDOM(data.id, data.status); });
-    socket.on('abm_task_deleted', (id) => { document.getElementById('task-' + id)?.remove(); });
-    socket.on('abm_completed_deleted', () => { document.querySelectorAll('.completed-task').forEach(el => el.remove()); });
-    socket.on('abm_assignee_changed', (data) => {
-        if (isProcessingAjax) return;
-        const taskEl = document.getElementById('task-' + data.id);
-        if (taskEl) {
-            const assignDiv = taskEl.querySelector('.task-assign');
-            const sel = assignDiv.querySelector('select');
-            if (sel) {
-                sel.value = data.newAssigneeId;
-                assignDiv.dataset.assigneeId = data.newAssigneeId;
-            } else {
-                const name = data.newAssigneeId == '0' ? adminName + ' (Admin)' : (members.find(m => m.id == data.newAssigneeId)?.name || '');
-                assignDiv.innerHTML = `<span style="font-size: 11px;">${name}</span>`;
-                assignDiv.dataset.assigneeId = data.newAssigneeId;
-            }
-        }
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    renderTasks(<%- JSON.stringify(openTasks) %>, <%- JSON.stringify(completedTasks) %>);
+});
 </script>
 </body>
 </html>
