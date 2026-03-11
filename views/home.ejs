@@ -180,7 +180,7 @@ html, body {
   box-sizing: border-box;
   padding-left: 12px;
   padding-right: 12px;
-  margin-bottom: -10px;
+  margin-bottom: 0px;
 }
 /* Dustbin icon */
 #delete-completed {
@@ -471,6 +471,48 @@ html, body {
 ::-webkit-scrollbar-thumb:hover{
   background:#aaa;
 }
+
+
+/* TASK column bigger */
+.task-column{
+  display:flex;
+  flex-direction:column;
+  flex:1.5;        /* increased width */
+  min-width:400px; /* wider minimum */
+}
+
+/* other columns normal */
+.column-wrapper{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-width:250px;
+}
+
+/* HEADER STYLE */
+.column-header{
+  height:30px;
+  margin:8px;
+  margin-bottom:0;
+  border-radius:100px;
+  background:#0F8989;
+  color:white;
+  font-size:12px;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* SECTION AREA */
+.task-column .task-main,
+.column-wrapper .task-change,
+.column-wrapper .task-update,
+.column-wrapper .task-other{
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
+}
 </style>
 </head>
 <body>
@@ -484,37 +526,57 @@ html, body {
     <div class="main-content">
       <div class="board-scroll">
         <div class="board-container">
-          <div class="sub-header">
-            <div class="task-header">Task</div>
-            <div class="change">Change</div>
-            <div class="update">Update</div>
-            <div class="other-task">Others</div>
-          </div>
+        
+<div class="content-wrapper">
 
-          <div class="content-wrapper">
-            <div class="task-main" id="task-section"></div>
-            <div class="vertical-line"></div>
+  <!-- TASK -->
+  <div class="task-column">
+    <div class="column-header">Task</div>
+    <div class="task-main" id="task-section"></div>
+  </div>
 
-            <div class="right-section">
-              <div class="top-columns">
-                <div class="task-change" id="change-section"></div>
-                <div class="vertical-line"></div>
-                <div class="task-update" id="update-section"></div>
-                <div class="vertical-line"></div>
-                <div class="task-other" id="other-section"></div>
+  <div class="vertical-line"></div>
 
-                <div class="completed-wrapper">
-                  <div class="completed-header">
-                    Completed Tasks
-                    <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
-                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                    </svg>
-                  </div>
-                  <div class="completed-section" id="completed-section"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="right-section">
+    <div class="top-columns">
+
+      <!-- CHANGE -->
+      <div class="column-wrapper">
+        <div class="column-header">Change</div>
+        <div class="task-change" id="change-section"></div>
+      </div>
+
+      <div class="vertical-line"></div>
+
+      <!-- UPDATE -->
+      <div class="column-wrapper">
+        <div class="column-header">Update</div>
+        <div class="task-update" id="update-section"></div>
+      </div>
+
+      <div class="vertical-line"></div>
+
+      <!-- OTHERS -->
+      <div class="column-wrapper">
+        <div class="column-header">Others</div>
+        <div class="task-other" id="other-section"></div>
+      </div>
+
+      <!-- COMPLETED -->
+      <div class="completed-wrapper">
+        <div class="completed-header">
+          Completed Tasks
+          <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
+            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+          </svg>
+        </div>
+        <div class="completed-section" id="completed-section"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
         </div>
       </div>
     </div>
