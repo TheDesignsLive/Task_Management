@@ -235,7 +235,7 @@ select::-ms-expand { display: none; }
     </select>
   </div>
 
-  <div class="user-display">
+  <div class="user-display" id="navWelcomeText">
     Welcome <%= (typeof session !== "undefined" && (session.userName || session.adminName)) ? (session.userName || session.adminName) : "Guest" %>
   </div>
 </div>
@@ -312,20 +312,10 @@ function submitTask() {
   .then(res => res.json())
   .then(data => {
       if(data.success) {
-          // ZERO RELOAD LOGIC:
-          // 1. Reset the UI
           textarea.value = '';
           dateInput.value = todayDate;
           dateDisplay.innerText = displayDate(todayDate);
-          
-          // 2. OPTIONAL: Update your task list container here manually 
-          // Example: appendTaskToDOM(data.task); 
-          
           console.log("Task added successfully without reload");
-          
-          // If you have a refresh function for your task list, call it here:
-          // if(typeof refreshTaskList === 'function') refreshTaskList();
-          
       } else {
           alert(data.message || "Error adding task");
       }
@@ -341,4 +331,34 @@ document.addEventListener("keydown", function(e) {
     }
   }
 });
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    window.globalSocket = io();
+    const currentSessionUserId = "<%= session.userId %>";
+
+    window.globalSocket.on('force_logout', (targetUserId) => {
+        if (currentSessionUserId == targetUserId) {
+            alert("Your account has been suspended or removed. You will be logged out.");
+            window.location.href = "/logout";
+        }
+    });
+
+    // --- ZERO RELOAD NAME UPDATE LOGIC ---
+    window.globalSocket.on('update_session_name', (data) => {
+        // 1. If the updated user is the one currently logged in, update Welcome text
+        if (currentSessionUserId == data.userId) {
+            const welcomeDiv = document.getElementById('navWelcomeText');
+            if(welcomeDiv) welcomeDiv.innerText = "Welcome " + data.newName;
+        }
+
+        // 2. Update the name in the Member Dropdown list for everyone
+        const memberDropdown = document.getElementById('member');
+        if (memberDropdown) {
+            const option = memberDropdown.querySelector(`option[value="${data.userId}"]`);
+            if (option) {
+                option.innerText = data.newName;
+            }
+        }
+    });
 </script>
