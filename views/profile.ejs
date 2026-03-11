@@ -235,7 +235,23 @@ html, body {
       <% } %>
 
       <label style="font-size:12px; color:#666;">Profile Picture</label>
-      <input type="file" name="profile_pic" style="margin-bottom:20px; width:100%;" accept="image/*">
+      <!-- <input type="file" name="profile_pic" style="margin-bottom:20px; width:100%;" accept="image/*"> -->
+       <input type="file" name="profile_pic" 
+style="margin-bottom:5px; width:100%;" 
+accept=".jpg,.jpeg,.png,.webp">
+<div style="font-size:11px;color:#777;margin-bottom:15px;">
+Supported formats: JPG, JPEG, PNG, WEBP | Max size: 5MB
+</div>
+
+
+<% if(profilePic && profilePic !== ''){ %>
+<button id="removePicBtn"
+type="button"
+onclick="openRemoveModal()"
+style="background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;margin-bottom:15px;">
+Remove Profile Picture
+</button>
+<% } %>
 
       <div style="display:flex; gap:10px;">
         <button type="submit" style="flex:1; background:#00a896; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer; font-weight: 600;">Save Changes</button>
@@ -245,53 +261,214 @@ html, body {
   </div>
 </div>
 
+
+<!-- Remove Confirmation Modal for Remove Profile Picture -->
+<div class="modal" id="removeModal">
+  <div style="width:320px;background:white;border-radius:10px;padding:25px;text-align:center;box-shadow:0 5px 20px rgba(0,0,0,0.3);">
+
+    <h3 style="margin-top:0;color:#095959;">Remove Profile Picture</h3>
+
+    <p style="font-size:14px;color:#555;margin-bottom:20px;">
+      Are you sure you want to remove the profile picture?
+    </p>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="confirmRemovePic()"
+        style="flex:1;background:#ef4444;color:white;border:none;padding:10px;border-radius:5px;cursor:pointer;">
+        Remove
+      </button>
+
+      <button onclick="closeRemoveModal()"
+        style="flex:1;background:#ddd;border:none;padding:10px;border-radius:5px;cursor:pointer;">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <script>
-function openEdit(){document.getElementById('editModal').style.display='flex';}
-function closeEdit(){document.getElementById('editModal').style.display='none';}
-document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
+
+function openEdit(){
+    document.getElementById('editModal').style.display='flex';
+}
+
+function closeEdit(){
+    document.getElementById('editModal').style.display='none';
+}
+
+// allow only numbers
+document.getElementById('phoneInput').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g,'');
+});
 
 const editForm = document.getElementById('editForm');
-editForm.addEventListener('submit', async function(e) {
+
+editForm.addEventListener('submit', async function(e){
+
     e.preventDefault();
+
     const phone = document.getElementById('phoneInput').value;
     const phoneError = document.getElementById('phoneError');
+
     const phoneRegex = /^\d{10}$/;
-    if(!phoneRegex.test(phone)) { phoneError.style.display = 'block'; return; } 
-    else { phoneError.style.display = 'none'; }
+
+    if(!phoneRegex.test(phone)){
+        phoneError.style.display='block';
+        return;
+    }
+
+    phoneError.style.display='none';
 
     const formData = new FormData(editForm);
 
-    try {
-        const res = await fetch('/profile/update-profile', { method:'POST', body: formData });
+    try{
+
+        const res = await fetch('/profile/update-profile',{
+            method:'POST',
+            body:formData
+        });
+
         const data = await res.json();
+
         if(data.success){
-            document.querySelector('.profile-name-left').textContent = data.name;
-            const infoItems = document.querySelectorAll('.info-grid .info-item span');
-            let index = 0;
+
+            // update name
+            document.querySelector('.profile-name-left').textContent=data.name;
+
+            const infoItems=document.querySelectorAll('.info-grid .info-item span');
+
+            let index=0;
+
             <% if(session.role=="admin"){ %>
-                infoItems[index++].textContent = data.company || 'N/A';
+            infoItems[index++].textContent=data.company || 'N/A';
             <% } %>
+
             index++;
-            infoItems[index++].textContent = data.phone;
+
+            infoItems[index++].textContent=data.phone;
+
             if(data.profilePic){
-                const imgContainer = document.querySelector('.profile-left');
-                let imgTag = document.querySelector('.profile-img');
+
+                const profileLeft=document.querySelector('.profile-left');
+
+                const oldAvatar=profileLeft.querySelector('.profile-letter-avatar');
+                if(oldAvatar) oldAvatar.remove();
+
+                let imgTag=profileLeft.querySelector('.profile-img');
+
                 if(!imgTag){
-                    const letterAvatar = document.querySelector('.profile-letter-avatar');
-                    if(letterAvatar) letterAvatar.remove();
-                    imgTag = document.createElement('img');
-                    imgTag.classList.add('profile-img');
-                    imgContainer.prepend(imgTag);
+                    imgTag=document.createElement('img');
+                    imgTag.className='profile-img';
+                    profileLeft.prepend(imgTag);
                 }
-                imgTag.src = '/images/' + data.profilePic;
+
+                imgTag.src='/images/'+data.profilePic+'?t='+new Date().getTime();
+
+                let removeBtn=document.getElementById('removePicBtn');
+
+                if(!removeBtn){
+
+                    removeBtn=document.createElement('button');
+                    removeBtn.id="removePicBtn";
+                    removeBtn.type="button";
+                    removeBtn.innerText="Remove Profile Picture";
+
+                    removeBtn.style.background="#ef4444";
+                    removeBtn.style.color="white";
+                    removeBtn.style.border="none";
+                    removeBtn.style.padding="8px 12px";
+                    removeBtn.style.borderRadius="4px";
+                    removeBtn.style.cursor="pointer";
+                    removeBtn.style.marginBottom="15px";
+
+                    removeBtn.onclick=openRemoveModal;
+
+                    const form=document.getElementById('editForm');
+
+                    form.insertBefore(
+                        removeBtn,
+                        form.querySelector('div[style*="display:flex"]')
+                    );
+                }
+
             }
+
             closeEdit();
-        } else { alert("Profile update failed!"); }
-    } catch(err){ console.error(err); alert("Something went wrong!"); }
+
+        }else{
+
+            alert("Profile update failed");
+
+        }
+
+    }catch(err){
+
+        console.error(err);
+        alert("Server error");
+
+    }
+
 });
 
+function openRemoveModal(){
+    document.getElementById("removeModal").style.display="flex";
+}
+
+function closeRemoveModal(){
+    document.getElementById("removeModal").style.display="none";
+}
+
+
+// remove profile picture
+async function confirmRemovePic(){
+
+    try{
+
+        const res = await fetch('/profile/remove-picture',{
+            method:'POST'
+        });
+
+        const data = await res.json();
+
+        if(data.success){
+
+            const profileLeft = document.querySelector('.profile-left');
+
+            const imgTag = profileLeft.querySelector('.profile-img');
+            if(imgTag) imgTag.remove();
+
+            const oldAvatar = profileLeft.querySelector('.profile-letter-avatar');
+            if(oldAvatar) oldAvatar.remove();
+
+            const avatar = document.createElement('div');
+            avatar.className = 'profile-letter-avatar';
+            avatar.textContent = data.name.charAt(0);
+
+            profileLeft.prepend(avatar);
+
+            const removeBtn = document.getElementById('removePicBtn');
+            if(removeBtn) removeBtn.remove();
+
+            closeRemoveModal();
+            closeEdit();
+
+        }else{
+
+            alert("Failed to remove picture");
+
+        }
+
+    }catch(err){
+
+        console.error(err);
+        alert("Error removing picture");
+
+    }
+}
 const socket = io();
 socket.on('update_profiles', () => { window.location.reload(); });
+socket.on('update_members', () => { window.location.reload(); });
 </script>
 
 </body>
