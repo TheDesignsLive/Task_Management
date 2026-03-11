@@ -180,6 +180,58 @@ button:hover{
     font-size: 14px;
     text-align: center;
 }
+/* OTP Verified Alert Styles */
+.custom-alert{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.4);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.alert-box{
+    background:#fff;
+    padding:25px 30px;
+    border-radius:10px;
+    text-align:center;
+    width:280px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    animation: popup 0.3s ease;
+}
+
+.alert-box i{
+    font-size:40px;
+    color:#14b8a6;
+    margin-bottom:10px;
+}
+
+.alert-box h3{
+    margin-bottom:15px;
+    color:#333;
+}
+
+.alert-box button{
+    padding:8px 18px;
+    border:none;
+    background:#14b8a6;
+    color:white;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.alert-box button:hover{
+    background:#0f766e;
+}
+
+@keyframes popup{
+    from{transform:scale(0.8);opacity:0}
+    to{transform:scale(1);opacity:1}
+}
 </style>
 </head>
 
@@ -282,6 +334,14 @@ button:hover{
     </form>
 </div>
 
+<!-- OTP Verified Alert Styles  -->
+<div id="customAlert" class="custom-alert">
+    <div class="alert-box">
+        <i class="fa-solid fa-circle-check"></i>
+        <h3 id="alertMessage">Success</h3>
+        <button onclick="closeAlert()">OK</button>
+    </div>
+</div>
 <script>
 let signupOtp = null;
 let signupEmail = null;
@@ -435,7 +495,7 @@ function nextStep(step) {
             alert("Invalid OTP. Try again.");
             return;
         }
-        alert("OTP Verified Successfully!");
+        showAlert("OTP Verified Successfully!");
     }
 
     if(nextStepElement) {
@@ -482,6 +542,16 @@ function showTab(index){
     tabs[index].classList.add("active");
     forms[index].classList.add("active");
     underline.style.left = index * 50 + "%";
+}
+
+// OTP Verified Alert Functions
+function showAlert(message){
+    document.getElementById("alertMessage").innerText = message;
+    document.getElementById("customAlert").style.display = "flex";
+}
+
+function closeAlert(){
+    document.getElementById("customAlert").style.display = "none";
 }
 </script>
 
