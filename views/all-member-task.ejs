@@ -80,6 +80,7 @@ html,body{
   padding:8px;
   overflow-y:auto;
   min-width:350px;
+  position:relative;
 }
 .task-main,
 .task-change,
@@ -108,10 +109,10 @@ html,body{
 .task-change,
 .task-update,
 .task-other{
-  flex:2;
-  padding:8px;
+  flex:1;
+  padding:10px;
   overflow-y:auto;
-  min-width:300px;
+  min-width:250px;
 }
 .vertical-line{
   width:1px;
@@ -125,21 +126,24 @@ html,body{
   display:flex;
   flex-direction:column;
   background:#2E2D2D;
-  border-top:1px solid #666;
+  border-left:1px solid #666;
+  min-width:250px;
+  flex-shrink:0;
 }
 
 .completed-header{
-  margin:8px;
-  border-radius:50px;
+  height:30px;
+  margin:8px 10px 0 10px;
+  border-radius:100px;
   background:#0F8989;
-  padding:6px 15px;
   color:white;
-  font-weight:600;
   font-size:12px;
-  width:calc(100% - 38px);   /* always full width */
-  text-align:center;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:calc(100% - 20px);
 }
-
 .completed-section{
   flex:1;
   overflow-y:auto;
@@ -249,14 +253,28 @@ html,body{
   text-align:right;
 }
 
-.task-main{min-width:475px;}
-.task-change{min-width:300px;}
-.task-update{min-width:300px;}
-.task-other{min-width:300px;}
-.completed-wrapper{
-  min-width:10%;
-  max-width:100%;
-  flex-shrink:0;
+
+
+.task-column{
+  display:flex;
+  flex-direction:column;
+  flex:1.5;
+  min-width:400px;
+}
+
+.column-wrapper{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-width:250px;
+}
+.task-column .task-main,
+.column-wrapper .task-change,
+.column-wrapper .task-update,
+.column-wrapper .task-other{
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
 }
 
 
@@ -275,16 +293,21 @@ html,body{
   background:#CDF4F4;
 }
 
+
+
 /* keep task column sticky */
-.task-main{
+.task-column{
   position:sticky;
   left:0;
   z-index:4;
   background:#3C3A3A;
+    display:flex;
+  flex-direction:column;
+  flex:1.8;
+  min-width:510px;
 }
 
-/* keep vertical separator aligned */
-.task-main + .vertical-line{
+.task-column + .vertical-line{
   position:sticky;
   left:475px;
   z-index:3;
@@ -316,6 +339,42 @@ html,body{
  color: #ff4d4d !important;
   font-weight:500;
 }
+
+
+.task-main{
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
+}
+.column-wrapper{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-width:310px;
+}
+
+.column-header{
+  height:30px;
+  margin:8px 10px 0 10px; /* left right same as section padding */
+  border-radius:100px;
+  background:#0F8989;
+  color:white;
+  font-size:12px;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:calc(100% - 20px); /* match section width */
+}
+
+.task-column .task-main,
+.column-wrapper .task-change,
+.column-wrapper .task-update,
+.column-wrapper .task-other{
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
+}
 </style>
 </head>
 <body>
@@ -343,17 +402,12 @@ html,body{
 </form>
 </div>
 
-<div class="sub-header">
-  <div class="task-header">Task</div>
-  <div class="right-header">
-    <div class="change">Change</div>
-    <div class="update">Update</div>
-    <div class="other-task">Others</div>
-  </div>
-</div>
+
 
 <div class="content-wrapper">
-
+  <!-- TASK -->
+  <div class="task-column">
+    <div class="column-header">Task</div>
   <div class="task-main">
   <% tasks.filter(t=>t.section==='TASK' && t.status==='OPEN').forEach(task=>{ %>
 <%
@@ -404,12 +458,15 @@ if(task.due_date){
   </div>
   <% }) %>
   </div>
-
+  </div>
   <div class="vertical-line"></div> 
 
   <div class="right-section">
     <div class="top-columns">
       
+       <!-- CHANGE -->
+      <div class="column-wrapper">
+        <div class="column-header">Change</div>
       <div class="task-change">
       <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
       <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
@@ -439,10 +496,12 @@ if(task.due_date){
       </div>
       <% }) %>
       </div>
-
+</div>
       <div class="vertical-line"></div> 
-
-      <div class="task-update">
+ <!-- UPDATE -->
+      <div class="column-wrapper">
+        <div class="column-header">Update</div>
+        <div class="task-update">
       <% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
       <% let taskDate=''; if(task.due_date){ const d=new Date(task.due_date); const day=("0"+d.getDate()).slice(-2); const month=d.toLocaleString('en-GB',{month:'short'}); taskDate=`${day} ${month}`;} %>
       <div class="task-card priority-<%= task.priority.toLowerCase() %>">
@@ -457,9 +516,12 @@ if(task.due_date){
       </div>
       <% }) %>
       </div>
+       </div>
 
       <div class="vertical-line"></div> 
-
+            <!-- OTHERS -->
+      <div class="column-wrapper">
+        <div class="column-header">Others</div>
       <div class="task-other">
       <% tasks.filter(t=>t.section==='OTHERS' && t.status==='OPEN').forEach(task=>{ %>
       <div class="task-card priority-<%= (task.priority||'').toLowerCase() %>">
@@ -484,6 +546,7 @@ if(task.due_date){
       </div>
       <% }) %>
       </div>
+         </div>
 
       <div class="vertical-line"></div> 
 
