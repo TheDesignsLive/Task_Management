@@ -73,6 +73,7 @@ router.post("/signup", (req, res) => {
             req.session.adminId = result.insertId; // ✅ Save session
             req.session.role = "admin";
             req.session.email = email;
+            req.session.adminName = name;
 
             return res.redirect("/home");
 
