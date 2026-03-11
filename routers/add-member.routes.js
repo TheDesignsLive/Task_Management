@@ -20,7 +20,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter }).single('profile_pic');
 
-router.post('/', (req, res) => {
+router.post('/add-member', (req, res) => {
     upload(req, res, async (err) => {
         if (err) {
             return res.json({ success: false, message: err.message });

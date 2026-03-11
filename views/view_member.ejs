@@ -327,7 +327,7 @@
         </select>
         <input type="text" name="name" placeholder="Name" required>
         <input type="email" name="email" placeholder="Email" required>
-        <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10">
+        <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10" >
         <div id="addPhoneError" class="error-msg">Please enter a valid 10-digit phone number.</div>
         
         <div style="position: relative; margin-top: 15px;">
@@ -615,14 +615,7 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
 });
 
 window.onclick = function(event) {
-    if (event.target.className === 'dialog-overlay') {
-        // Prevent closing the custom alert by clicking outside IF it requires a reload to finish the action
-        if (event.target.id === 'customAlertModal' && alertReloadFlag) {
-            return; 
-        }
-        event.target.style.display = "none";
-        resetErrors();
-    }
+    // Left empty so clicking outside does NOT close the dialog
 }
 </script>
 
