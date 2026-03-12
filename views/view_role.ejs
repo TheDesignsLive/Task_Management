@@ -84,7 +84,7 @@ body {
 
 /* ===== Table - Dark Theme ===== */
 .table-container {
-  background-color: rgba(255,255,255,0.05); /* Darker container */
+  background-color: rgba(255,255,255,0.05);
   padding: 20px;
   border-radius: 8px;
   margin: 0 50px;
@@ -93,7 +93,7 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  color: white; /* White text for dark theme */
+  color: white;
 }
 
 table th {
@@ -136,7 +136,7 @@ table tr:hover td {
   z-index: 1000;
 }
 
-/* ===== Dialog Box (Untouched structure) ===== */
+/* ===== Dialog Box ===== */
 .dialog-box {
   background: #fff;
   width: 380px;
@@ -196,7 +196,7 @@ table tr:hover td {
 .edit-icon:hover { color: #f1c40f; }
 .delete-icon:hover { color: #ff4d4d; }
 
-/* ===== Confirmation Modal Style (Same as Member Page) ===== */
+/* ===== Confirmation Modal Style ===== */
 .confirm-modal-content {
   background: white;
   padding: 25px;
@@ -232,7 +232,7 @@ table tr:hover td {
 .btn-danger:hover { background-color: #c0392b; }
 .btn-cancel { background-color: #f1f1f1; color: #333; }
 .btn-cancel:hover { background-color: #e2e2e2; }
-.btn-success { background-color: #0F8989; color: #fff; } /* Added for Success Alert */
+.btn-success { background-color: #0F8989; color: #fff; } 
 .btn-success:hover { background-color: #0c7575; }
 
 /* ===== Permissions Guide Style ===== */
@@ -270,7 +270,7 @@ table tr:hover td {
       </div>
     </div>
 
-    <div class="table-container">
+    <div class="table-container" id="tableContent">
       <% if (roles && roles.length > 0) { %>
         <table id="rolesTable">
           <thead>
@@ -283,9 +283,9 @@ table tr:hover td {
           </thead>
 
           <tbody>
-           <% roles.forEach((r, index) => { %>
-            <tr class="role-row">
-               <td><%= index + 1 %></td>
+            <% roles.forEach((r, index) => { %>
+             <tr class="role-row">
+                <td><%= index + 1 %></td>
               <td class="role-name"><%= r.role_name %></td>
               <td><%= r.control_type %></td>
             <td><%= new Date(r.created_at).toLocaleDateString() %></td>
@@ -403,13 +403,24 @@ table tr:hover td {
 </div>
 
 <script>
-// FLAG TO PREVENT SOCKET REFRESH WHILE DIALOG IS OPEN
 let isProcessingAjax = false;
 
-// ================= CUSTOM ALERT FUNCTION =================
-let alertReloadFlag = false;
+// ================= ZERO RELOAD REFRESH FUNCTION =================
+async function refreshTable() {
+    try {
+        const response = await fetch(window.location.href);
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTable = doc.getElementById('tableContent').innerHTML;
+        document.getElementById('tableContent').innerHTML = newTable;
+    } catch (err) {
+        console.error("Failed to refresh table:", err);
+    }
+}
 
-function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+// ================= CUSTOM ALERT FUNCTION =================
+function showAlertDialog(title, message, isSuccess) {
   document.getElementById("customAlertTitle").innerText = title;
   document.getElementById("customAlertMessage").innerText = message;
   
@@ -426,28 +437,20 @@ function showAlertDialog(title, message, isSuccess, shouldReload = false) {
       btn.className = "btn btn-danger";
   }
   
-  alertReloadFlag = shouldReload;
   document.getElementById("customAlertModal").style.display = "flex";
 }
 
 document.getElementById("customAlertBtn").addEventListener("click", function() {
   document.getElementById("customAlertModal").style.display = "none";
-  if(alertReloadFlag) {
-      window.location.reload();
-  } else {
-      isProcessingAjax = false; 
-  }
+  isProcessingAjax = false; 
 });
-// =========================================================
 
-
-// Search Logic: StartsWith fix
+// Search Logic
 document.getElementById('searchRole').addEventListener('input', function() {
   const filter = this.value.toLowerCase();
   const rows = document.querySelectorAll('.role-row');
   rows.forEach(row => {
     const nameText = row.querySelector('.role-name').textContent.trim().toLowerCase();
-    // Use startsWith instead of includes to fix the "a" showing "Manager" issue
     row.style.display = nameText.startsWith(filter) ? "" : "none";
   });
 });
@@ -463,14 +466,13 @@ function openEditDialog(id, name, control) {
   document.getElementById("editRoleDialog").style.display = "flex";
   document.getElementById("edit_role_name").value = name;
   document.getElementById("edit_control_type").value = control;
-  document.getElementById("editRoleForm").action = "/edit-role/" + id;
+  document.getElementById("editRoleForm").dataset.action = "/edit-role/" + id;
 }
 
 function closeEditDialog() {
   document.getElementById("editRoleDialog").style.display = "none";
 }
 
-// Delete Logic
 let deleteTargetId = null;
 function openDeletePopup(id, name) {
   deleteTargetId = id;
@@ -482,8 +484,6 @@ function closeDeletePopup() {
   document.getElementById("deleteModal").style.display = "none";
 }
 
-// ===== AJAX JSON FETCH REQUESTS =====
-
 // ADD ROLE
 document.getElementById('addRoleForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -492,7 +492,7 @@ document.getElementById('addRoleForm').addEventListener('submit', async function
         control_type: this.control_type.value
     };
     
-    isProcessingAjax = true; // Pause socket reload
+    isProcessingAjax = true; 
     try {
         const response = await fetch('/add-role', {
             method: 'POST',
@@ -502,15 +502,15 @@ document.getElementById('addRoleForm').addEventListener('submit', async function
         const resData = await response.json();
         if (resData.success) {
             closeCategoryDialog();
-            showAlertDialog("Success!", resData.message || "Role created successfully.", true, true);
+            this.reset();
+            showAlertDialog("Success!", resData.message, true);
         } else {
-            isProcessingAjax = false; // Unblock if error
-            showAlertDialog("Error", resData.message, false, false);
+            isProcessingAjax = false; 
+            showAlertDialog("Error", resData.message, false);
         }
     } catch (err) {
-        console.error(err);
-        isProcessingAjax = false; // Unblock if error
-        showAlertDialog("Error", "Server Error", false, false);
+        isProcessingAjax = false; 
+        showAlertDialog("Error", "Server Error", false);
     }
 });
 
@@ -522,9 +522,9 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
         control_type: document.getElementById('edit_control_type').value
     };
     
-    isProcessingAjax = true; // Pause socket reload
+    isProcessingAjax = true; 
     try {
-        const response = await fetch(this.action, {
+        const response = await fetch(this.dataset.action, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -532,51 +532,45 @@ document.getElementById('editRoleForm').addEventListener('submit', async functio
         const resData = await response.json();
         if (resData.success) {
             closeEditDialog();
-            showAlertDialog("Updated!", resData.message || "Role updated successfully.", true, true);
+            showAlertDialog("Updated!", resData.message, true);
         } else {
-            isProcessingAjax = false; // Unblock if error
-            showAlertDialog("Error", resData.message, false, false);
+            isProcessingAjax = false; 
+            showAlertDialog("Error", resData.message, false);
         }
     } catch (err) {
-        console.error(err);
-        isProcessingAjax = false; // Unblock if error
-        showAlertDialog("Error", "Server Error", false, false);
+        isProcessingAjax = false; 
+        showAlertDialog("Error", "Server Error", false);
     }
 });
 
 // DELETE ROLE
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     if (deleteTargetId) {
-        isProcessingAjax = true; // Pause socket reload
+        isProcessingAjax = true; 
         try {
             const response = await fetch('/delete-role/' + deleteTargetId);
             const resData = await response.json();
-            
             closeDeletePopup();
-            
             if (resData.success) {
-                showAlertDialog("Deleted!", resData.message || "Role deleted successfully.", true, true);
+                showAlertDialog("Deleted!", resData.message, true);
             } else {
-                isProcessingAjax = false; // Unblock if error
-                showAlertDialog("Error", resData.message, false, false);
+                isProcessingAjax = false; 
+                showAlertDialog("Error", resData.message, false);
             }
         } catch (err) {
-            console.error(err);
-            closeDeletePopup();
-            isProcessingAjax = false; // Unblock if error
-            showAlertDialog("Error", "Server Error", false, false);
+            isProcessingAjax = false; 
+            showAlertDialog("Error", "Server Error", false);
         }
     }
 });
 
-// Close dialogs on overlay click
+// DIALOG CLICK LOGIC (Only close via Cross)
 window.onclick = function(event) {
   if (event.target.className === 'dialog-overlay') {
-    // Prevent closing the custom alert by clicking outside IF it requires a reload to finish the action
-    if (event.target.id === 'customAlertModal' && alertReloadFlag) {
-        return; 
+    // Only allow background-click closing for confirmation modals, not data forms or alerts
+    if (event.target.id === 'deleteModal') {
+        event.target.style.display = "none";
     }
-    event.target.style.display = "none";
   }
 }
 </script>
@@ -585,10 +579,7 @@ window.onclick = function(event) {
 <script>
     const socket = io();
     socket.on('update_roles', () => {
-        // ✅ Only auto-reload if the user doesn't have an alert modal waiting for them
-        if (!isProcessingAjax) {
-            window.location.reload(); 
-        }
+        refreshTable();
     });
 </script>
 

@@ -110,7 +110,52 @@ router.post("/forgot-password/send-otp", async (req, res) => {
         `
         };
     }
-    
+    if (sent_for == "change_password") {
+    mailOptions = {
+        from: 'social.designs.live@gmail.com',
+        to: contact,
+        subject: "Security Alert: OTP to Change Password",
+        text: `Your OTP for changing your password is ${otp}. If you didn't request this, please secure your account.`,
+        html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+            <h2 style="color: #095959; text-align: center;">Password Change Verification</h2>
+            <p style="font-size: 15px; color: #555; text-align: center; font-style: italic; margin-bottom: 25px;">
+                "Verifying your identity to keep your account credentials safe."
+            </p>
+            <p style="font-size: 16px; color: #333;">To finalize your new password, please enter the following One-Time Password (OTP):</p>
+            <div style="background-color: #fef9f9; border: 2px dashed #095959; padding: 20px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #095959;">${otp}</span>
+            </div>
+            <p style="font-size: 13px; color: #777; text-align: center;">
+                If you did not authorize this change, please ignore this email and contact support immediately.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin-top: 20px;">
+            <p style="font-size: 12px; color: #aaa; text-align: center;">© 2026 [Your Company Name]. All rights reserved.</p>
+        </div>`
+    };
+}   
+
+if (sent_for == "delete_profile") {
+        mailOptions = {
+            from: 'social.designs.live@gmail.com',
+            to: contact,
+            subject: "CRITICAL: OTP to Delete Your Profile",
+            text: `Your OTP for deleting your profile is ${otp}. This action is permanent.`,
+            html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px; border-top: 5px solid #d9534f;">
+                <h2 style="color: #d9534f; text-align: center;">Account Deletion Request</h2>
+                <p style="font-size: 16px; color: #333;">You have requested to <strong>permanently delete</strong> your profile and all associated data. This action cannot be undone.</p>
+                <div style="background-color: #fff5f5; border: 2px dashed #d9534f; padding: 20px; text-align: center; margin: 20px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #d9534f;">${otp}</span>
+                </div>
+                <p style="font-size: 13px; color: #777; text-align: center;">
+                    If you did not request this, your account may be compromised. Please change your password immediately.
+                </p>
+                <hr style="border: none; border-top: 1px solid #eee; margin-top: 20px;">
+                <p style="font-size: 12px; color: #aaa; text-align: center;">© 2026 [Your Company Name]. All rights reserved.</p>
+            </div>`
+        };
+    }
 
     try {
         await transporter.sendMail(mailOptions);

@@ -17,10 +17,10 @@ const homeroutes = require('./routers/home.routes');
 const logoutRoutes = require('./routers/logout.routes');
 const viewMemberRoutes = require('./routers/view_member');
 const addmemberRoutes = require('./routers/member.routes');
-const addrole = require('./routers/add-role.routes');
 const viewrole = require('./routers/view-role.routes');
-const delete_role = require('./routers/delete-role.routes');
-const editrole = require('./routers/edit-role.routes');
+// const addrole = require('./routers/add-role.routes');
+// const delete_role = require('./routers/delete-role.routes');
+// const editrole = require('./routers/edit-role.routes');
 const notification = require('./routers/notifications.routes');
 const memberRequest = require('./routers/memberRequest.routes');
 const AssignByMe = require('./routers/assign_by_me.routes');
@@ -110,10 +110,10 @@ app.use('/', addmemberRoutes); //edit,delete,suspend
 app.use('/', memberRequest);
 
 // Roles Management
-app.use('/view-roles', viewrole);
-app.use('/add-role', addrole);
-app.use('/', editrole);
-app.use('/', delete_role);
+app.use('/', viewrole);
+// app.use('/add-role', addrole);
+// app.use('/', editrole);
+// app.use('/', delete_role);
 
 // Tasks & Features
 app.use('/assign_by_me', AssignByMe);
