@@ -65,7 +65,8 @@ router.get('/view-roles', async (req, res) => {
             roles,
             members,
             adminName, 
-            session: req.session
+            session: req.session,
+            activePage:"view_member"
         });
 
     } catch (err) {
