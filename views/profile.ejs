@@ -59,13 +59,16 @@ html, body {
   object-fit: cover;
   margin-bottom: 15px;
 }
+/* Updated to match the first code's avatar style */
 .profile-letter-avatar {
-  background: rgba(255,255,255,0.2);
-  display: flex;
+  background-color: #095959;
+  color: white;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 60px;
   font-weight: bold;
+  font-size: 60px;
+  text-transform: uppercase;
 }
 .profile-name-left {
   font-size: 24px;
@@ -155,17 +158,18 @@ html, body {
   </div>
 
   <div class="main-content">
-
     <div class="profile-card">
       <div class="profile-left">
-          <% if (profilePic) { %>
-              <img src="/images/<%= profilePic %>" class="profile-img">
-          <% } else { %>
-              <div class="profile-letter-avatar">
-                  <%= name.charAt(0) %>
-              </div>
-          <% } %>
-          <div class="profile-name-left"><%= name %></div>
+          <div id="profileImageArea">
+            <% if (profilePic) { %>
+                <img src="/images/<%= profilePic %>" class="profile-img">
+            <% } else { %>
+                <div class="profile-letter-avatar">
+                    <%= name.charAt(0) %>
+                </div>
+            <% } %>
+          </div>
+          <div class="profile-name-left text-uppercase"><%= name %></div>
           <div class="profile-role-tag"><%= role %></div>
       </div>
 
@@ -175,7 +179,7 @@ html, body {
           <div class="info-grid">
               <div class="info-item">
                   <label>Company</label>
-                  <span><%= company || 'N/A' %></span>
+                  <span id="displayCompany"><%= company || 'N/A' %></span>
               </div>
               <div class="info-item">
                   <label>Email Address</label>
@@ -183,7 +187,7 @@ html, body {
               </div>
               <div class="info-item">
                   <label>Phone Number</label>
-                  <span><%= phone && phone.trim() !== "" ? phone : "-----" %></span>
+                  <span id="displayPhone"><%= phone && phone.trim() !== "" ? phone : "-----" %></span>
               </div>
 
               <% if (session.role === 'admin') { %>
@@ -211,14 +215,13 @@ html, body {
           <button class="profile-btn" onclick="openEdit()">Edit Profile Information</button>
       </div>
     </div>
-
   </div>
 </div>
 
 <div class="modal" id="editModal">
   <div style="width:400px; background:white; border-radius:10px; padding:25px; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
     <h3 style="margin-top:0; color: #095959;">Edit Profile</h3>
-    <form id="editForm" action="/profile/update-profile" method="POST" enctype="multipart/form-data">
+    <form id="editForm" enctype="multipart/form-data">
       <label style="font-size:12px; color:#666;">Full Name</label>
       <input type="text" name="name" value="<%= name %>" placeholder="Name" required style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
 
@@ -232,7 +235,18 @@ html, body {
       <% } %>
 
       <label style="font-size:12px; color:#666;">Profile Picture</label>
-      <input type="file" name="profile_pic" style="margin-bottom:20px; width:100%;" accept="image/*">
+      <input type="file" name="profile_pic" style="margin-bottom:5px; width:100%;" accept=".jpg,.jpeg,.png,.webp">
+      <div style="font-size:11px;color:#777;margin-bottom:15px;">
+        Supported formats: JPG, JPEG, PNG, WEBP | Max size: 5MB
+      </div>
+
+      <div id="removeBtnContainer">
+        <% if(profilePic && profilePic !== ''){ %>
+            <button id="removePicBtn" type="button" onclick="openRemoveModal()" style="background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;margin-bottom:15px;width:100%;font-weight:600;">
+            Remove Profile Picture
+            </button>
+        <% } %>
+      </div>
 
       <div style="display:flex; gap:10px;">
         <button type="submit" style="flex:1; background:#00a896; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer; font-weight: 600;">Save Changes</button>
@@ -242,9 +256,23 @@ html, body {
   </div>
 </div>
 
+<div class="modal" id="removeModal">
+    <div style="width:320px;background:white;border-radius:10px;padding:25px;text-align:center;box-shadow:0 5px 20px rgba(0,0,0,0.3);">
+      <h3 style="margin-top:0;color:#095959;">Remove Picture</h3>
+      <p style="font-size:14px;color:#555;margin-bottom:20px;">Are you sure you want to remove your profile picture?</p>
+      <div style="display:flex;gap:10px;">
+        <button onclick="confirmRemovePic()" style="flex:1;background:#ef4444;color:white;border:none;padding:10px;border-radius:5px;cursor:pointer;font-weight:600;">Remove</button>
+        <button onclick="closeRemoveModal()" style="flex:1;background:#ddd;border:none;padding:10px;border-radius:5px;cursor:pointer;font-weight:600;">Cancel</button>
+      </div>
+    </div>
+</div>
+
 <script>
 function openEdit(){document.getElementById('editModal').style.display='flex';}
 function closeEdit(){document.getElementById('editModal').style.display='none';}
+function openRemoveModal(){document.getElementById('removeModal').style.display='flex';}
+function closeRemoveModal(){document.getElementById('removeModal').style.display='none';}
+
 document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
 
 const editForm = document.getElementById('editForm');
@@ -254,7 +282,6 @@ editForm.addEventListener('submit', async function(e) {
     const phoneError = document.getElementById('phoneError');
     const phoneRegex = /^\d{10}$/;
     
-    // If phone has a value, it MUST be 10 digits. If empty, it is fine.
     if(phone && !phoneRegex.test(phone)) { 
         phoneError.style.display = 'block'; 
         return; 
@@ -267,34 +294,44 @@ editForm.addEventListener('submit', async function(e) {
     try {
         const res = await fetch('/profile/update-profile', { method:'POST', body: formData });
         const data = await res.json();
+        
         if(data.success){
             document.querySelector('.profile-name-left').textContent = data.name;
-            const infoItems = document.querySelectorAll('.info-grid .info-item span');
-            let index = 0;
-            <% if(session.role=="admin"){ %>
-                infoItems[index++].textContent = data.company || 'N/A';
-            <% } %>
-            index++;
-            infoItems[index++].textContent = data.phone || "-----";
+            const navWelcome = document.getElementById('navWelcomeText');
+            if(navWelcome) navWelcome.innerText = "Welcome " + data.name;
+
+            if(data.phone) document.getElementById('displayPhone').textContent = data.phone;
+            if(data.company) document.getElementById('displayCompany').textContent = data.company;
+
             if(data.profilePic){
-                const imgContainer = document.querySelector('.profile-left');
-                let imgTag = document.querySelector('.profile-img');
-                if(!imgTag){
-                    const letterAvatar = document.querySelector('.profile-letter-avatar');
-                    if(letterAvatar) letterAvatar.remove();
-                    imgTag = document.createElement('img');
-                    imgTag.classList.add('profile-img');
-                    imgContainer.prepend(imgTag);
+                const imgArea = document.getElementById('profileImageArea');
+                imgArea.innerHTML = `<img src="/images/${data.profilePic}?t=${new Date().getTime()}" class="profile-img">`;
+                
+                if(!document.getElementById('removePicBtn')){
+                    document.getElementById('removeBtnContainer').innerHTML = `
+                        <button id="removePicBtn" type="button" onclick="openRemoveModal()" style="background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;margin-bottom:15px;width:100%;font-weight:600;">
+                        Remove Profile Picture
+                        </button>`;
                 }
-                imgTag.src = '/images/' + data.profilePic;
             }
             closeEdit();
-        } else { alert("Profile update failed!"); }
+        } else { alert(data.message || "Profile update failed!"); }
     } catch(err){ console.error(err); alert("Something went wrong!"); }
 });
 
-const socket = io();
-socket.on('update_profiles', () => { window.location.reload(); });
+async function confirmRemovePic(){
+    try {
+        const res = await fetch('/profile/remove-picture', { method:'POST' });
+        const data = await res.json();
+        if(data.success){
+            const imgArea = document.getElementById('profileImageArea');
+            imgArea.innerHTML = `<div class="profile-letter-avatar">${data.name.charAt(0)}</div>`;
+            const rb = document.getElementById('removePicBtn');
+            if(rb) rb.remove();
+            closeRemoveModal();
+        } else { alert("Failed to remove picture"); }
+    } catch(err) { console.error(err); alert("Error removing picture"); }
+}
 </script>
 
 </body>
