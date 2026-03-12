@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
+
 router.get('/all-member-task', async (req, res) => {
 
     if (!req.session.role) {
@@ -176,7 +177,9 @@ router.get('/all-member-task', async (req, res) => {
             roles,
             adminName,
             tasks,
-            selected_user: selectedUser
+            selected_user: selectedUser,
+            activePage: "allmembers"
+
         });
 
     } catch (err) {

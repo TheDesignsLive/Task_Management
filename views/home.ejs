@@ -476,10 +476,14 @@ html, body {
 
 /* TASK column bigger */
 .task-column{
+  position:sticky;
+  left:0;
+  z-index:4;
+  background:#3C3A3A;
   display:flex;
   flex-direction:column;
-  flex:1.5;        /* increased width */
-  min-width:400px; /* wider minimum */
+  flex:1.5;
+  min-width:400px;
 }
 
 /* other columns normal */
@@ -487,6 +491,9 @@ html, body {
   display:flex;
   flex-direction:column;
   flex:1;
+  min-width:250px;
+}
+.completed-wrapper{
   min-width:250px;
 }
 
@@ -666,11 +673,13 @@ function createTaskElement(task) {
       <div class="task-title">${task.title}</div>
       <div class="task-name">${task.assigned_by_name || ''}</div>
       
-      <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" x1="12" y1="8" x2="12" y2="8.5"></line>
-        <line x1="12" y1="11" x2="12" y2="16"></line>
-      </svg>
+  ${task.description ? `
+<svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10"></circle>
+  <line x1="12" y1="8" x2="12" y2="8.5"></line>
+  <line x1="12" y1="11" x2="12" y2="16"></line>
+</svg>
+` : ''}
 
       <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
         ${formatDate(task.due_date)}
@@ -762,10 +771,14 @@ function createTaskElement(task) {
     });
   });
 
-  div.querySelector('.info-icon').addEventListener('click', (e) => {
+const infoIcon = div.querySelector('.info-icon');
+
+if(infoIcon){
+  infoIcon.addEventListener('click', (e) => {
     e.stopPropagation();
     div.classList.toggle('expanded');
   });
+}
 
   div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';

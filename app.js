@@ -41,13 +41,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
     secret: 'your_secret_key',
     resave: false,
-    saveUninitialized: false,   // better security
+    saveUninitialized: false,  
     cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    //  maxAge: 30* 1 * 24 * 60 * 60 * 1000 // 30 days
     }
 }));
 
-// SOCKET.IO MIDDLEWARE: This makes 'req.io' available in all your routers
+
 app.use((req, res, next) => {
     req.io = io;
     next();

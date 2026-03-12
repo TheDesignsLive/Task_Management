@@ -11,6 +11,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+
+
 router.get('/notifications', async (req, res) => {
     if (!req.session.role) return res.redirect('/');
 
@@ -133,7 +135,8 @@ router.get('/notifications', async (req, res) => {
             deletionRequests, 
             roles,
             announcements,
-            session: req.session
+            session: req.session,
+            activePage: "notifications"
         });
 
     } catch (err) {

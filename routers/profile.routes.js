@@ -97,7 +97,9 @@ router.get('/', async (req, res) => {
             phone,
             company,
             role,
-            userRoleName
+            userRoleName,
+            activePage: "profile"
+        
         });
 
     } catch (err) {

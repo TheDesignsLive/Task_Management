@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
             return res.json({ success: true, openTasks, completedTasks });
         }
 
-        res.render('assign_by_me', { members, adminName, openTasks, completedTasks, session: req.session });
+        res.render('assign_by_me', { members, adminName, openTasks, completedTasks, session: req.session,activePage: "assign_by_me" });
     } catch (err) {
         console.error(err);
         res.status(500).send("Error loading Assign By Me");

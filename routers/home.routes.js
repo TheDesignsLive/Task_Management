@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 
+
+
+
+
+
+
 /* ===============================
     NEW API ENDPOINT FOR NO-RELOAD
 ================================ */
@@ -86,7 +92,7 @@ router.get('/home', async (req, res) => {
 
             tasks = [...userOwnTasksRows, ...adminTasksRows, ...userToOthersTasksRows]; // ✅ use correct variable names
         }
-        res.render("home", { members, adminName, tasks, session: req.session });
+        res.render("home", { members, adminName, tasks, session: req.session, activePage: 'home' });
     } catch (err) { res.send("Error loading home"); }
 });
 
