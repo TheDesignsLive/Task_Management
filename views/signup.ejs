@@ -352,20 +352,22 @@ async function sendSignupOtp(email){
     signupOtp = Math.floor(100000 + Math.random() * 900000);
     signupEmail = email;
 
-    const res = await fetch("/forgot-password/send-otp", {
+    // IMMEDIATELY SHOW THE NEXT STEP
+    document.querySelector(".step-1").classList.remove("active");
+    document.querySelector(".step-2").classList.add("active");
+
+    // TRIGGER THE API REQUEST IN BACKGROUND
+    fetch("/forgot-password/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contact: email, otp: signupOtp, sent_for: "signup" })
+    }).then(res => res.json()).then(data => {
+        if(data.status !== "sent") {
+            showAlertDialog("Error", "Failed to send OTP to your email. Please go back and try again.", false);
+        }
+    }).catch(err => {
+        console.error("OTP send error:", err);
     });
-
-    const data = await res.json();
-    if(data.status === "sent") {
-        showAlertDialog("Success", "OTP sent successfully to your email.", true);
-        document.querySelector(".step-1").classList.remove("active");
-        document.querySelector(".step-2").classList.add("active");
-    } else {
-        showAlertDialog("Error", "Failed to send OTP. Try again.", false);
-    }
 }
 
 document.getElementById("loginForm").addEventListener("submit", async function(e){

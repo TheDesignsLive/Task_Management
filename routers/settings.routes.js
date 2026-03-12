@@ -37,7 +37,8 @@ router.get('/', async (req, res) => {
         res.render('settings', {
             members,
             adminName,
-            session: req.session
+            session: req.session,
+            activePage:"settings"
         });
 
     } catch (err) {
@@ -49,39 +50,19 @@ router.get('/', async (req, res) => {
 /* ================= CHANGE PASSWORD ================= */
 router.post('/change-password', async (req, res) => {
     if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
-
-    const { current_password, new_password, confirm_password } = req.body;
-
-    if (new_password !== confirm_password)
-        return res.json({ success: false, message: 'New passwords do not match' });
-
+    const { new_password } = req.body;
     try {
         let table = req.session.role === "admin" ? "admins" : "users";
         let id = req.session.role === "admin" ? req.session.adminId : req.session.userId;
 
-        const [rows] = await con.query(`SELECT password FROM ${table} WHERE id=?`, [id]);
-
-        if (!rows.length) return res.json({ success: false, message: 'Account not found' });
-
-        // Verify current password 
-        const match = await bcrypt.compare(current_password, rows[0].password);
-        if (!match)
-            return res.json({ success: false, message: 'Incorrect current password' });
-
-        // HASH THE NEW PASSWORD
-        const saltRounds = 10;
-        const hashedNewPassword = await bcrypt.hash(new_password, saltRounds);
-
+        const hashedNewPassword = await bcrypt.hash(new_password, 10);
         await con.query(`UPDATE ${table} SET password=? WHERE id=?`, [hashedNewPassword, id]);
-
+        
         res.json({ success: true, message: 'Your password has been successfully updated.' });
-
     } catch (err) {
-        console.log(err);
-        res.json({ success: false, message: 'Failed to update password due to a server error.' });
+        res.json({ success: false, message: 'Server error updating password.' });
     }
 });
-
 /* ================= CHANGE GMAIL ================= */
 router.post('/change-email', async (req, res) => {
     if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
@@ -117,7 +98,10 @@ router.get('/delete-profile', async (req, res) => {
 
     try {
         let adminId = req.session.adminId;
+        // Delete associated users first if needed (based on your DB constraints)
+        await con.query(`DELETE FROM users WHERE admin_id=?`, [adminId]);
         await con.query(`DELETE FROM admins WHERE id=?`, [adminId]);
+        
         req.session.destroy();
         res.json({ success: true, message: 'Your profile and all associated data have been permanently deleted.' });
     } catch (err) {
