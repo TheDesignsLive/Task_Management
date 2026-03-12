@@ -57,7 +57,7 @@
       padding: 10px 20px;
       border: none;
       border-radius: 100px;
-      background: white; /* Changed to white */
+      background: white;
       color: #333;
       width: 300px;
       outline: none;
@@ -97,8 +97,8 @@
     }
 
     table th {
-      background-color: #CDF4F4; /* Lightened header */
-      color: #095959; /* Darker text for contrast */
+      background-color: #CDF4F4;
+      color: #095959;
       text-align: center;
       padding: 12px;
       font-size: 14px;
@@ -149,7 +149,7 @@
     .edit-icon:hover { color: #FFD000; }
     .delete-icon:hover { color: #ff4d4d; }
 
-    /* ====== Dialogs (Structure Unchanged) ====== */
+    /* ====== Dialogs ====== */
     .dialog-overlay {
       position: fixed;
       inset: 0;
@@ -183,7 +183,6 @@
 
     .error-msg { color: #e74c3c; font-size: 11px; margin-top: 4px; display: none; }
 
-    /* ====== Modals for Suspend/Delete (Styled from requested snippet) ====== */
     .confirm-modal-content {
       background: white;
       padding: 25px;
@@ -222,7 +221,6 @@
     .btn-success { background-color: #0F8989; color: #fff; } 
     .btn-success:hover { background-color: #0c7575; }
 
-    /* Empty Role Warning Style */
     .empty-role-warning {
       text-align: center;
       padding: 20px;
@@ -250,7 +248,7 @@
       </div>
     </div>
 
-    <div class="table-container">
+    <div class="table-container" id="tableContent">
       <% if (users && users.length > 0) { %>
         <table id="membersTable">
           <thead>
@@ -314,7 +312,6 @@
 <div class="dialog-overlay" id="dialogBox">
   <div class="dialog-box">
     <span class="close-btn" onclick="closeDialog()">✖</span>
-    
     <% if (roles && roles.length > 0) { %>
       <h3>Add Member</h3>
       <form id="addMemberForm">
@@ -327,23 +324,21 @@
         </select>
         <input type="text" name="name" placeholder="Name" required>
         <input type="email" name="email" placeholder="Email" required>
-        <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10">
+        <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10" >
         <div id="addPhoneError" class="error-msg">Please enter a valid 10-digit phone number.</div>
-        
         <div style="position: relative; margin-top: 15px;">
           <input type="password" id="addPassword" name="password" placeholder="Password" required>
           <i class="fa-solid fa-eye-slash" id="toggleAddPassword" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
         </div>
         <div id="addPassError" class="error-msg">Min 8 chars, 1 Upper, 1 Lower, 1 Number.</div>
-
         <div style="position: relative; margin-top: 15px;">
           <input type="password" id="addConfirmPassword" placeholder="Confirm Password" required>
           <i class="fa-solid fa-eye-slash" id="toggleAddConfirm" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
         </div>
         <div id="addConfirmError" class="error-msg">Passwords do not match.</div>
-
         <label>Profile Picture</label>
         <input type="file" name="profile_pic" accept="image/*">
+        <small style="display: block; color: #666; font-size: 11px; margin-top: 3px;">Supported formats: jpeg, jpg, png, gif, webp</small>
         <button type="submit">Submit</button>
       </form>
     <% } else { %>
@@ -373,7 +368,6 @@
       <input type="email" name="email" id="edit_email" placeholder="Email" required>
       <input type="text" name="phone" id="edit_phone" placeholder="Phone">
       <div id="editPhoneError" class="error-msg">10 digits required.</div>
-
       <div style="position: relative; margin-top: 15px;">
         <input type="password" id="editPassword" name="password" placeholder="New Password (optional)">
         <i class="fa-solid fa-eye-slash" id="toggleEditPassword" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
@@ -384,6 +378,7 @@
       </div>
       <label>Profile Picture</label>
       <input type="file" name="profile_pic" accept="image/*">
+      <small style="display: block; color: #666; font-size: 11px; margin-top: 3px;">Supported formats: jpeg, jpg, png, gif, webp</small>
       <button type="submit">Update Member</button>
     </form>
   </div>
@@ -424,16 +419,27 @@
   </div>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
 const userRole = '<%= session.role %>';
-
-// FLAG TO PREVENT SOCKET REFRESH WHILE DIALOG IS OPEN
 let isProcessingAjax = false;
 
-// ================= CUSTOM ALERT FUNCTION =================
-let alertReloadFlag = false;
+// ================= ZERO RELOAD REFRESH FUNCTION =================
+async function refreshTable() {
+    try {
+        const response = await fetch(window.location.href);
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTable = doc.getElementById('tableContent').innerHTML;
+        document.getElementById('tableContent').innerHTML = newTable;
+    } catch (err) {
+        console.error("Failed to refresh table:", err);
+    }
+}
 
-function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+// ================= CUSTOM ALERT FUNCTION =================
+function showAlertDialog(title, message, isSuccess) {
   document.getElementById("customAlertTitle").innerText = title;
   document.getElementById("customAlertMessage").innerText = message;
   
@@ -450,20 +456,15 @@ function showAlertDialog(title, message, isSuccess, shouldReload = false) {
       btn.className = "btn btn-danger";
   }
   
-  alertReloadFlag = shouldReload;
   document.getElementById("customAlertModal").style.display = "flex";
 }
 
 document.getElementById("customAlertBtn").addEventListener("click", function() {
   document.getElementById("customAlertModal").style.display = "none";
-  if(alertReloadFlag) {
-      window.location.reload();
-  } else {
-      isProcessingAjax = false; // Reset flag so socket can reload if needed later
-  }
+  isProcessingAjax = false; 
 });
-// =========================================================
 
+// Search Logic
 document.getElementById('searchMember').addEventListener('input', function() {
   const filter = this.value.toLowerCase();
   const rows = document.querySelectorAll('.member-row');
@@ -486,7 +487,6 @@ function openEditDialog(id, roleId, name, email, phone) {
   document.getElementById("editDialogBox").style.display = "flex";
 }
 function closeEditDialog() { document.getElementById("editDialogBox").style.display = "none"; resetErrors(); }
-
 function resetErrors() { document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none'); }
 
 function togglePassword(inputId, iconId) {
@@ -503,15 +503,14 @@ function togglePassword(inputId, iconId) {
 
 const toggleAddPass = document.getElementById("toggleAddPassword");
 if (toggleAddPass) toggleAddPass.addEventListener("click", () => togglePassword("addPassword", "toggleAddPassword"));
-
 const toggleAddConf = document.getElementById("toggleAddConfirm");
 if (toggleAddConf) toggleAddConf.addEventListener("click", () => togglePassword("addConfirmPassword", "toggleAddConfirm"));
-
 document.getElementById("toggleEditPassword").addEventListener("click", () => togglePassword("editPassword", "toggleEditPassword"));
 document.getElementById("toggleEditConfirm").addEventListener("click", () => togglePassword("editConfirmPassword", "toggleEditConfirm"));
 
 const passRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
 
+// Add Member POST
 const addForm = document.getElementById("addMemberForm");
 if (addForm) {
   addForm.addEventListener("submit", async function(e) {
@@ -527,45 +526,44 @@ if (addForm) {
       if(pass !== confirm) { document.getElementById("addConfirmError").style.display = 'block'; hasError = true; }
       if(hasError) return;
 
-      isProcessingAjax = true; // Block auto-refresh
+      isProcessingAjax = true; 
       const formData = new FormData(this);
       try {
           const response = await fetch('/add-member', { method: 'POST', body: formData });
           const data = await response.json();
           if (data.success) {
               closeDialog();
-              showAlertDialog("Success!", data.message, true, true);
+              addForm.reset();
+              showAlertDialog("Success!", data.message, true);
           } else {
-              isProcessingAjax = false; // Unblock if error
-              showAlertDialog("Error", data.message, false, false);
+              isProcessingAjax = false;
+              showAlertDialog("Error", data.message, false);
           }
       } catch (err) {
-          console.error(err);
-          isProcessingAjax = false; // Unblock if error
-          showAlertDialog("Error", "Server Error", false, false);
+          isProcessingAjax = false;
+          showAlertDialog("Error", "Server Error", false);
       }
   });
 }
 
+// Edit Member POST
 document.getElementById("editMemberForm").addEventListener("submit", async function(e) {
     e.preventDefault();
+    isProcessingAjax = true;
     const formData = new FormData(this);
-    
-    isProcessingAjax = true; // Block auto-refresh
     try {
         const response = await fetch('/edit-member/' + editTargetId, { method: 'POST', body: formData });
         const data = await response.json();
         if (data.success) {
             closeEditDialog();
-            showAlertDialog("Updated!", "Member updated successfully", true, true);
+            showAlertDialog("Updated!", "Member updated successfully", true);
         } else {
-            isProcessingAjax = false; // Unblock if error
-            showAlertDialog("Error", data.message, false, false);
+            isProcessingAjax = false;
+            showAlertDialog("Error", data.message, false);
         }
     } catch (err) {
-        console.error(err);
-        isProcessingAjax = false; // Unblock if error
-        showAlertDialog("Error", "Server Error", false, false);
+        isProcessingAjax = false;
+        showAlertDialog("Error", "Server Error", false);
     }
 });
 
@@ -577,8 +575,25 @@ function openSuspendPopup(userId, userName, status) {
     document.getElementById("suspendModal").style.display = "flex";
 }
 function closeSuspendPopup() { document.getElementById("suspendModal").style.display = "none"; }
-document.getElementById("confirmSuspendBtn").addEventListener("click", () => {
-    if (selectedUserId) location.href = "/suspend-member/" + selectedUserId;
+
+document.getElementById("confirmSuspendBtn").addEventListener("click", async () => {
+    if (selectedUserId) {
+        isProcessingAjax = true;
+        try {
+            const response = await fetch("/suspend-member/" + selectedUserId);
+            const data = await response.json();
+            closeSuspendPopup();
+            if (data.success) {
+                showAlertDialog("Success!", data.message, true);
+            } else {
+                isProcessingAjax = false;
+                showAlertDialog("Error", data.message, false);
+            }
+        } catch (err) {
+            isProcessingAjax = false;
+            showAlertDialog("Error", "Failed to update status", false);
+        }
+    }
 });
 
 let deleteUserId = null;
@@ -592,49 +607,31 @@ function closeDeletePopup() { document.getElementById("deleteModal").style.displ
 
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     if (deleteUserId) {
-        isProcessingAjax = true; // Block auto-refresh
+        isProcessingAjax = true;
         try {
             const response = await fetch("/delete-member/" + deleteUserId);
             const data = await response.json();
-            
             closeDeletePopup();
-            
             if (data.success) {
-                showAlertDialog("Deleted!", data.message, true, true);
+                showAlertDialog("Done!", data.message, true);
             } else {
-                isProcessingAjax = false; // Unblock if error
-                showAlertDialog("Error", data.message, false, false);
+                isProcessingAjax = false;
+                showAlertDialog("Error", data.message, false);
             }
         } catch (err) {
-            console.error(err);
-            closeDeletePopup();
-            isProcessingAjax = false; // Unblock if error
-            showAlertDialog("Error", "Server Error", false, false);
+            isProcessingAjax = false;
+            showAlertDialog("Error", "Server Error", false);
         }
     }
 });
 
-window.onclick = function(event) {
-    if (event.target.className === 'dialog-overlay') {
-        // Prevent closing the custom alert by clicking outside IF it requires a reload to finish the action
-        if (event.target.id === 'customAlertModal' && alertReloadFlag) {
-            return; 
-        }
-        event.target.style.display = "none";
-        resetErrors();
-    }
-}
-</script>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    socket.on('update_members', () => {
-        // ONLY reload if the user didn't trigger the fetch request themselves
-        if (!isProcessingAjax) {
-            window.location.reload(); 
-        }
-    });
+// SOCKET LOGIC
+const socket = io();
+socket.on('update_members', () => {
+    // If we are showing an alert or processing, the refresh will happen when user clicks "Okay"
+    // Otherwise, refresh immediately in the background
+    refreshTable();
+});
 </script>
 
 </body>

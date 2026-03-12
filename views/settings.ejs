@@ -20,9 +20,10 @@ body{margin:0;font-family:Arial, sans-serif;background:#3C3A3A;color: #fff;}
 .settings-item.danger:hover { background: rgba(217, 83, 79, 0.1); }
 
 /* Input group for Password Eye Icon */
-.input-group { position: relative; margin: 6px 0; }
+.input-group { position: relative; margin: 6px 0; text-align: left; }
+.input-group label { display: block; font-size: 13px; margin-bottom: 4px; color: #555; font-weight: bold; }
 input{width:100%;padding:10px;padding-right:40px;box-sizing:border-box;border-radius:6px;border:1px solid #ccc;}
-.input-group i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; }
+.input-group i { position: absolute; right: 12px; top: 32px; cursor: pointer; color: #999; }
 
 button{width:100%;padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;margin-top:15px;border-radius:6px;font-weight:bold;}
 button:hover{background:#0b7373;}
@@ -73,6 +74,9 @@ button:hover{background:#0b7373;}
 .btn-danger:hover { background-color: #c9302c; }
 .btn-cancel { background-color: #f1f1f1; color: #333; }
 .btn-cancel:hover { background-color: #e2e2e2; }
+
+/* Validation Message Style */
+#pwdError, #matchError { color: #d9534f; font-size: 11px; margin-top: 4px; display: none; text-align: left; line-height: 1.4; }
 </style>
 </head>
 
@@ -102,16 +106,21 @@ button:hover{background:#0b7373;}
         <h3 style="margin-top:0;">Change Password</h3>
         <form id="changePasswordForm">
             <div class="input-group">
-                <input type="password" name="current_password" id="currPwd" placeholder="Current Password" required>
+                <label>Current Password</label>
+                <input type="password" name="current_password" id="currPwd" placeholder="Enter current password" required>
                 <i class="fa-solid fa-eye-slash" onclick="togglePwd('currPwd', this)"></i>
             </div>
             <div class="input-group">
-                <input type="password" name="new_password" id="newPwd" placeholder="New Password" required>
+                <label>New Password</label>
+                <input type="password" name="new_password" id="newPwd" placeholder="Enter new password" required>
                 <i class="fa-solid fa-eye-slash" onclick="togglePwd('newPwd', this)"></i>
+                <div id="pwdError">Must be 8+ characters with 1 uppercase, 1 lowercase & 1 number.</div>
             </div>
             <div class="input-group">
-                <input type="password" name="confirm_password" id="confPwd" placeholder="Confirm Password" required>
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" id="confPwd" placeholder="Confirm new password" required>
                 <i class="fa-solid fa-eye-slash" onclick="togglePwd('confPwd', this)"></i>
+                <div id="matchError">Passwords do not match. Please try again.</div>
             </div>
             <button type="submit">Update Password</button>
         </form>
@@ -223,7 +232,11 @@ document.getElementById("customAlertBtn").addEventListener("click", function() {
 });
 // =========================================================
 
-function openPasswordDialog() { document.getElementById('passwordDialog').style.display = 'flex'; }
+function openPasswordDialog() { 
+    document.getElementById('passwordDialog').style.display = 'flex'; 
+    document.getElementById('pwdError').style.display = 'none';
+    document.getElementById('matchError').style.display = 'none';
+}
 function closePasswordDialog() { document.getElementById('passwordDialog').style.display = 'none'; }
 
 function openEmailDialog() {
@@ -264,9 +277,23 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
     const currPwd = document.getElementById('currPwd').value;
     const newPwd = document.getElementById('newPwd').value;
     const confPwd = document.getElementById('confPwd').value;
+    const pwdError = document.getElementById('pwdError');
+    const matchError = document.getElementById('matchError');
+
+    // Reset errors
+    pwdError.style.display = 'none';
+    matchError.style.display = 'none';
+
+    // Password Validation: 8+ chars, 1 uppercase, 1 lowercase, 1 number
+    const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    
+    if (!pwdRegex.test(newPwd)) {
+        pwdError.style.display = 'block';
+        return;
+    }
 
     if (newPwd !== confPwd) {
-        showAlertDialog("Error", "New Passwords do not match.", false);
+        matchError.style.display = 'block';
         return;
     }
 
@@ -282,9 +309,8 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
         });
         const data = await res.json();
         
-        closePasswordDialog();
-        
         if(data.success) {
+            closePasswordDialog();
             showAlertDialog("Success!", data.message, true);
             this.reset();
         } else {
@@ -311,6 +337,8 @@ async function sendOtpToCurrent(email) {
     if (data.status === 'sent') {
         document.getElementById('email-step1').style.display = 'none';
         document.getElementById('email-step2').style.display = 'block';
+    } else {
+        showAlertDialog("Error", "Failed to send OTP.", false);
     }
 }
 
@@ -318,11 +346,17 @@ function verifyCurrentOtp() {
     if (document.getElementById('currentOtpInput').value === generatedCurrentOtp) {
         document.getElementById('email-step2').style.display = 'none';
         document.getElementById('email-step3').style.display = 'block';
-    } else alert('Invalid OTP');
+    } else {
+        showAlertDialog("Invalid OTP", "The code you entered is incorrect.", false);
+    }
 }
 
 async function sendOtpToNew() {
     const newEmail = document.getElementById('newEmailInput').value;
+    if(!newEmail) {
+        showAlertDialog("Error", "Please enter a valid email.", false);
+        return;
+    }
     generatedNewOtp = generateOtp();
     const res = await fetch('/forgot-password/send-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -333,6 +367,8 @@ async function sendOtpToNew() {
         document.getElementById('finalNewEmail').value = newEmail;
         document.getElementById('email-step3').style.display = 'none';
         document.getElementById('email-step4').style.display = 'block';
+    } else {
+        showAlertDialog("Error", "Failed to send OTP to new email.", false);
     }
 }
 
@@ -340,7 +376,8 @@ async function sendOtpToNew() {
 async function verifyNewOtpAndSubmit(e) {
     e.preventDefault();
     if (document.getElementById('newOtpInput').value !== generatedNewOtp) {
-        alert('Invalid OTP'); return false;
+        showAlertDialog("Invalid OTP", "The code you entered is incorrect.", false);
+        return false;
     }
     
     const newEmail = document.getElementById('finalNewEmail').value;
@@ -356,7 +393,6 @@ async function verifyNewOtpAndSubmit(e) {
         closeEmailDialog();
         
         if (data.success) {
-            // Instantly update email text on the screen without reloading!
             document.getElementById('currentEmailDisplay').innerText = data.newEmail;
             showAlertDialog("Success!", data.message, true);
             document.getElementById('changeEmailForm').reset();
@@ -380,7 +416,6 @@ async function confirmDeleteProfile() {
         closeDeleteDialogs();
         
         if(data.success) {
-            // Once OK is clicked, redirect to the login page (since they are deleted)
             showAlertDialog("Profile Deleted", data.message, true, '/');
         } else {
             showAlertDialog("Error", data.message, false);

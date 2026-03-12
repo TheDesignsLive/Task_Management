@@ -58,13 +58,19 @@ html, body {
   flex: 1;
   min-width: 1200px;
   align-items: stretch;
-  gap: 1px;
-  flex-wrap: nowrap;
-  overflow-x: hidden; /* keep */
+  gap: 1px; 
+  flex-wrap: nowrap; 
+  overflow-x: hidden;
 }
 
-
-
+/* Allow scroll on hover if content overflows */
+.task-change:hover,
+.task-update:hover,
+.task-other:hover,
+.completed-section:hover {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 
 /* ===== TASK SECTIONS VERTICAL SCROLL ===== */
 .task-main, 
@@ -74,8 +80,9 @@ html, body {
 .completed-section { 
   height: 100%;
   box-sizing: border-box;
-
-  background:#2E2D2D;
+  overflow-y: auto; 
+  overflow-x: hidden;
+     background:#2E2D2D;
 }
 
 /* ===== SUB HEADER ===== */
@@ -115,7 +122,12 @@ html, body {
 }
 
 /* ===== LEFT TASK SECTION ===== */
-
+.task-main {
+  flex: 1.5;
+  padding: 10px;
+  overflow-y: auto;
+  max-height: 100%;
+}
 /* Vertical divider */
 .vertical-line {
   width: 1px;
@@ -126,12 +138,12 @@ html, body {
 /* ===== RIGHT SIDE ===== */
 .task-change,
 .task-update,
-.task-other {
-  flex: 1 0 250px; /* allow resizing */
+.task-other,
+.completed-section {
+  flex: 1;
   min-width: 250px;
-  overflow-x: auto;  /* horizontal scroll */
-  overflow-y: auto;  /* vertical scroll */
 }
+
 .task-change { padding: 10px; overflow-y: auto; }
 .task-update { padding: 10px; overflow-y: auto; }
 .task-other  { padding: 10px; overflow-y: auto; }
@@ -463,12 +475,11 @@ html, body {
 
 
 /* TASK column bigger */
-.task-column {
-  display: flex;
-  flex-direction: column;
-  flex: 1.5;        /* column width */
-  min-width: 400px; /* wider minimum */
-  overflow-x: hidden; /* container itself */
+.task-column{
+  display:flex;
+  flex-direction:column;
+  flex:1.5;        /* increased width */
+  min-width:400px; /* wider minimum */
 }
 
 /* other columns normal */
@@ -503,20 +514,6 @@ html, body {
   padding:10px;
   overflow-y:auto;
 }
-
-
-.task-main { 
-  flex: 1.5;
-  padding: 10px;
-  overflow-x: scroll;  /* force horizontal scroll */
-  overflow-y: auto;    /* vertical scroll still works */
-  min-width: 400px;    /* ensure content width for scroll */
-}
-.task-main:hover {
-  overflow-x: auto;
-  overflow-y: auto;
-}
-
 </style>
 </head>
 <body>
@@ -957,20 +954,6 @@ document.getElementById("confirmSingleDelete").addEventListener("click", async (
 
 document.getElementById("cancelSingleDelete").addEventListener("click", () => {
   document.getElementById("singleDeleteModal").style.display = "none";
-});
-
-const taskMain = document.getElementById('task-section');
-const changeSection = document.getElementById('change-section');
-const updateSection = document.getElementById('update-section');
-const otherSection = document.getElementById('other-section');
-
-taskMain.addEventListener('wheel', (e) => {
-    if (e.deltaY === 0) return; // ignore if no vertical scroll
-    e.preventDefault();
-    taskMain.scrollLeft += e.deltaY; // horizontal scroll
-    changeSection.scrollLeft = taskMain.scrollLeft;
-    updateSection.scrollLeft = taskMain.scrollLeft;
-    otherSection.scrollLeft = taskMain.scrollLeft;
 });
 
 </script>

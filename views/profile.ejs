@@ -148,7 +148,6 @@ html, body {
 
 <body>
 
-<!-- Pass members safely to navbar -->
 <%- include('navbar', { members: members || [] }) %>
 
 <div class="layout">
@@ -185,7 +184,7 @@ html, body {
               </div>
               <div class="info-item">
                   <label>Phone Number</label>
-                  <span><%= phone %></span>
+                  <span><%= phone && phone.trim() !== "" ? phone : "-----" %></span>
               </div>
 
               <% if (session.role === 'admin') { %>
@@ -217,7 +216,6 @@ html, body {
   </div>
 </div>
 
-<!-- Edit Modal -->
 <div class="modal" id="editModal">
   <div style="width:400px; background:white; border-radius:10px; padding:25px; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
     <h3 style="margin-top:0; color: #095959;">Edit Profile</h3>
@@ -313,12 +311,23 @@ editForm.addEventListener('submit', async function(e){
 
     const phoneRegex = /^\d{10}$/;
 
+
     if(!phoneRegex.test(phone)){
         phoneError.style.display='block';
         return;
     }
 
     phoneError.style.display='none';
+
+    
+    // If phone has a value, it MUST be 10 digits. If empty, it is fine.
+    if(phone && !phoneRegex.test(phone)) { 
+        phoneError.style.display = 'block'; 
+        return; 
+    } else { 
+        phoneError.style.display = 'none'; 
+    }
+
 
     const formData = new FormData(editForm);
 
@@ -346,7 +355,11 @@ editForm.addEventListener('submit', async function(e){
 
             index++;
 
+
             infoItems[index++].textContent=data.phone;
+
+
+            infoItems[index++].textContent = data.phone || "-----";
 
             if(data.profilePic){
 

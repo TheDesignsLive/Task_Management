@@ -34,8 +34,8 @@ body{
 .logo-container {
     text-align: center;
     margin-bottom: 20px;
-    user-select: none; /* Prevents text cursor/selection */
-    pointer-events: none; /* Makes the container non-interactive for text insertion */
+    user-select: none;
+    pointer-events: none;
 }
 
 .logo-container img {
@@ -44,7 +44,7 @@ body{
     object-fit: cover;
     border-radius: 50%;
     border: 3px solid #14b8a6;
-    pointer-events: auto; /* Re-enables interaction specifically for the image if needed */
+    pointer-events: auto;
 }
 
 .tabs{
@@ -113,7 +113,6 @@ body{
     box-shadow:0 0 5px rgba(20,184,166,0.4);
 }
 
-/* Validation Error Message Style */
 .error-msg {
     color: #ff4d4d;
     font-size: 11px;
@@ -180,65 +179,33 @@ button:hover{
     font-size: 14px;
     text-align: center;
 }
-/* OTP Verified Alert Styles */
-.custom-alert{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.4);
-    display:none;
-    justify-content:center;
-    align-items:center;
-    z-index:999;
-}
 
-.alert-box{
-    background:#fff;
-    padding:25px 30px;
-    border-radius:10px;
-    text-align:center;
-    width:280px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-    animation: popup 0.3s ease;
+/* === DIALOG MODAL STYLES === */
+.dialog-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+    display: none; justify-content: center; align-items: center; z-index: 999;
 }
-
-.alert-box i{
-    font-size:40px;
-    color:#14b8a6;
-    margin-bottom:10px;
+.modal-content {
+    background: #fff; width: 340px; padding: 25px; border-radius: 12px;
+    text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    color: #333;
 }
-
-.alert-box h3{
-    margin-bottom:15px;
-    color:#333;
+.modal-buttons { margin-top: 20px; display: flex; justify-content: center; }
+.btn { 
+    flex: 1; height: 44px; border: none; cursor: pointer; border-radius: 8px; 
+    font-size: 15px; font-weight: bold; display: flex; align-items: center; 
+    justify-content: center; transition: 0.2s;
 }
-
-.alert-box button{
-    padding:8px 18px;
-    border:none;
-    background:#14b8a6;
-    color:white;
-    border-radius:5px;
-    cursor:pointer;
-}
-
-.alert-box button:hover{
-    background:#0f766e;
-}
-
-@keyframes popup{
-    from{transform:scale(0.8);opacity:0}
-    to{transform:scale(1);opacity:1}
-}
+.btn-success { background-color: #14b8a6; color: #fff; } 
+.btn-success:hover { background-color: #0f766e; }
+.btn-danger { background-color: #d9534f; color: #fff; }
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
     <div class="logo-container">
         <img src="/images/tms_logo.jpeg" alt="TMS Logo">
     </div>
@@ -334,17 +301,50 @@ button:hover{
     </form>
 </div>
 
-<!-- OTP Verified Alert Styles  -->
-<div id="customAlert" class="custom-alert">
-    <div class="alert-box">
-        <i class="fa-solid fa-circle-check"></i>
-        <h3 id="alertMessage">Success</h3>
-        <button onclick="closeAlert()">OK</button>
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="modal-content">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 10px;"></p>
+    <div class="modal-buttons">
+        <button id="customAlertBtn" class="btn btn-success">Okay</button>
     </div>
+  </div>
 </div>
+
 <script>
 let signupOtp = null;
 let signupEmail = null;
+let alertRedirectUrl = null;
+
+// ================= CUSTOM ALERT FUNCTION =================
+function showAlertDialog(title, message, isSuccess, redirectUrl = null) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  
+  alertRedirectUrl = redirectUrl;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertRedirectUrl) {
+      window.location.href = alertRedirectUrl;
+  }
+});
+// =========================================================
 
 async function sendSignupOtp(email){
     signupOtp = Math.floor(100000 + Math.random() * 900000);
@@ -358,11 +358,11 @@ async function sendSignupOtp(email){
 
     const data = await res.json();
     if(data.status === "sent") {
-        alert("OTP sent successfully to your email.");
+        showAlertDialog("Success", "OTP sent successfully to your email.", true);
         document.querySelector(".step-1").classList.remove("active");
         document.querySelector(".step-2").classList.add("active");
     } else {
-        alert("Failed to send OTP. Try again.");
+        showAlertDialog("Error", "Failed to send OTP. Try again.", false);
     }
 }
 
@@ -383,13 +383,11 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         return;
     }
     const data = await res.text();
-    alert(data);
+    showAlertDialog("Login Info", data, false);
 });
 
 document.getElementById("signupForm").addEventListener("submit", async function(e){
     e.preventDefault();
-    
-    // Reset error messages
     document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
 
     const fullName = document.getElementById("fullName").value.trim();
@@ -402,20 +400,17 @@ document.getElementById("signupForm").addEventListener("submit", async function(
 
     let hasError = false;
 
-    // Phone Number Check
     if(phone.length !== 10) {
         document.getElementById("phoneError").style.display = 'block';
         hasError = true;
     }
 
-    // Password Complexity Check
     const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
     if(!passwordRegex.test(password)) {
         document.getElementById("passError").style.display = 'block';
         hasError = true;
     }
 
-    // Password Matching Check
     if(password !== confirmPassword){
         document.getElementById("confirmError").style.display = 'block';
         hasError = true;
@@ -429,7 +424,6 @@ document.getElementById("signupForm").addEventListener("submit", async function(
     formData.append("email", email);
     formData.append("phone", phone);
     formData.append("password", password);
-
     if(profilePic) formData.append("profile_pic", profilePic);
 
     const res = await fetch("/signup", {
@@ -442,7 +436,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
         return;
     }
     const data = await res.text();
-    alert(data);
+    showAlertDialog("Signup Info", data, false);
 });
 
 function nextStep(step) {
@@ -454,13 +448,13 @@ function nextStep(step) {
         const email = document.getElementById("signupEmail").value.trim();
 
         if(!fullName || !email ) {
-            alert("Please fill all fields");
+            showAlertDialog("Validation", "Please fill all fields", false);
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if(!emailRegex.test(email)){
-            alert("Enter a valid email address.");
+            showAlertDialog("Validation", "Enter a valid email address.", false);
             return;
         }
 
@@ -472,15 +466,14 @@ function nextStep(step) {
         .then(res => res.json())
         .then(data => {
             if(data.exists){
-                alert("Email already exists ❌");
+                showAlertDialog("Error", "Email already exists ❌", false);
                 document.getElementById("signupEmail").value = "";
             } else {
                 sendSignupOtp(email);
             }
         })
         .catch(err => {
-            console.error(err);
-            alert("Server error");
+            showAlertDialog("Error", "Server error", false);
         });
         return;
     }
@@ -488,14 +481,14 @@ function nextStep(step) {
     if(step === 2) {
         const code = document.getElementById("verificationCode").value.trim();
         if(!code) {
-            alert("Enter verification code.");
+            showAlertDialog("Validation", "Enter verification code.", false);
             return;
         }
         if(code != signupOtp){
-            alert("Invalid OTP. Try again.");
+            showAlertDialog("Error", "Invalid OTP. Try again.", false);
             return;
         }
-        showAlert("OTP Verified Successfully!");
+        showAlertDialog("Success", "OTP Verified Successfully!", true);
     }
 
     if(nextStepElement) {
@@ -542,16 +535,6 @@ function showTab(index){
     tabs[index].classList.add("active");
     forms[index].classList.add("active");
     underline.style.left = index * 50 + "%";
-}
-
-// OTP Verified Alert Functions
-function showAlert(message){
-    document.getElementById("alertMessage").innerText = message;
-    document.getElementById("customAlert").style.display = "flex";
-}
-
-function closeAlert(){
-    document.getElementById("customAlert").style.display = "none";
 }
 </script>
 

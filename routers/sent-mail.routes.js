@@ -110,6 +110,7 @@ router.post("/forgot-password/send-otp", async (req, res) => {
         `
         };
     }
+    
 
     try {
         await transporter.sendMail(mailOptions);
