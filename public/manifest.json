@@ -1,0 +1,20 @@
+{
+  "short_name": "MyTMS",
+  "name": "Task Management System",
+  "icons": [
+    {
+      "src": "/images/tms.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/images/tms.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#095959",
+  "background_color": "#3C3A3A"
+}
