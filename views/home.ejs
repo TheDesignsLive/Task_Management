@@ -6,585 +6,121 @@
 <title>Home</title>
 <link rel="icon" type="image/svg" href="/images/tms.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <style>
-/* ===== PREVENT FULL PAGE SCROLL ===== */
+/* ===== CORE STYLES ===== */
 html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-  background-color: #3C3A3A;
-}
-.layout {
-  display: flex;
-  height: calc(100% - 60px);
+  margin: 0; padding: 0; height: 100%; overflow: hidden;
+  font-family: Arial, sans-serif; background-color: #3C3A3A;
 }
 
-.sidebar-container {
-  width: 55px;
-}
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 2px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #777; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
-/* Ensure the container inside main-content fills the height */
-.main-content > div {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* Content wrapper */
-.content-wrapper {
-  display: flex;
-  flex: 1;
-  height: auto;
-  align-items: stretch;
-}
-
-/* Right section */
-.right-section {
-  flex: 3;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-x: visible; 
-  overflow-y: hidden;
-}
-
-/* Top columns (task containers) */
-.top-columns {
-  display: flex;
-  flex: 1;
-  min-width: 1200px;
-  align-items: stretch;
-  gap: 1px; 
-  flex-wrap: nowrap; 
-  overflow-x: hidden;
-}
-
-/* Allow scroll on hover if content overflows */
-.task-change:hover,
-.task-update:hover,
-.task-other:hover,
-.completed-section:hover {
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-/* ===== TASK SECTIONS VERTICAL SCROLL ===== */
-.task-main, 
-.task-change, 
-.task-update, 
-.task-other, 
-.completed-section { 
-  height: 100%;
-  box-sizing: border-box;
-  overflow-y: auto; 
-  overflow-x: hidden;
-     background:#2E2D2D;
-}
-
-/* ===== SUB HEADER ===== */
-.sub-header {
-  display: flex;
-  background: #CDF4F4;
-  font-size: 14px;
-  min-width: 1350px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  padding: 12px 0;
-}
-
-.task-header {
-  flex: 1.5;
-  display: flex;
-  justify-content: center;
-}
-
-.change,
-.update,
-.other-task {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.sub-header .vertical-line {
-  width: 1px;
-  background: #7C7B7B;
-}
-.sub-header > div {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* ===== LEFT TASK SECTION ===== */
-.task-main {
-  flex: 1.5;
-  padding: 10px;
-  overflow-y: auto;
-  max-height: 100%;
-}
-/* Vertical divider */
-.vertical-line {
-  width: 1px;
-  background-color: #7C7B7B;
-  height: 100%;
-}
-
-/* ===== RIGHT SIDE ===== */
-.task-change,
-.task-update,
-.task-other,
-.completed-section {
-  flex: 1;
-  min-width: 250px;
-}
-
-.task-change { padding: 10px; overflow-y: auto; }
-.task-update { padding: 10px; overflow-y: auto; }
-.task-other  { padding: 10px; overflow-y: auto; }
-
-/* ===== COMPLETED SECTION (beside Others) ===== */
-.completed-wrapper {
-  display: flex;
-  flex-direction: column;
-  background-color: #2E2D2D;
-  border-left: 1px solid #666;
-  min-width: 250px;
-}
-.completed-section {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  color: white;
-}
-
-/* Completed header */
-.completed-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-height: 30px;
-  height: 30px;
-  padding: 0 6px;
-  margin: 8px;
-  border-radius: 100px;
-  background-color: #0F8989;
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-  line-height: 20px;
-  box-sizing: border-box;
-  padding-left: 12px;
-  padding-right: 12px;
-  margin-bottom: 0px;
-}
-/* Dustbin icon */
-#delete-completed {
-  cursor: pointer;
-  transition: transform 0.2s, fill 0.2s;
-  fill: #e74c3c;
-}
-
-#delete-completed:hover {
-  transform: scale(1.2);
-  fill: #c0392b;
-}
-
-/* ===== TASK ITEM ===== */
+/* Task Items */
 .task-item {
-  font-size: 13px;
-  padding: 6px;
-  margin: 6px 0;
-  background-color: #444;
-  color: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-  overflow: visible; 
-  position: relative;
+  font-size: 13px; padding: 6px; margin: 6px 0;
+  background-color: #444; color: #fff; border-radius: 4px;
+  cursor: pointer; transition: background 0.2s; position: relative;
 }
-
 .task-item:hover { background-color: #555; }
 .completed-task { opacity: 0.6; cursor: default; }
 
 .task-checkbox {
-  width: 12px; height: 12px;
-  appearance: none;
-  border: 2px solid white; 
-  border-radius: 3px;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;  
+  width: 12px; height: 12px; appearance: none;
+  border: 2px solid white; border-radius: 3px;
+  background: transparent; cursor: pointer; position: relative; flex-shrink: 0;
 }
-
-.task-checkbox:checked::after {
-  content: "✔";                
-  position: absolute;
-  top: 0;
-  left: 1px;
-  font-size: 7px;
-  color: white;                
-}
+.task-checkbox:checked::after { content: "✔"; position: absolute; top: 0; left: 1px; font-size: 7px; color: white; }
 
 .priority-red { border-color: #ff4d4d; }
 .priority-yellow { border-color: #ffd633; }
 .priority-blue { border-color: #4da6ff; }
 
-.info-icon { width: 14px; height: 14px; stroke: #959494; flex-shrink: 0; margin-left: auto; }
-.info-icon:hover { stroke:white; }
-
-.task-row { display: flex; align-items: center; gap: 6px; }
-.task-title { flex: 1; min-width: 0; word-break: break-word; }
-.task-name { flex: 0 1 auto; font-size: 11px; opacity: 0.7; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.task-date { flex: 0 0 50px; font-size: 11px; opacity: 0.8; white-space: nowrap; text-align: center; }
-
-/* 3 DOT MENU */
-.dots-btn { cursor: pointer; padding: 0 5px; color: #959494; font-size: 14px; margin-left: auto; }
-.dots-btn:hover { color: white; }
-
+/* Options Menu */
 .task-options-menu {
-  display: none;
-  position: absolute;
-  right: 5px; top: 25px;
-  background: white; color: #333;
-  border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  z-index: 1000;
-  min-width: 100px;
+  display: none; position: absolute; right: 5px; top: 25px;
+  background: white; color: #333; border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000; min-width: 100px;
 }
-
 .task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .task-options-menu div:hover { background-color: #f0f0f0; }
 
-/* EDIT BOX */
+/* Edit Box */
 .edit-box {
-  display: none;
-  background: #555;
-  padding: 10px;
-  border-radius: 4px;
-  margin-top: 5px;
-  flex-direction: column;
-  gap: 8px;
-  box-sizing: border-box;
+  display: none; background: #555; padding: 10px; border-radius: 4px;
+  margin-top: 5px; flex-direction: column; gap: 8px;
 }
-
 .edit-box input, .edit-box textarea, .edit-box select {
   background: #3C3A3A; color: white; border: 1px solid #7C7B7B;
   padding: 5px; border-radius: 4px; font-size: 12px;
-  box-sizing: border-box;
 }
 
-.edit-box input.edit-title, .edit-box textarea.edit-desc {
-  width: 100% !important;
-  display: block;
-}
-
-.edit-box textarea.edit-desc {
-  min-height: 80px;
-  resize: none;
-  overflow: hidden;
-  line-height: 1.5;
-}
-
-.edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.save-btn { background: #0F8989; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
-.cancel-btn { background: #7C7B7B; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
-
-/* DESCRIPTION DETAILS */
-.task-details { display: none; padding-top: 8px; border-top: 1px solid #666; margin-top: 8px; font-size: 12px; }
-.task-desc-text { color: #ccc; line-height: 1.4; margin-bottom: 8px; }
-.task-item.expanded .task-details { display: block; }
-
-/* MODAL */
+/* Modal */
 .modal {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  justify-content: center;
-  align-items: center;
+  display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+  width: 100%; height: 100%; background: rgba(0,0,0,0.6);
+  justify-content: center; align-items: center;
 }
+.modal-content { background: white; padding: 25px; border-radius: 10px; width: 320px; text-align: center; }
 
-.modal-content {
-  background: white;
-  padding: 25px;
-  border-radius: 10px;
-  width: 320px;
-  text-align: center;
-  animation: pop 0.3s ease;
-}
+.past-date { color: #ff4d4d !important; font-weight: 500; }
+.center-calendar { position: fixed !important; top: 20% !important; left: 50% !important; transform: translateX(-50%) !important; z-index: 10000 !important; }
 
-.modal-content h3 { color: #d32f2f; margin-bottom: 10px; }
-
-.modal-buttons { margin-top: 20px; display: flex; justify-content: space-between; }
-.btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-.cancel { background: #ccc; }
-.cancel:hover { background: #aaa; }
-.delete { background: #d32f2f; color: white; }
-.delete:hover { background: #b71c1c; }
-
-@keyframes pop {
-  from { transform: scale(0.7); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-/* ==== BOARD SCROLL CONTAINERS ==== */
-.main-content { flex:1; overflow:hidden; }
-.board-scroll {
-  width: 100%;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-}
-.board-container { width:100%; min-width:1350px; height:100%; display:flex; flex-direction:column; }
-
-.sub-header > div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  box-sizing: border-box;
-}
-.sub-header-inner {
-  display: flex;
-  gap: 20px;
-}
-.other-task .task-text {
-  padding-right: 50px;
-}
-
-/* TRUE LOGO: calendar style for task-date */
-.flatpickr-calendar.task-calendar {
-  margin-top: 0 !important;
-  width: 330px !important;
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-  font-family: Segoe UI, sans-serif;
-}
-
-/* TRUE LOGO: FORCE FLATPICKR ALWAYS OPEN AT TOP CENTER */
-.flatpickr-calendar.task-calendar.open {
-  position: fixed !important;
-  top: 190px !important;
-  left: 60% !important;
-  right: 20px !important;
-  transform: translateX(-50%) !important;
-  bottom: auto !important;
-}
-
-.flatpickr-months .flatpickr-month { height: 32px !important; }
-.flatpickr-weekdays { font-size: 10px !important; }
-.flatpickr-days { width: 100% !important; }
-.numInputWrapper input { font-size: 12px !important; }
-
-.past-date {
-  color: #ff4d4d !important;
-  font-weight:500;
-}
-
-.center-calendar {
-  position: fixed !important;
-  top: 20% !important;
-  left: 60% !important;
-  transform: translateX(-50%) !important;
-  z-index: 10000 !important;
-}
-
-.flatpickr-calendar {
-  font-size: 12px;
-  width: 280px !important;
-  border-radius: 12px;
-}
-
-.flatpickr-monthDropdown-months {
-  background: transparent !important;
-  color: white !important;
-  border: none !important;
-  outline: none !important;
-  appearance: none;
-  -webkit-appearance: none;
-  font-weight: 600;
-  padding: 2px 4px !important;
-}
-
-.flatpickr-monthDropdown-months option {
-  background-color: white !important;
-  color: #333 !important;
-}
-
-.flatpickr-current-month .numInputWrapper input.cur-year {
-  color: white !important;
-  background: transparent !important;
-  font-weight: 600;
-}
-
-.flatpickr-day { height: 30px; line-height: 30px; font-size: 12px; }
-.flatpickr-weekday { font-size: 11px; }
-.flatpickr-current-month { font-size: 13px; color: white !important; }
-.flatpickr-months { background: linear-gradient(to right, #0f9d9a, #14b8a6); border-radius: 12px 12px 0 0; }
-.flatpickr-prev-month, .flatpickr-next-month { color: white !important; fill: white !important; }
-
-.content-wrapper {
-  display: flex;
-  flex: 1 1 0;
-  align-items: stretch;
-  height: 100%;
-}
-
-.board-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-
-
-/* ===== CUSTOM SCROLLBAR ===== */
-
-/* scrollbar size */
-::-webkit-scrollbar{
-  width:2px;
-  height:6px;
-}
-
-/* scrollbar track */
-::-webkit-scrollbar-track{
-  background:transparent;
-}
-
-/* scrollbar thumb */
-::-webkit-scrollbar-thumb{
-  background:#777;
-  border-radius:10px;
-}
-
-/* hover effect */
-::-webkit-scrollbar-thumb:hover{
-  background:#aaa;
-}
-
-
-/* TASK column bigger */
-.task-column{
-  position:sticky;
-  left:0;
-  z-index:4;
-  background:#3C3A3A;
-  display:flex;
-  flex-direction:column;
-  flex:1.5;
-  min-width:400px;
-}
-
-/* other columns normal */
-.column-wrapper{
-  display:flex;
-  flex-direction:column;
-  flex:1;
-  min-width:250px;
-}
-.completed-wrapper{
-  min-width:250px;
-}
-
-/* HEADER STYLE */
-.column-header{
-  height:30px;
-  margin:8px;
-  margin-bottom:0;
-  border-radius:100px;
-  background:#0F8989;
-  color:white;
-  font-size:12px;
-  font-weight:600;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-/* SECTION AREA */
-.task-column .task-main,
-.column-wrapper .task-change,
-.column-wrapper .task-update,
-.column-wrapper .task-other{
-  flex:1;
-  padding:10px;
-  overflow-y:auto;
-}
+/* Section Backgrounds */
+.task-main-bg { background: #2E2D2D; }
 </style>
 </head>
 <body>
   <%- include('navbar') %>
 
-  <div class="layout">
-    <div class="sidebar-container">
+  <div class="flex flex-col md:flex-row h-[calc(100vh-60px)] overflow-hidden">
+    
+    <div class="hidden md:block w-[55px] flex-shrink-0">
       <%- include('sidebar') %>
     </div>
 
-    <div class="main-content">
-      <div class="board-scroll">
-        <div class="board-container">
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      
+      <div class="flex-1 overflow-x-auto overflow-y-auto md:overflow-y-hidden">
         
-<div class="content-wrapper">
+        <div class="flex flex-col md:flex-row h-full min-w-full md:min-w-[1350px]">
+          
+          <div class="flex flex-col w-full md:w-[400px] md:sticky md:left-0 z-[5] bg-[#3C3A3A] border-r border-[#7C7B7B] min-h-[300px] md:min-h-0">
+            <div class="h-[30px] m-2 rounded-full bg-[#0F8989] text-white text-[12px] font-semibold flex items-center justify-center flex-shrink-0">Task</div>
+            <div class="flex-1 p-[10px] overflow-y-auto task-main-bg" id="task-section"></div>
+          </div>
 
-  <!-- TASK -->
-  <div class="task-column">
-    <div class="column-header">Task</div>
-    <div class="task-main" id="task-section"></div>
-  </div>
+          <div class="flex flex-col w-full md:flex-1 border-r border-[#7C7B7B] min-h-[300px] md:min-h-0">
+            <div class="h-[30px] m-2 rounded-full bg-[#0F8989] text-white text-[12px] font-semibold flex items-center justify-center flex-shrink-0">Change</div>
+            <div class="flex-1 p-[10px] overflow-y-auto task-main-bg" id="change-section"></div>
+          </div>
 
-  <div class="vertical-line"></div>
+          <div class="flex flex-col w-full md:flex-1 border-r border-[#7C7B7B] min-h-[300px] md:min-h-0">
+            <div class="h-[30px] m-2 rounded-full bg-[#0F8989] text-white text-[12px] font-semibold flex items-center justify-center flex-shrink-0">Update</div>
+            <div class="flex-1 p-[10px] overflow-y-auto task-main-bg" id="update-section"></div>
+          </div>
 
-  <div class="right-section">
-    <div class="top-columns">
+          <div class="flex flex-col w-full md:flex-1 border-r border-[#7C7B7B] min-h-[300px] md:min-h-0">
+            <div class="h-[30px] m-2 rounded-full bg-[#0F8989] text-white text-[12px] font-semibold flex items-center justify-center flex-shrink-0">Others</div>
+            <div class="flex-1 p-[10px] overflow-y-auto task-main-bg" id="other-section"></div>
+          </div>
 
-      <!-- CHANGE -->
-      <div class="column-wrapper">
-        <div class="column-header">Change</div>
-        <div class="task-change" id="change-section"></div>
-      </div>
+          <div class="flex flex-col w-full md:w-[250px] bg-[#2E2D2D] min-h-[300px] md:min-h-0">
+            <div class="h-[30px] m-2 px-3 rounded-full bg-[#0F8989] text-white text-[12px] font-semibold flex items-center justify-between flex-shrink-0">
+              Completed Tasks
+              <svg id="delete-completed" class="cursor-pointer hover:scale-125 transition-transform fill-[#e74c3c]" viewBox="0 0 24 24" width="20" height="20">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+            </div>
+            <div class="flex-1 p-[10px] overflow-y-auto text-white" id="completed-section"></div>
+          </div>
 
-      <div class="vertical-line"></div>
-
-      <!-- UPDATE -->
-      <div class="column-wrapper">
-        <div class="column-header">Update</div>
-        <div class="task-update" id="update-section"></div>
-      </div>
-
-      <div class="vertical-line"></div>
-
-      <!-- OTHERS -->
-      <div class="column-wrapper">
-        <div class="column-header">Others</div>
-        <div class="task-other" id="other-section"></div>
-      </div>
-
-      <!-- COMPLETED -->
-      <div class="completed-wrapper">
-        <div class="completed-header">
-          Completed Tasks
-          <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
-            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
-        </div>
-        <div class="completed-section" id="completed-section"></div>
-      </div>
-
-    </div>
-  </div>
-
-</div>
         </div>
       </div>
     </div>
@@ -592,27 +128,28 @@ html, body {
 
   <div id="singleDeleteModal" class="modal">
     <div class="modal-content">
-      <h3>Delete This Task?</h3>
-      <p>This task will be permanently removed.</p>
-      <div class="modal-buttons">
-        <button id="confirmSingleDelete" class="btn delete">Delete</button>
-        <button id="cancelSingleDelete" class="btn cancel">Cancel</button>
+      <h3 class="text-[#d32f2f] mb-2 font-bold">Delete This Task?</h3>
+      <p class="text-gray-600">This task will be permanently removed.</p>
+      <div class="mt-5 flex justify-between gap-4">
+        <button id="confirmSingleDelete" class="flex-1 py-2 bg-[#d32f2f] text-white rounded-md">Delete</button>
+        <button id="cancelSingleDelete" class="flex-1 py-2 bg-[#ccc] rounded-md">Cancel</button>
       </div>
     </div>
   </div>
 
   <div id="deleteModal" class="modal">
     <div class="modal-content">
-      <h3>Delete Completed Tasks?</h3>
-      <p>This action cannot be undone.</p>
-      <div class="modal-buttons">
-        <button id="confirmDelete" class="btn delete">Delete</button>
-        <button id="cancelDelete" class="btn cancel">Cancel</button>
+      <h3 class="text-[#d32f2f] mb-2 font-bold">Delete Completed Tasks?</h3>
+      <p class="text-gray-600">This action cannot be undone.</p>
+      <div class="mt-5 flex justify-between gap-4">
+        <button id="confirmDelete" class="flex-1 py-2 bg-[#d32f2f] text-white rounded-md">Delete</button>
+        <button id="cancelDelete" class="flex-1 py-2 bg-[#ccc] rounded-md">Cancel</button>
       </div>
     </div>
   </div>
 
 <script>
+// Logic remains identical to your original code
 async function refreshTasksUI() {
   const res = await fetch('/api/get-all-tasks');
   const data = await res.json();
@@ -630,10 +167,8 @@ function formatDate(dateStr) {
   const taskDate = new Date(dateStr);
   today.setHours(0,0,0,0);
   taskDate.setHours(0,0,0,0);
-
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
-
   if (taskDate.getTime() === today.getTime()) return "Today";
   else if (taskDate.getTime() === tomorrow.getTime()) return "Tom";
   else return taskDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -662,30 +197,28 @@ function createTaskElement(task) {
   div.className = 'task-item';
   div.dataset.id = task.id;
   div.dataset.date = task.due_date ? task.due_date.split('T')[0] : '';
-
   if (task.status === 'COMPLETED') div.classList.add('completed-task');
-
   const priorityClass = getPriorityClass(task.priority);
 
   div.innerHTML = `
-    <div class="task-row">
+    <div class="flex items-center gap-[6px]">
       <input type="checkbox" class="task-checkbox ${priorityClass}" ${task.status === 'COMPLETED' ? 'checked' : ''} />
-      <div class="task-title">${task.title}</div>
-      <div class="task-name">${task.assigned_by_name || ''}</div>
+      <div class="flex-1 min-w-0 break-words">${task.title}</div>
+      <div class="flex-none text-[11px] opacity-70 max-w-[80px] truncate">${task.assigned_by_name || ''}</div>
       
-  ${task.description ? `
-<svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-  <circle cx="12" cy="12" r="10"></circle>
-  <line x1="12" y1="8" x2="12" y2="8.5"></line>
-  <line x1="12" y1="11" x2="12" y2="16"></line>
-</svg>
-` : ''}
+      ${task.description ? `
+        <svg class="info-icon w-3.5 h-3.5 stroke-[#959494] hover:stroke-white ml-auto flex-shrink-0 cursor-pointer" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="8.5"></line>
+          <line x1="12" y1="11" x2="12" y2="16"></line>
+        </svg>
+      ` : ''}
 
-      <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
+      <div class="task-date flex-none w-[50px] text-[11px] opacity-80 whitespace-nowrap text-center ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
         ${formatDate(task.due_date)}
       </div>
 
-      <div class="dots-btn">
+      <div class="dots-btn px-1 cursor-pointer text-[#959494] hover:text-white">
         <i class="fa-solid fa-ellipsis-vertical"></i>
       </div>
 
@@ -696,48 +229,40 @@ function createTaskElement(task) {
     </div>
 
     <div class="edit-box">
-      <input type="text" class="edit-title" value="${task.title}" placeholder="Title">
-      <textarea class="edit-desc" placeholder="Description">${task.description || ''}</textarea>
-      <div style="display:flex; gap:5px;">
-        <select class="edit-priority">
+      <input type="text" class="edit-title w-full" value="${task.title}" placeholder="Title">
+      <textarea class="edit-desc w-full min-h-[60px]" placeholder="Description">${task.description || ''}</textarea>
+      <div class="flex gap-2">
+        <select class="edit-priority flex-1">
           <option value="HIGH" ${task.priority === 'HIGH' ? 'selected' : ''}>High</option>
           <option value="MEDIUM" ${task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
           <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
         </select>
-<input type="text" class="edit-date" placeholder="Due Date" >
+        <input type="text" class="edit-date flex-1" placeholder="Due Date">
       </div>
-      <div class="edit-actions">
-        <button class="save-btn">Save</button>
-        <button class="cancel-btn">Cancel</button>
+      <div class="flex gap-2 justify-end mt-2">
+        <button class="save-btn bg-[#0F8989] text-white py-1 px-3 rounded text-[12px]">Save</button>
+        <button class="cancel-btn bg-[#7C7B7B] text-white py-1 px-3 rounded text-[12px]">Cancel</button>
       </div>
     </div>
 
-    <div class="task-details">
-      <div class="task-desc-text">${task.description || 'No description provided.'}</div>
+    <div class="task-details hidden pt-2 border-t border-[#666] mt-2 text-[12px]">
+      <div class="text-[#ccc] mb-2">${task.description || 'No description provided.'}</div>
     </div>
   `;
 
   if (task.status !== 'COMPLETED') div.draggable = true;
 
-  const autoResizeTextarea = (textarea) => {
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-  };
-
+  // Double Click Edit
   div.addEventListener('dblclick', () => {
     if (task.status === 'COMPLETED') return;
     const editBox = div.querySelector('.edit-box');
     editBox.style.display = 'flex';
-    const descTextarea = editBox.querySelector('.edit-desc');
     const dateInput = editBox.querySelector('.edit-date');
-    autoResizeTextarea(descTextarea);
-    descTextarea.addEventListener('input', () => autoResizeTextarea(descTextarea));
     if (dateInput._flatpickr) dateInput._flatpickr.destroy();
-    let dbDate = task.due_date;
-    if (dbDate) dateInput.value = dbDate.split('T')[0];
-    flatpickr(dateInput, { dateFormat: "Y-m-d", defaultDate: dateInput.value || null });
+    flatpickr(dateInput, { dateFormat: "Y-m-d", defaultDate: task.due_date ? task.due_date.split('T')[0] : null });
   });
 
+  // Dots Menu
   const dotsBtn = div.querySelector('.dots-btn');
   const menu = div.querySelector('.task-options-menu');
   dotsBtn.addEventListener('click', (e) => {
@@ -761,9 +286,7 @@ function createTaskElement(task) {
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
     const priority = div.querySelector('.edit-priority').value;
-    let due_date = div.querySelector('.edit-date').value.trim();
-    if (due_date === "") due_date = null;
-
+    let due_date = div.querySelector('.edit-date').value.trim() || null;
     await fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -771,15 +294,16 @@ function createTaskElement(task) {
     });
   });
 
-const infoIcon = div.querySelector('.info-icon');
+  // Info Toggle
+  const infoIcon = div.querySelector('.info-icon');
+  if(infoIcon){
+    infoIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      div.querySelector('.task-details').classList.toggle('hidden');
+    });
+  }
 
-if(infoIcon){
-  infoIcon.addEventListener('click', (e) => {
-    e.stopPropagation();
-    div.classList.toggle('expanded');
-  });
-}
-
+  // Checkbox Toggle
   div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
@@ -810,11 +334,9 @@ function renderAllSections(taskList) {
     'OTHERS': document.getElementById('other-section'),
     'COMPLETED': document.getElementById('completed-section')
   };
-
   Object.values(sections).forEach(s => s.innerHTML = '');
-
   const sectionTasks = { 'TASK': [], 'CHANGES': [], 'UPDATE': [], 'OTHERS': [], 'COMPLETED': [] };
-
+  
   taskList.forEach(task => {
     const targetSection = task.status === 'COMPLETED' ? 'COMPLETED' : (task.section || 'TASK');
     if (sectionTasks[targetSection]) sectionTasks[targetSection].push(task);
@@ -844,39 +366,6 @@ function appendTasksToContainer(container, taskArray, dateStr) {
   if(taskArray.length > 0) container.appendChild(createSeparator(dateStr));
 }
 
-function enableDragAndDrop() {
-  const containers = { 'task-section': 'TASK', 'change-section': 'CHANGES', 'update-section': 'UPDATE' };
-  Object.keys(containers).forEach(containerId => {
-    const container = document.getElementById(containerId);
-    container.addEventListener('dragover', e => e.preventDefault());
-    container.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      const draggingId = e.dataTransfer.getData('text/plain');
-      if(!draggingId) return;
-      const targetEl = e.target.closest('.task-item, .date-separator');
-      let due_date = undefined;
-      if (targetEl) {
-        let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
-        if (rawDate && rawDate !== "") {
-          const parts = rawDate.split("-");
-          due_date = parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
-        } else due_date = null;
-      }
-      const sectionPromise = fetch('/update-task-section', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: draggingId, section: containers[containerId] })
-      });
-      let datePromise = due_date !== undefined ? fetch('/update-task-date', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: draggingId, due_date: due_date })
-      }) : Promise.resolve();
-      await Promise.all([sectionPromise, datePromise]);
-    });
-  });
-}
-
 function createSeparator(dateStr) {
   const hr = document.createElement('div');
   hr.className = 'date-separator';
@@ -886,24 +375,20 @@ function createSeparator(dateStr) {
 }
 
 function sortByPriority(tasks) {
-  const priorityOrder = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
-  return tasks.sort((a, b) => {
-    const p1 = priorityOrder[a.priority?.toUpperCase()] || 4;
-    const p2 = priorityOrder[b.priority?.toUpperCase()] || 4;
-    return p1 - p2;
-  });
+  const order = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
+  return tasks.sort((a, b) => (order[a.priority?.toUpperCase()] || 4) - (order[b.priority?.toUpperCase()] || 4));
 }
 
+// Flatpickr for date clicks
 const hiddenInput = document.createElement('input');
-hiddenInput.type = 'text'; hiddenInput.className = 'task-date-picker';
 hiddenInput.style.display = 'none';
 document.body.appendChild(hiddenInput);
 let currentTaskDiv = null;
 
 const fp = flatpickr(hiddenInput, {
-  dateFormat: "Y-m-d", minDate: "today", clickOpens: false, appendTo: document.body,
+  dateFormat: "Y-m-d", minDate: "today", clickOpens: false,
   onOpen: (s, d, i) => i.calendarContainer.classList.add("center-calendar"),
-  onChange: function(selectedDates, dateStr) {
+  onChange: function(dates, dateStr) {
     if (currentTaskDiv && dateStr) {
       fetch('/update-task-date', {
         method: 'POST',
@@ -911,7 +396,6 @@ const fp = flatpickr(hiddenInput, {
         body: JSON.stringify({ id: currentTaskDiv.dataset.id, due_date: dateStr })
       });
     }
-    currentTaskDiv = null;
   }
 });
 
@@ -925,6 +409,33 @@ function attachDateEvents() {
   });
 }
 
+function enableDragAndDrop() {
+  const containers = { 'task-section': 'TASK', 'change-section': 'CHANGES', 'update-section': 'UPDATE' };
+  Object.keys(containers).forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('dragover', e => e.preventDefault());
+    el.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const draggingId = e.dataTransfer.getData('text/plain');
+      const targetEl = e.target.closest('.task-item, .date-separator');
+      let due_date = targetEl?.dataset.date || null;
+      
+      await fetch('/update-task-section', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: draggingId, section: containers[id] })
+      });
+      if (due_date) {
+        await fetch('/update-task-date', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: draggingId, due_date })
+        });
+      }
+    });
+  });
+}
+
 document.addEventListener('dragstart', (e) => {
   if(e.target.classList.contains('task-item')) e.dataTransfer.setData('text/plain', e.target.dataset.id);
 });
@@ -934,49 +445,34 @@ document.addEventListener('DOMContentLoaded', ()=>{
   enableDragAndDrop();
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-  const deleteIcon = document.getElementById("delete-completed");
-  const modal = document.getElementById("deleteModal");
-  const confirmBtn = document.getElementById("confirmDelete");
-  const cancelBtn = document.getElementById("cancelDelete");
-
-  deleteIcon.addEventListener("click", () => modal.style.display = "flex");
-  cancelBtn.addEventListener("click", () => modal.style.display = "none");
-  confirmBtn.addEventListener("click", async () => {
-    modal.style.display = "none"; // Close immediately
-    await fetch('/delete-completed-tasks', { method: 'POST' });
-  });
+// Modals
+document.getElementById("delete-completed").addEventListener("click", () => document.getElementById("deleteModal").style.display = "flex");
+document.getElementById("cancelDelete").addEventListener("click", () => document.getElementById("deleteModal").style.display = "none");
+document.getElementById("confirmDelete").addEventListener("click", async () => {
+  document.getElementById("deleteModal").style.display = "none";
+  await fetch('/delete-completed-tasks', { method: 'POST' });
 });
 
 let taskToDeleteId = null;
-document.addEventListener("click", function(e) {
-  const deleteBtn = e.target.closest(".delete-opt");
-  if (deleteBtn) {
-    taskToDeleteId = deleteBtn.closest(".task-item").dataset.id;
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".delete-opt");
+  if (btn) {
+    taskToDeleteId = btn.closest(".task-item").dataset.id;
     document.getElementById("singleDeleteModal").style.display = "flex";
   }
 });
 
 document.getElementById("confirmSingleDelete").addEventListener("click", async () => {
-  if (taskToDeleteId) {
-    document.getElementById("singleDeleteModal").style.display = "none"; // Close immediately
-    await fetch(`/delete-task/${taskToDeleteId}`, { method: "POST" });
-    taskToDeleteId = null;
-  }
-});
-
-document.getElementById("cancelSingleDelete").addEventListener("click", () => {
+  await fetch(`/delete-task/${taskToDeleteId}`, { method: "POST" });
   document.getElementById("singleDeleteModal").style.display = "none";
 });
-
+document.getElementById("cancelSingleDelete").addEventListener("click", () => document.getElementById("singleDeleteModal").style.display = "none");
 </script>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    socket.on('update_tasks', () => {
-       refreshTasksUI();
-    });
+    socket.on('update_tasks', () => refreshTasksUI());
 </script>
 </body>
 </html>
