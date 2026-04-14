@@ -200,7 +200,7 @@ function scheduleBackup(hour, minute, period) {
     });
 }
 
-scheduleBackup(4, 10, "PM");
+scheduleBackup(4, 18, "PM");
 
 // ================= ROUTES EXECUTION =================
 
