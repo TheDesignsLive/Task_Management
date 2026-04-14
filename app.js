@@ -192,7 +192,7 @@ function scheduleBackup(hour, minute, period) {
     const cronTime = `${minute} ${cronHour} * * *`;
 
     console.log("✅ Backup Scheduled:", `${hour}:${minute} ${period}`);
-    console.log("⏰ Cron:", cronTime);
+
 
     cron.schedule(cronTime, () => {
         console.log("🚀 Running DB Backup...");
@@ -200,7 +200,7 @@ function scheduleBackup(hour, minute, period) {
     });
 }
 
-scheduleBackup(4, 18, "PM");
+scheduleBackup(4,29, "PM");
 
 // ================= ROUTES EXECUTION =================
 

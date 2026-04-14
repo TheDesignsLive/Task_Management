@@ -26,7 +26,7 @@ async function backupDatabase() {
   const dbUser = process.env.DB_USER;
 const dbPass = process.env.DB_PASS ? `-p${process.env.DB_PASS}` : "";
 
-const command = `mysqldump -h ${process.env.DB_HOST} -u ${dbUser} ${dbPass} ${DB_NAME} > "${filePath}"`;
+const command = `/usr/bin/mysqldump -h ${process.env.DB_HOST} -u ${dbUser} ${dbPass} ${DB_NAME} > "${filePath}"`;
 
         exec(command, async (err) => {
             if (err) {
