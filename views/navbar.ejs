@@ -1,0 +1,678 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --teal1:#0f9d9a;
+  --teal2:#1bb3a9;
+  --light:#e9f2ef;
+  --white:#ffffff;
+  --border:#d6e3df;
+}
+
+body{
+  margin:0;
+  font-family:Segoe UI, Arial, sans-serif;
+  background:#f4f6f5;
+}
+
+.navbar{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:10px 20px 10px 5px; 
+  background:linear-gradient(to right,var(--teal1),var(--teal2));
+  box-shadow:0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logo {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+  background: white;
+  padding: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+
+.input-box{
+  flex:1;
+  background:#fff;
+  border-radius:10px;
+  padding:6px 14px;
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  max-width:900px;
+  height:34px;
+  gap:10px; 
+}
+
+textarea{
+  width:100%;
+  border:none;
+  resize:none;
+  outline:none;
+  background:transparent;
+  font-size:14px;
+  padding:6px 0;
+  height:22px;
+  overflow:hidden;
+}
+
+.icon-btn{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 8px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-right:8px;
+}
+
+select {
+  background-color: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 6px 30px 6px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-right: 5px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center; 
+  background-size: 12px;
+}
+
+select::-ms-expand { display: none; }
+.flag-red{ color:red; }
+.flag-green{ color:green; }
+.flag-blue{ color:blue; }
+
+.calendar-wrapper{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+
+#datePicker{
+  width:0;
+  height:0;
+  opacity:0;
+  position:absolute;
+}
+
+.user-display{
+  margin-left:auto;
+  font-weight:bold;
+  color:#fff;
+  font-size:14px;
+}
+
+.date-display{
+  font-size:8px;
+  color:#0f9d9a;
+  font-weight:600;
+  margin-right:8px;
+  white-space:nowrap;
+  background:#e6f7f5;
+  padding:3px 8px;
+  border-radius:10px;
+}
+
+.flatpickr-calendar {
+  margin-top: 20px !important;
+  width: 330px !important;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  overflow: hidden;
+  font-family: Segoe UI, sans-serif;
+}
+
+.flatpickr-calendar.open {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.flatpickr-months {
+  background: linear-gradient(to right, #0f9d9a, #14b8a6);
+  padding: 10px 0;
+}
+
+.flatpickr-calendar select.flatpickr-monthDropdown-months {
+  background: transparent !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-weight: 500;
+  border-radius: 6px !important;
+  border: none !important;
+  padding: 4px 6px !important;
+  appearance: auto !important;
+}
+
+.flatpickr-current-month {
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.flatpickr-current-month input.cur-year {
+  color: white;
+  font-weight: 600;
+}
+
+.flatpickr-prev-month, .flatpickr-next-month {
+  fill: white;
+  color: white;
+}
+
+.flatpickr-weekday {
+  color: #0f9d9a;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.flatpickr-day {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.flatpickr-day.selected {
+  background: #14b8a6;
+  border-color: #14b8a6;
+  color: white;
+}
+
+.flatpickr-days {
+  padding: 10px;
+  transform: translateX(-2px);
+}
+
+.flatpickr-weekday, .flatpickr-day {
+  width: 14.2857% !important;
+  max-width: 14.2857% !important;
+  flex: 0 0 14.2857% !important;
+  text-align: center;
+}
+
+
+/* ===== TOAST NOTIFICATION ===== */
+.toast {
+  position: fixed;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  background: #0F8989;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+
+  opacity: 0;
+  transition: all 0.4s ease;
+
+  z-index: 99999;
+}
+
+.toast.show {
+  bottom: 25px;   /* move up */
+  opacity: 1;
+}
+
+.custom-dropdown {
+  position: relative;
+  width: 160px;
+  font-size: 13px;
+}
+
+.dropdown-selected {
+  background: #fff;
+  border: 1px solid #d6e3df;
+  border-radius: 20px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  display: none;
+  z-index: 999;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  position: relative;
+}
+
+.dropdown-item:hover {
+  background: #e9f2ef;
+}
+
+.has-submenu:hover .submenu {
+  display: block;
+}
+
+/* SUBMENU RIGHT SIDE */
+.submenu {
+  left: calc(100% + 5px); 
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: 160px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  display: none;
+  overflow: hidden;   
+   transition: all 0.2s ease;
+
+}
+
+.submenu .dropdown-item:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.submenu .dropdown-item:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.dropdown-item[data-value^="team_"] {
+  font-weight: 600;
+  color: #0f9d9a;
+}
+
+.dropdown-item[data-value^="team_"]:first-child {
+  background: #e6f7f5;
+  border-left: 4px solid #0f9d9a;
+  font-weight: 700;
+}
+
+.dropdown-selected {
+  white-space: nowrap;        /* 🔥 prevents 2-line wrap */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;           /* adjust if needed */
+  gap: 6px;
+}
+.dropdown-item.has-submenu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dropdown-menu {
+  color: #222;   /* 🔥 IMPORTANT FIX */
+}
+
+.dropdown-item {
+  color: #222;   /* 🔥 force dark text */
+}
+</style>
+
+<div class="navbar">
+  <img src="/images/tms_logo.jpeg" alt="TMS Logo" class="logo">
+  
+  <div class="input-box">
+    <textarea id="taskInput" placeholder="Add Task here (Press Shift+Enter for description)"></textarea>
+
+    <div class="calendar-wrapper">
+      <span id="dateDisplay" class="date-display"></span>
+      <input type="text" id="datePicker">
+      <i class="fa-regular fa-calendar" onclick="openDate()" style="cursor:pointer; color:#14b8a6; font-size:16px; margin-left:-5px;"></i>
+    </div>
+
+    <select id="flag">
+      <option value="High" class="flag-red">High</option>
+      <option value="Medium" class="flag-green" selected>Medium</option>
+      <option value="Low" class="flag-blue">Low</option>
+    </select>
+
+<div class="custom-dropdown" id="assignDropdown">
+  <div class="dropdown-selected" id="selectedValue">
+    My Self <i class="fa fa-chevron-down"></i>
+  </div>
+
+
+
+  <div class="dropdown-menu" id="dropdownMenu">
+    
+
+    <div class="dropdown-item" data-value="self">My Self</div>
+  
+  <!-- ✅ SHOW ADMIN ONLY FOR USER -->
+<% if ((session.role === 'user' || session.role === 'owner') && admin) { %>
+    <div class="dropdown-item" data-value="admin">
+      <%= admin.name %> (Admin)
+    </div>
+  <% } %>
+    
+
+<% teams.forEach(team => { %>
+      <div class="dropdown-item has-submenu" data-team="<%= team.id %>">
+        <%= team.name %> <i class="fa fa-chevron-right"></i>
+
+        <!-- SUB MENU -->
+        <div class="submenu" id="team_<%= team.id %>"></div>
+      </div>
+    <% }) %>
+
+    <div class="dropdown-item has-submenu" id="otherEmployeesBtn">
+  Other Employees <i class="fa fa-chevron-right"></i>
+
+  <div class="submenu" id="other_employees_menu"></div>
+</div>
+
+    <div class="dropdown-item" data-value="all">All Members</div>
+
+  </div>
+</div>
+  </div>
+
+  <div class="user-display" id="navWelcomeText">
+    Welcome <%= (typeof session !== "undefined" && (session.userName || session.adminName)) ? (session.userName || session.adminName) : "Guest" %>
+  </div>
+</div>
+
+<!-- For Bottom Task Add message when task add sucessfully -->
+  <div id="toast" class="toast"></div>
+  
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+const textarea = document.getElementById("taskInput");
+const dateInput = document.getElementById("datePicker");
+const dateDisplay = document.getElementById("dateDisplay");
+const flagDropdown = document.getElementById("flag");
+
+
+function formatDate(date){
+  const d = new Date(date);
+  const day = d.getDate().toString().padStart(2,"0");
+  const month = d.toLocaleString("en-US",{month:"short"});
+  return day + " " + month;
+}
+
+
+const dropdown = document.getElementById("assignDropdown");
+const selected = document.getElementById("selectedValue");
+const menu = document.getElementById("dropdownMenu");
+
+window.assignedTo = "self";
+
+// ✅ Toggle dropdown
+selected.addEventListener("click", () => {
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+});
+
+// ✅ Close on outside click
+document.addEventListener("click", (e) => {
+  if (!dropdown.contains(e.target)) {
+    menu.style.display = "none";
+  }
+});
+
+// ✅ Handle click items
+menu.addEventListener("click", async function (e) {
+  const item = e.target.closest(".dropdown-item");
+  if (!item) return;
+
+  
+
+  // ===== NORMAL CLICK (SELF / ALL / TEAM / MEMBER) =====
+  window.assignedTo = item.dataset.value;
+
+  // ✅ SHOW SELECTED TEXT PROPERLY
+  if (window.assignedTo.startsWith("team_")) {
+const rawText = item.childNodes[0].textContent.trim();
+selected.innerHTML = rawText + ' <i class="fa fa-chevron-down"></i>';
+  } else {
+    selected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></i>';
+  }
+
+  // CLOSE DROPDOWN
+  menu.style.display = "none";
+});
+
+
+function displayDate(date){
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+  const selected = new Date(date);
+
+  today.setHours(0,0,0,0);
+  tomorrow.setHours(0,0,0,0);
+  selected.setHours(0,0,0,0);
+
+  if(selected.getTime() === today.getTime()) return "Today";
+  if(selected.getTime() === tomorrow.getTime()) return "Tom";
+  return formatDate(selected);
+}
+
+const todayDate = new Date().toISOString().split("T")[0];
+dateDisplay.innerText = displayDate(todayDate);
+dateInput.value = todayDate;
+
+const picker = flatpickr("#datePicker", {
+  minDate: "today",
+  dateFormat: "Y-m-d",
+  defaultDate: todayDate,
+  position: "below",
+  onChange: function(selectedDates) {
+    dateDisplay.innerText = displayDate(selectedDates[0]);
+  },
+  onClose: function() {
+    textarea.focus();
+  }
+});
+
+function openDate(){
+  dateInput._flatpickr.open();
+}
+
+function submitTask() {
+  const fullText = textarea.value.trim();
+  if(!fullText){
+    alert("Task cannot be empty!");
+    return;
+  }
+
+  const lines = fullText.split(/\r?\n/);
+  const title = lines[0];
+  const description = lines.slice(1).join('\n');
+  const date = dateInput.value;
+  const priority = flagDropdown.value;
+let assignedTo = window.assignedTo || "self";
+
+
+
+
+
+if (assignedTo === "self") {
+  assignedTo = "<%= session.userId || session.adminId %>";
+}
+
+// ✅ ADD THIS BLOCK
+if (assignedTo === "admin") {
+  assignedTo = "admin"; // keep same (backend already handles it)
+}
+
+fetch('/add-task', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ title, description, date, priority, assignedTo })
+})
+.then(res => res.json())
+.then(data => {
+    if(data.success) {
+
+        // ✅ SHOW TOAST
+        showToast("Task Added Successfully");
+
+        textarea.value = '';
+        dateInput.value = todayDate;
+        dateDisplay.innerText = displayDate(todayDate);
+        
+        // RESET DROPDOWNS HERE
+        flagDropdown.value = "Medium";
+            window.assignedTo = "self";
+    selected.innerHTML = 'My Self <i class="fa fa-chevron-down"></i>';
+
+        
+        console.log("Task added successfully without reload");
+
+    } else {
+        alert(data.message || "Error adding task");
+    }
+})
+.catch(err => console.error(err));
+
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+
+    const text = textarea.value.trim();
+
+    // prevent accidental empty submit
+    if (!text) return;
+
+    e.preventDefault();
+    submitTask();
+  }
+});
+
+const otherBtn = document.getElementById("otherEmployeesBtn");
+const otherMenu = document.getElementById("other_employees_menu");
+
+otherBtn.addEventListener("mouseenter", async function () {
+
+  if (otherMenu.innerHTML === "") {
+    const res = await fetch('/get-other-employees');
+    const data = await res.json();
+
+    if (data.success) {
+      otherMenu.innerHTML = "";
+
+      data.members.forEach(m => {
+        
+        otherMenu.innerHTML += `
+          <div class="dropdown-item" data-value="${m.id}">
+            ${m.name}
+          </div>
+        `;
+      });
+    }
+  }
+});
+
+//
+
+document.querySelectorAll(".has-submenu").forEach(item => {
+  item.addEventListener("mouseenter", async function () {
+
+    const teamId = item.dataset.team;
+    if (!teamId) return;
+
+    const submenu = document.getElementById("team_" + teamId);
+
+    // ✅ Load only once
+    if (submenu.innerHTML !== "") return;
+
+    try {
+      const res = await fetch(`/get-team-members/${teamId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        submenu.innerHTML = "";
+
+        // ✅ Team option
+        submenu.innerHTML += `
+          <div class="dropdown-item" data-value="team_${teamId}">
+            All ${item.childNodes[0].textContent.trim()}
+          </div>
+        `;
+
+        // ✅ Members
+        data.members.forEach(m => {
+          submenu.innerHTML += `
+            <div class="dropdown-item" data-value="${m.id}">
+              ${m.name}
+            </div>
+          `;
+        });
+      }
+
+    } catch (err) {
+      console.error("Error loading team members:", err);
+    }
+
+  });
+});
+
+
+// ===== TOAST FUNCTION =====
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.innerText = message;
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1000);
+}
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    window.globalSocket = io();
+    const currentSessionUserId = "<%= session.userId %>";
+
+    window.globalSocket.on('force_logout', (targetUserId) => {
+        if (currentSessionUserId == targetUserId) {
+            alert("Your account has been suspended or removed. You will be logged out.");
+            window.location.href = "/logout";
+        }
+    });
+
+    // --- ZERO RELOAD NAME UPDATE LOGIC ---
+    window.globalSocket.on('update_session_name', (data) => {
+        // 1. If the updated user is the one currently logged in, update Welcome text
+        if (currentSessionUserId == data.userId) {
+            const welcomeDiv = document.getElementById('navWelcomeText');
+            if(welcomeDiv) welcomeDiv.innerText = "Welcome " + data.newName;
+        }
+
+        // 2. Update the name in the Member Dropdown list for everyone
+        const mDropdown = document.getElementById('member');
+        if (mDropdown) {
+            const option = mDropdown.querySelector(`option[value="${data.userId}"]`);
+            if (option) {
+                option.innerText = data.newName;
+            }
+        }
+    });
+</script>

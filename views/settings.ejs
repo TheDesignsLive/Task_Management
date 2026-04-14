@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>Settings</title>
+<link rel="icon" type="image/svg" href="/images/tms.svg">
+<style>
+/* Background and layout */
+body{margin:0;font-family:Arial, sans-serif;background:#3C3A3A;color: #fff;}
+.layout{display:flex;min-height:calc(100vh - 60px);}
+.sidebar-container{width:55px;}
+.main-content{flex:1;padding:20px;background:#3C3A3A;}
+
+/* Settings Menu - Dark Theme Style */
+.settings-menu{background:rgba(255, 255, 255, 0.05);border-radius:8px;overflow:hidden;margin-bottom:20px;border: 1px solid rgba(255, 255, 255, 0.1);}
+.settings-item{padding:15px;border-bottom:1px solid rgba(255, 255, 255, 0.1);cursor:pointer;color: #eee;}
+.settings-item:hover{background:rgba(255, 255, 255, 0.1);}
+.settings-item.danger { color: #ff6b6b; font-weight: bold; }
+.settings-item.danger:hover { background: rgba(217, 83, 79, 0.1); }
+
+/* Input group for Password Eye Icon */
+.input-group { position: relative; margin: 6px 0; text-align: left; }
+.input-group label { display: block; font-size: 13px; margin-bottom: 4px; color: #555; font-weight: bold; }
+input{width:100%;padding:10px;padding-right:40px;box-sizing:border-box;border-radius:6px;border:1px solid #ccc; margin-bottom: 10px;}
+.input-group i { position: absolute; right: 12px; top: 32px; cursor: pointer; color: #999; }
+
+button{width:100%;padding:10px;background:#095959;color:#fff;border:none;cursor:pointer;margin-top:15px;border-radius:6px;font-weight:bold;}
+button:hover{background:#0b7373;}
+
+/* === DIALOG MODAL STYLES === */
+.modal, .dialog-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+    display: none; justify-content: center; align-items: center; z-index: 999;
+}
+.modal-content, .dialog-box {
+    background: #fff; width: 380px; padding: 25px; border-radius: 12px;
+    position: relative; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    color: #333;
+}
+.close-btn {
+    position: absolute; top: 12px; right: 15px; cursor: pointer; font-size: 18px; font-weight: bold; color: #555;
+}
+.close-btn:hover { color: red; }
+
+.modal-buttons { 
+    margin-top: 25px; 
+    display: flex; 
+    justify-content: center; 
+    gap: 15px; 
+}
+.btn { 
+    flex: 1; 
+    height: 44px; 
+    border: none; 
+    cursor: pointer; 
+    border-radius: 8px; 
+    font-size: 15px; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    text-decoration: none;
+    padding: 0; 
+    margin: 0;
+    transition: 0.2s;
+    box-sizing: border-box;
+}
+.btn-success { background-color: #0F8989; color: #fff; } 
+.btn-success:hover { background-color: #0c7575; }
+.btn-danger { background-color: #d9534f; color: #fff; }
+.btn-danger:hover { background-color: #c9302c; }
+.btn-cancel { background-color: #f1f1f1; color: #333; }
+.btn-cancel:hover { background-color: #e2e2e2; }
+
+#pwdError, #matchError { color: #d9534f; font-size: 11px; margin-top: 4px; display: none; text-align: left; line-height: 1.4; }
+
+.dropdown-selected {
+  background: #fff;
+  border: 1px solid #d6e3df;
+  border-radius: 20px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #222; /* ✅ ADD THIS */
+}
+</style>
+</head>
+
+<body>
+
+<%- include('navbar') %>
+
+<div class="layout">
+  <div class="sidebar-container">
+    <%- include('sidebar') %>
+  </div>
+
+  <div class="main-content">
+    <h2 style="margin-top: 0;">Settings</h2>
+    <div class="settings-menu">
+        <div class="settings-item" onclick="openPasswordDialog()">Change Password</div>
+        <div class="settings-item" onclick="openEmailDialog()">Change Gmail</div>
+        <div class="settings-item danger" onclick="openDeleteDialog()">Delete Profile</div>
+        <div class="settings-item danger" onclick="openLogoutModal()">Logout</div>
+    </div>
+  </div>
+</div>
+
+<div id="passwordDialog" class="dialog-overlay">
+    <div class="dialog-box">
+        <span class="close-btn" onclick="closePasswordDialog()">✖</span>
+        <h3 style="margin-top:0;">Change Password</h3>
+        
+        <div id="pwd-step1">
+            <p style="font-size: 14px; color: #555;">To change password, verify your email:<br><strong><%= session.email %></strong></p>
+            <button type="button" onclick="sendOtpForPassword()">Send Verification OTP</button>
+        </div>
+
+        <div id="pwd-step2" style="display:none;">
+            <p style="color:green; font-size:14px;">OTP sent to your email.</p>
+            <input type="text" id="pwdOtpInput" placeholder="Enter OTP">
+            <button type="button" onclick="verifyPwdOtp()">Verify OTP</button>
+        </div>
+
+        <form id="changePasswordForm" style="display:none;">
+            <div class="input-group">
+                <label>New Password</label>
+                <input type="password" name="new_password" id="newPwd" placeholder="Enter new password" required>
+                <i class="fa-solid fa-eye-slash" onclick="togglePwd('newPwd', this)"></i>
+                <div id="pwdError">Must be 8+ characters with 1 uppercase, 1 lowercase & 1 number.</div>
+            </div>
+            <div class="input-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" id="confPwd" placeholder="Confirm new password" required>
+                <i class="fa-solid fa-eye-slash" onclick="togglePwd('confPwd', this)"></i>
+                <div id="matchError">Passwords do not match. Please try again.</div>
+            </div>
+            <button type="submit">Update Password</button>
+        </form>
+    </div>
+</div>
+
+<div id="emailDialog" class="dialog-overlay">
+    <div class="dialog-box">
+        <span class="close-btn" onclick="closeEmailDialog()">✖</span>
+        <h3 style="margin-top:0;">Change Gmail</h3>
+        <div id="email-step1">
+            <p style="font-size: 14px; color: #555;">Current Email: <strong id="currentEmailDisplay"><%= session.email %></strong></p>
+            <button type="button" onclick="sendOtpToCurrent('<%= session.email %>')">Send OTP to Current Email</button>
+        </div>
+        <div id="email-step2" style="display:none;">
+            <p style="color:green; font-size:14px;">OTP sent to current email.</p>
+            <input type="text" id="currentOtpInput" placeholder="Enter OTP">
+            <button type="button" onclick="verifyCurrentOtp()">Confirm OTP</button>
+        </div>
+        <div id="email-step3" style="display:none;">
+            <p style="font-size: 14px; color: #555;">Current email verified.</p>
+            <input type="email" id="newEmailInput" placeholder="Enter New Email Address" required>
+            <button type="button" onclick="sendOtpToNew()">Send OTP to New Email</button>
+        </div>
+        <div id="email-step4" style="display:none;">
+            <p style="color:green; font-size:14px;">OTP sent to new email.</p>
+            <form id="changeEmailForm" onsubmit="return verifyNewOtpAndSubmit(event)">
+                <input type="hidden" name="new_email" id="finalNewEmail">
+                <input type="text" id="newOtpInput" placeholder="Enter OTP" required>
+                <button type="submit">Confirm & Change Gmail</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="logoutModal" class="modal">
+  <div class="modal-content">
+    <h2 style="margin-top:0;">Confirm Logout</h2>
+    <p style="color:#555;">Logout from <br><strong style="color:#095959;"><%= session.email %></strong> ?</p>
+    <div class="modal-buttons">
+      <button type="button" onclick="location.href='/logout'" class="btn btn-danger">Logout</button>
+      <button type="button" onclick="closeLogoutModal()" class="btn btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="adminDeleteModal" class="modal">
+  <div class="modal-content">
+    <h2 style="margin-top:0; color:#d9534f;">Delete Profile</h2>
+    <div id="del-step1">
+        <p style="color:#555;">Are you sure? All associated employee data will be permanently lost. Verification required.</p>
+        <button type="button" onclick="sendOtpForDelete()" class="btn btn-danger" style="margin-top:10px;">Send OTP to <%= session.email %></button>
+    </div>
+    <div id="del-step2" style="display:none;">
+        <p style="color:green; font-size:14px;">OTP sent. Please verify to delete.</p>
+        <input type="text" id="delOtpInput" placeholder="Enter OTP" style="margin-top:10px;">
+        <button type="button" onclick="verifyDeleteOtp()" class="btn btn-danger">Confirm Deletion</button>
+    </div>
+    <div class="modal-buttons">
+      <button type="button" onclick="closeDeleteDialogs()" class="btn btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="userCannotDeleteModal" class="modal">
+  <div class="modal-content">
+    <h3 style="margin-top:0; color:#d9534f;">Action Denied</h3>
+    <p style="color:#333;">Please contact your admin to remove your profile.</p>
+    <div class="modal-buttons">
+      <button type="button" onclick="closeDeleteDialogs()" class="btn btn-cancel">Okay</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="modal-content" style="text-align: center;">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons" style="margin-top: 0;">
+        <button id="customAlertBtn" class="btn btn-success" style="width: 100%;">Okay</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let alertRedirectUrl = null;
+let generatedPwdOtp = "";
+let generatedDelOtp = "";
+
+function showAlertDialog(title, message, isSuccess, redirectUrl = null) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  alertRedirectUrl = redirectUrl;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertRedirectUrl) window.location.href = alertRedirectUrl;
+});
+
+function openPasswordDialog() { 
+    document.getElementById('passwordDialog').style.display = 'flex'; 
+    document.getElementById('pwd-step1').style.display = 'block';
+    document.getElementById('pwd-step2').style.display = 'none';
+    document.getElementById('changePasswordForm').style.display = 'none';
+}
+function closePasswordDialog() { document.getElementById('passwordDialog').style.display = 'none'; }
+
+function openEmailDialog() {
+    document.getElementById('emailDialog').style.display = 'flex';
+    document.getElementById('email-step1').style.display = 'block';
+    ['email-step2','email-step3','email-step4'].forEach(s => document.getElementById(s).style.display='none');
+}
+function closeEmailDialog() { document.getElementById('emailDialog').style.display = 'none'; }
+
+function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+
+function openDeleteDialog() {
+    const userRole = "<%= session.role %>";
+    if (userRole === "admin") {
+        document.getElementById('adminDeleteModal').style.display = 'flex';
+        document.getElementById('del-step1').style.display = 'block';
+        document.getElementById('del-step2').style.display = 'none';
+    }
+    else document.getElementById('userCannotDeleteModal').style.display = 'flex';
+}
+function closeDeleteDialogs() { 
+    document.getElementById('adminDeleteModal').style.display = 'none'; 
+    document.getElementById('userCannotDeleteModal').style.display = 'none'; 
+}
+
+function togglePwd(id, icon) {
+    const input = document.getElementById(id);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+    } else {
+        input.type = "password";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+    }
+}
+
+function generateOtp() { return Math.floor(100000 + Math.random() * 900000).toString(); }
+
+// PASSWORD OTP LOGIC
+async function sendOtpForPassword() {
+    generatedPwdOtp = generateOtp();
+    document.getElementById('pwd-step1').style.display = 'none';
+    document.getElementById('pwd-step2').style.display = 'block';
+    try {
+        await fetch('/forgot-password/send-otp', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact: '<%= session.email %>', otp: generatedPwdOtp, sent_for: 'change_password' })
+        });
+    } catch(err) { console.error(err); }
+}
+
+function verifyPwdOtp() {
+    if (document.getElementById('pwdOtpInput').value === generatedPwdOtp) {
+        document.getElementById('pwd-step2').style.display = 'none';
+        document.getElementById('changePasswordForm').style.display = 'block';
+    } else {
+        showAlertDialog("Invalid OTP", "The code you entered is incorrect.", false);
+    }
+}
+
+// DELETE PROFILE OTP LOGIC
+async function sendOtpForDelete() {
+    generatedDelOtp = generateOtp();
+    document.getElementById('del-step1').style.display = 'none';
+    document.getElementById('del-step2').style.display = 'block';
+    try {
+        await fetch('/forgot-password/send-otp', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact: '<%= session.email %>', otp: generatedDelOtp, sent_for: 'delete_profile' })
+        });
+    } catch(err) { console.error(err); }
+}
+
+function verifyDeleteOtp() {
+    if (document.getElementById('delOtpInput').value === generatedDelOtp) {
+        confirmDeleteProfile();
+    } else {
+        showAlertDialog("Invalid OTP", "The code you entered is incorrect.", false);
+    }
+}
+
+document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const newPwd = document.getElementById('newPwd').value;
+    const confPwd = document.getElementById('confPwd').value;
+    const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    
+    if (!pwdRegex.test(newPwd)) {
+        document.getElementById('pwdError').style.display = 'block';
+        return;
+    }
+    if (newPwd !== confPwd) {
+        document.getElementById('matchError').style.display = 'block';
+        return;
+    }
+
+    try {
+        const res = await fetch('/settings/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_password: newPwd })
+        });
+        const data = await res.json();
+        if(data.success) {
+            closePasswordDialog();
+            showAlertDialog("Success!", data.message, true);
+            this.reset();
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        showAlertDialog("Error", "Server connection failed.", false);
+    }
+});
+
+// EMAIL OTP LOGIC
+let generatedCurrentOtp = "";
+let generatedNewOtp = "";
+
+async function sendOtpToCurrent(email) {
+    generatedCurrentOtp = generateOtp();
+    document.getElementById('email-step1').style.display = 'none';
+    document.getElementById('email-step2').style.display = 'block';
+    try {
+        await fetch('/forgot-password/send-otp', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact: email, otp: generatedCurrentOtp, sent_for: 'change_email' })
+        });
+    } catch(err) { console.error(err); }
+}
+
+function verifyCurrentOtp() {
+    if (document.getElementById('currentOtpInput').value === generatedCurrentOtp) {
+        document.getElementById('email-step2').style.display = 'none';
+        document.getElementById('email-step3').style.display = 'block';
+    } else {
+        showAlertDialog("Invalid OTP", "The code you entered is incorrect.", false);
+    }
+}
+
+async function sendOtpToNew() {
+    const newEmail = document.getElementById('newEmailInput').value;
+    if(!newEmail) {
+        showAlertDialog("Error", "Please enter a valid email.", false);
+        return;
+    }
+    generatedNewOtp = generateOtp();
+    document.getElementById('finalNewEmail').value = newEmail;
+    document.getElementById('email-step3').style.display = 'none';
+    document.getElementById('email-step4').style.display = 'block';
+    try {
+        await fetch('/forgot-password/send-otp', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact: newEmail, otp: generatedNewOtp, sent_for: 'change_email' })
+        });
+    } catch(err) { console.error(err); }
+}
+
+async function verifyNewOtpAndSubmit(e) {
+    e.preventDefault();
+    if (document.getElementById('newOtpInput').value !== generatedNewOtp) {
+        showAlertDialog("Invalid OTP", "The code you entered is incorrect.", false);
+        return false;
+    }
+    const newEmail = document.getElementById('finalNewEmail').value;
+    try {
+        const res = await fetch('/settings/change-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_email: newEmail })
+        });
+        const data = await res.json();
+        closeEmailDialog();
+        if (data.success) {
+            document.getElementById('currentEmailDisplay').innerText = data.newEmail;
+            showAlertDialog("Success!", data.message, true);
+            document.getElementById('changeEmailForm').reset();
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        showAlertDialog("Error", "Server Error.", false);
+    }
+    return false; 
+}
+
+async function confirmDeleteProfile() {
+    try {
+        const res = await fetch('/settings/delete-profile');
+        const data = await res.json();
+        closeDeleteDialogs();
+        if(data.success) {
+            showAlertDialog("Profile Deleted", data.message, true, '/');
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        showAlertDialog("Error", "Server Error.", false);
+    }
+}
+</script>
+
+</body>
+</html>

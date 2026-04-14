@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile</title>
+<link rel="icon" type="image/svg" href="/images/tms.svg">
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #3C3A3A;
+  overflow: hidden; 
+}
+.layout {
+  display: flex;
+  height: calc(100vh - 60px); 
+}
+.sidebar-container {
+  width: 55px;
+  height: 100%;
+}
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background: #3C3A3A; 
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+  overflow: hidden;
+}
+.profile-card {
+  width: 750px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  overflow: hidden;
+  height: 380px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.profile-left {
+  width: 300px;
+  background: linear-gradient(135deg, #095959, #00a896);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  padding: 20px;
+}
+.profile-img, .profile-letter-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 5px solid rgba(255,255,255,0.3);
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+/* Updated to match the first code's avatar style */
+.profile-letter-avatar {
+  background-color: #095959;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 60px;
+  text-transform: uppercase;
+}
+.profile-name-left {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+.profile-role-tag {
+  background: rgba(0,0,0,0.2);
+  padding: 4px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.profile-right {
+  flex: 1;
+  padding: 40px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+.section-title {
+  font-size: 20px;
+  color: #00d1b2;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+.info-item label {
+  display: block;
+  font-size: 12px;
+  color: #bbb;
+  margin-bottom: 3px;
+}
+.info-item span {
+  font-size: 15px;
+  color: #fff;
+  font-weight: 500;
+}
+.profile-btn {
+  margin-top: auto;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #095959;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.profile-btn:hover {
+  background: #00a896;
+}
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.error-msg {
+  color: #ff6b6b;
+  font-size: 11px;
+  display: none;
+  margin-top: -8px;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<%- include('navbar', { members: members || [] }) %>
+
+<div class="layout">
+  <div class="sidebar-container">
+    <%- include('sidebar') %>
+  </div>
+
+  <div class="main-content">
+    <div class="profile-card">
+      <div class="profile-left">
+          <div id="profileImageArea">
+            <% if (profilePic) { %>
+                <img src="/images/<%= profilePic %>" class="profile-img">
+            <% } else { %>
+                <div class="profile-letter-avatar">
+                    <%= name.charAt(0) %>
+                </div>
+            <% } %>
+          </div>
+          <div class="profile-name-left text-uppercase"><%= name %></div>
+          <div class="profile-role-tag"><%= role %></div>
+      </div>
+
+      <div class="profile-right">
+          <div class="section-title">Information</div>
+          
+          <div class="info-grid">
+              <div class="info-item">
+                  <label>Company</label>
+                  <span id="displayCompany"><%= company || 'N/A' %></span>
+              </div>
+              <div class="info-item">
+                  <label>Email Address</label>
+                  <span><%= email %></span>
+              </div>
+              <div class="info-item">
+                  <label>Phone Number</label>
+                  <span id="displayPhone"><%= phone && phone.trim() !== "" ? phone : "-----" %></span>
+              </div>
+
+              <% if (session.role === 'admin' || session.role === 'owner') { %>
+                  <div class="info-item">
+                      <label>Account Type</label>
+                      <span>Admin</span>
+                  </div>
+              <% } else { %>
+                  <div class="info-item">
+                      <label>Account Type</label>
+                      <span>User</span>
+                  </div>
+                  <div class="info-item">
+                      <label>Role</label>
+                      <span><%= userRoleName || 'N/A' %></span>
+                  </div>
+              <% } %>
+
+              <div class="info-item">
+                  <label>Account Status</label>
+                  <span style="color: #4ade80;">● Active</span>
+              </div>
+          </div>
+
+          <button class="profile-btn" onclick="openEdit()">Edit Profile Information</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="editModal">
+  <div style="width:400px; background:white; border-radius:10px; padding:25px; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
+    <h3 style="margin-top:0; color: #095959;">Edit Profile</h3>
+    <form id="editForm" enctype="multipart/form-data">
+      <label style="font-size:12px; color:#666;">Full Name</label>
+      <input type="text" name="name" value="<%= name %>" placeholder="Name" required style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+
+      <label style="font-size:12px; color:#666;">Phone Number (10 digits)</label>
+      <input type="text" id="phoneInput" name="phone" value="<%= phone %>" placeholder="Phone" maxlength="10" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+      <div id="phoneError" class="error-msg">Please enter a valid 10-digit number.</div>
+
+      <% if(session.role === "admin" || session.role === "owner"){ %>
+        <label style="font-size:12px; color:#666;">Company Name</label>
+        <input type="text" name="company" value="<%= company %>" placeholder="Company" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+      <% } %>
+
+      <label style="font-size:12px; color:#666;">Profile Picture</label>
+      <input type="file" name="profile_pic" style="margin-bottom:5px; width:100%;" accept=".jpg,.jpeg,.png,.webp">
+      <div style="font-size:11px;color:#777;margin-bottom:15px;">
+        Supported formats: JPG, JPEG, PNG, WEBP | Max size: 5MB
+      </div>
+
+      <div id="removeBtnContainer">
+        <% if(profilePic && profilePic !== ''){ %>
+            <button id="removePicBtn" type="button" onclick="openRemoveModal()" style="background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;margin-bottom:15px;width:100%;font-weight:600;">
+            Remove Profile Picture
+            </button>
+        <% } %>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button type="submit" style="flex:1; background:#00a896; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer; font-weight: 600;">Save Changes</button>
+        <button type="button" onclick="closeEdit()" style="flex:1; background:#ddd; border:none; padding:12px; border-radius:4px; cursor:pointer; font-weight: 600;">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="removeModal">
+    <div style="width:320px;background:white;border-radius:10px;padding:25px;text-align:center;box-shadow:0 5px 20px rgba(0,0,0,0.3);">
+      <h3 style="margin-top:0;color:#095959;">Remove Picture</h3>
+      <p style="font-size:14px;color:#555;margin-bottom:20px;">Are you sure you want to remove your profile picture?</p>
+      <div style="display:flex;gap:10px;">
+        <button onclick="confirmRemovePic()" style="flex:1;background:#ef4444;color:white;border:none;padding:10px;border-radius:5px;cursor:pointer;font-weight:600;">Remove</button>
+        <button onclick="closeRemoveModal()" style="flex:1;background:#ddd;border:none;padding:10px;border-radius:5px;cursor:pointer;font-weight:600;">Cancel</button>
+      </div>
+    </div>
+</div>
+
+<script>
+function openEdit(){document.getElementById('editModal').style.display='flex';}
+function closeEdit(){document.getElementById('editModal').style.display='none';}
+function openRemoveModal(){document.getElementById('removeModal').style.display='flex';}
+function closeRemoveModal(){document.getElementById('removeModal').style.display='none';}
+
+document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
+
+const editForm = document.getElementById('editForm');
+editForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const phone = document.getElementById('phoneInput').value;
+    const phoneError = document.getElementById('phoneError');
+    const phoneRegex = /^\d{10}$/;
+    
+    if(phone && !phoneRegex.test(phone)) { 
+        phoneError.style.display = 'block'; 
+        return; 
+    } else { 
+        phoneError.style.display = 'none'; 
+    }
+
+    const formData = new FormData(editForm);
+
+    try {
+        const res = await fetch('/profile/update-profile', { method:'POST', body: formData });
+        const data = await res.json();
+        
+        if(data.success){
+            document.querySelector('.profile-name-left').textContent = data.name;
+            const navWelcome = document.getElementById('navWelcomeText');
+            if(navWelcome) navWelcome.innerText = "Welcome " + data.name;
+
+            if(data.phone) document.getElementById('displayPhone').textContent = data.phone;
+            if(data.company) document.getElementById('displayCompany').textContent = data.company;
+
+            if(data.profilePic){
+                const imgArea = document.getElementById('profileImageArea');
+                imgArea.innerHTML = `<img src="/images/${data.profilePic}?t=${new Date().getTime()}" class="profile-img">`;
+                
+                if(!document.getElementById('removePicBtn')){
+                    document.getElementById('removeBtnContainer').innerHTML = `
+                        <button id="removePicBtn" type="button" onclick="openRemoveModal()" style="background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;margin-bottom:15px;width:100%;font-weight:600;">
+                        Remove Profile Picture
+                        </button>`;
+                }
+            }
+            closeEdit();
+        } else { alert(data.message || "Profile update failed!"); }
+    } catch(err){ console.error(err); alert("Something went wrong!"); }
+});
+
+async function confirmRemovePic(){
+    try {
+        const res = await fetch('/profile/remove-picture', { method:'POST' });
+        const data = await res.json();
+
+        if(data.success){
+
+            // update avatar
+            const imgArea = document.getElementById('profileImageArea');
+            imgArea.innerHTML = `<div class="profile-letter-avatar">${data.name.charAt(0)}</div>`;
+
+            // remove remove-button
+            const rb = document.getElementById('removePicBtn');
+            if(rb) rb.remove();
+
+            // 🔴 IMPORTANT: clear file input
+            const fileInput = document.querySelector('input[name="profile_pic"]');
+            if(fileInput) fileInput.value = "";
+
+            closeRemoveModal();
+
+        } else {
+            alert("Failed to remove picture");
+        }
+
+    } catch(err) {
+        console.error(err);
+        alert("Error removing picture");
+    }
+}
+</script>
+
+</body>
+</html>

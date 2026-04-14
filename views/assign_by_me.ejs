@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assign By Me</title>
+<link rel="icon" type="image/svg" href="/images/tms.svg">
+<style>
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: Arial, sans-serif; background-color: #3C3A3A; }
+.layout { display: flex; height: calc(100vh - 60px); } /* Changed to 100vh for stricter height control */
+.sidebar-container { width: 55px; flex-shrink: 0; }
+
+/* ✅ THE FIX: Added min-height: 0 to all flex columns in the chain */
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.content-wrapper { flex: 1; display: flex; gap: 10px; padding: 10px; overflow: hidden; min-height: 0; }
+
+.task-column { flex: 1; display: flex; flex-direction: column; background-color: rgba(255,255,255,0.05); border-radius: 8px; position: relative; min-height: 0; overflow: hidden; }
+#open-task-col { z-index: 2; }
+#comp-task-col { z-index: 1; }
+
+.column-header { border-radius: 100px; background-color: #0F8989; padding: 6px 15px; font-weight: bold; color: white; font-size: 13px; margin: 5px; text-align: center; position: relative; flex-shrink: 0; }
+
+/* ✅ THE FIX: This container now forces the scrollbar */
+.task-list-container { flex: 1; overflow-y: auto; padding: 5px 10px; min-height: 0; }
+
+.task-item { font-size: 13px; padding: 6px; margin: 6px 0; background-color: #444; color: #fff; border-radius: 4px; transition: background 0.2s; }
+.task-item:hover { background-color: #555; }
+.completed-task { opacity: 0.6; background-color: #2E2D2D; }
+.task-row { display: flex; align-items: center; gap: 6px; position: relative; }
+.task-title { flex: 1.2; min-width: 0; word-break: break-word; }
+.task-desc { flex: 1.5; min-width: 0; word-break: break-word; font-size: 11px; opacity: 0.8; }
+.task-sec-val { flex: 0.6; font-size: 10px; color: #0F8989; font-weight: bold; text-align: center; background: #ddd; border-radius: 4px; padding: 2px 4px; color: #333; }
+.task-assign { flex: 1; text-align: center; }
+.task-date { flex: 0.8; font-size: 10px; opacity: 0.7; text-align: right; white-space: nowrap; }
+.task-checkbox { width: 12px; height: 12px; appearance: none; border: 2px solid white; border-radius: 3px; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; }
+.task-checkbox:checked::after { content: "✔"; position: absolute; top: 0; left: 1px; font-size: 7px; color: white; }
+.priority-HIGH { border-color: #ff4d4d; }
+.priority-MEDIUM { border-color: #ffd633; }
+.priority-LOW { border-color: #4da6ff; }
+
+#delete-completed { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; transition: transform 0.2s, fill 0.2s; fill: #e74c3c; }
+.dots-btn { cursor: pointer; padding: 0 5px; color: #959494; font-size: 14px; margin-left: 5px; }
+.task-options-menu { display: none; position: absolute; right: 25px; top: 25px; background: white; color: #333; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; min-width: 100px; }
+.task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.modal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
+.modal-content { background: white; padding: 25px; border-radius: 10px; width: 320px; text-align: center; color: #333; }
+.btn { flex: 1; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.cancel { background: #ccc; }
+.delete { background: #d32f2f; color: white; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 3px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #777; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+/* ===== CUSTOM HOVER DROPDOWN ===== */
+
+
+.custom-select-btn::after { content: "▼"; font-size: 8px; margin-left: 4px; color: white; }
+
+.custom-menu-item:hover { background-color: #f0f0f0; }
+
+
+/* ALWAYS OPEN STRICTLY TO THE RIGHT */
+
+.custom-menu-item.has-submenu:hover > .custom-submenu { display: block; }
+
+
+
+
+.assign-by-me-page .custom-dropdown { 
+  position: relative; 
+  display: inline-block; 
+  width: 100%; 
+  text-align: left; 
+}
+
+.assign-by-me-page .custom-select-btn { 
+  background-color: #555; 
+  color: white; 
+  border: 1px solid #666; 
+  border-radius: 16px; 
+  padding: 3px 10px 3px 8px; 
+  cursor: pointer; 
+  font-size: 11px; 
+  width: 100%; 
+  box-sizing: border-box;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+}
+
+.assign-by-me-page .custom-select-btn::after { 
+  content: "▼"; 
+  font-size: 8px; 
+  margin-left: 4px; 
+  color: white; 
+}
+
+.assign-by-me-page .custom-menu {
+  display: none; 
+  position: absolute; 
+  background: white; 
+  color: #333;
+  min-width: 160px; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+  border-radius: 6px; 
+  z-index: 10000;
+  padding: 5px 0; 
+  font-size: 12px; 
+  margin-top: 3px;
+}
+
+.assign-by-me-page .custom-menu-item { 
+  position: relative; 
+  padding: 8px 15px; 
+  cursor: pointer; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  white-space: nowrap; 
+  transition: background 0.2s; 
+}
+
+.assign-by-me-page .custom-menu-item:hover { 
+  background-color: #f0f0f0; 
+}
+
+.assign-by-me-page .has-submenu::after { 
+  content: "▶"; 
+  font-size: 9px; 
+  color: #888; 
+  margin-left: 10px; 
+}
+
+.assign-by-me-page .custom-submenu {
+  display: none; 
+  position: absolute; 
+  top: 0; 
+  left: 100%; 
+  background: white; 
+  min-width: 150px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+  border-radius: 6px; 
+  padding: 5px 0; 
+  margin-left: 1px; 
+  z-index: 10001;
+}
+
+.assign-by-me-page .custom-menu-item.has-submenu:hover > .custom-submenu { 
+  display: block; 
+}
+
+.assign-by-me-page .menu-divider { 
+  border-bottom: 1px solid #ddd; 
+  margin: 4px 0; 
+}
+</style>
+</head>
+
+<body>
+<%- include('navbar') %>
+
+<div class="assign-by-me-page">
+<div class="layout">
+<div class="sidebar-container"><%- include('sidebar') %></div>
+<div class="main-content">
+<div class="content-wrapper">
+  <div class="task-column" id="open-task-col">
+    <div class="column-header">Pending Tasks</div>
+    <div class="task-list-container" id="open-task-list"></div>
+  </div>
+  <div class="task-column" id="comp-task-col">
+    <div class="column-header">Completed Tasks <svg id="delete-completed" viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
+    <div class="task-list-container" id="completed-task-list"></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div id="singleDeleteModal" class="modal"><div class="modal-content"><h3>Delete This Task?</h3><div class="modal-buttons"><button id="confirmSingleDelete" class="btn delete">Delete</button><button id="cancelSingleDelete" class="btn cancel">Cancel</button></div></div></div>
+<div id="deleteModal" class="modal"><div class="modal-content"><h3>Delete Completed Tasks?</h3><div class="modal-buttons"><button id="confirmDelete" class="btn delete">Delete</button><button id="cancelDelete" class="btn cancel">Cancel</button></div></div></div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let members = <%- JSON.stringify(typeof members !== 'undefined' ? members : []) %>;
+let teams = <%- JSON.stringify(typeof teams !== 'undefined' ? teams : []) %>;
+const adminName = "<%= adminName %>";
+const userRole = "<%= session.role %>";
+let isProcessingAjax = false;
+
+async function refreshABMUI() {
+    const res = await fetch(window.location.pathname, { headers: { 'Accept': 'application/json', 'x-requested-with': 'XMLHttpRequest' } });
+    const data = await res.json();
+    if(data.success) {
+        if(data.members) members = data.members;
+        if(data.teams) teams = data.teams;
+        renderTasks(data.openTasks, data.completedTasks);
+    }
+}
+
+function buildCustomDropdown(taskId, currentId, currentName) {
+    const myId = (userRole === 'admin' || userRole === 'owner') ? 0 : "<%= session.userId %>";
+    let displayName = currentName || "Select";
+    
+    // Note the added event to toggleCustomMenu
+    let html = `<div class="custom-dropdown" onclick="event.stopPropagation(); toggleCustomMenu(event, '${taskId}')">`;
+    html += `<div class="custom-select-btn" title="${displayName}">${displayName}</div>`;
+    html += `<div class="custom-menu" id="assign-menu-${taskId}">`;
+    
+    html += `<div class="custom-menu-item" onclick="changeAssignee('${taskId}', '${myId}')">Self</div>`;
+    html += `<div class="custom-menu-item" onclick="changeAssignee('${taskId}', 'all')">All Members</div>`;
+    
+    if (teams && teams.length > 0) {
+        html += `<div class="menu-divider"></div>`;
+        teams.forEach(t => {
+            html += `<div class="custom-menu-item has-submenu">Team: ${t.name}`;
+            html += `<div class="custom-submenu">`;
+            html += `<div class="custom-menu-item" style="font-weight:bold; color:#0F8989;" onclick="changeAssignee('${taskId}', 'team_${t.id}')">➜ Assign to All</div>`;
+            html += `<div class="menu-divider"></div>`;
+            
+            let teamHasMembers = false;
+            members.forEach(m => {
+                if (m.team_id == t.id) {
+                    html += `<div class="custom-menu-item" onclick="changeAssignee('${taskId}', '${m.id}')">${m.name}</div>`;
+                    teamHasMembers = true;
+                }
+            });
+            if(!teamHasMembers) html += `<div class="custom-menu-item" style="color:#999; cursor:default;">No members</div>`;
+            html += `</div></div>`;
+        });
+    }
+    
+    let hasOthers = members.some(m => !m.team_id);
+    if (hasOthers) {
+        html += `<div class="menu-divider"></div>`;
+        html += `<div class="custom-menu-item has-submenu">Other Members`;
+        html += `<div class="custom-submenu">`;
+        members.forEach(m => {
+            if (!m.team_id) {
+                html += `<div class="custom-menu-item" onclick="changeAssignee('${taskId}', '${m.id}')">${m.name}</div>`;
+            }
+        });
+        html += `</div></div>`;
+    }
+
+    if ((userRole === 'user' || userRole === 'owner') && adminName) {
+        html += `<div class="menu-divider"></div>`;
+        html += `<div class="custom-menu-item" onclick="changeAssignee('${taskId}', '0')">${adminName} (Admin)</div>`;
+    }
+    
+    html += `</div></div>`;
+    return html;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr || dateStr === 'null') return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+}
+
+async function toggleCheckboxStatus(id, checkboxEl) {
+    if(isProcessingAjax) return;
+    isProcessingAjax = true; 
+    const newStatus = checkboxEl.checked ? 'COMPLETED' : 'OPEN';
+    try {
+        await fetch('/update-task-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status: newStatus, section: 'COMPLETED' })
+        });
+    } catch(err) { console.error(err); }
+    finally { setTimeout(() => isProcessingAjax = false, 500); }
+}
+
+async function changeAssignee(taskId, newAssigneeId) {
+    activeAssignMenu = null; 
+    document.querySelectorAll('.task-row').forEach(row => row.style.zIndex = '1');
+    try {
+        await fetch('/assign_by_me/update-assignee', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ taskId, newAssigneeId })
+        });
+    } catch(err) { console.error(err); }
+}
+
+function renderTasks(openTasks, completedTasks) {
+    const openContainer = document.getElementById('open-task-list');
+    const compContainer = document.getElementById('completed-task-list');
+    openContainer.innerHTML = '';
+    compContainer.innerHTML = '';
+
+    openTasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'task-item';
+        item.id = 'task-' + task.id;
+        item.innerHTML = `
+        <div class="task-row">
+            <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleCheckboxStatus('${task.id}', this)">
+            <div class="task-title">${task.title}</div>
+            <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
+            <div class="task-sec-val">${task.section || 'TASK'}</div>
+            <div class="task-assign">
+                ${buildCustomDropdown(task.id, task.assignee_id, task.assigned_to)}
+            </div>
+            <div class="task-date">${formatDate(task.due_date)}</div>
+            <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+            <div class="task-options-menu" id="menu-${task.id}">
+                <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
+            </div>
+        </div>`;
+        openContainer.appendChild(item);
+    });
+
+    completedTasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'task-item completed-task';
+        item.id = 'task-' + task.id;
+        item.innerHTML = `
+        <div class="task-row">
+            <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
+            <div class="task-title">${task.title}</div>
+            <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
+            <div class="task-sec-val">${task.section || 'TASK'}</div>
+            <div class="task-assign"><span style="font-size: 11px;">${task.assigned_to}</span></div>
+            <div class="task-date">${formatDate(task.due_date)}</div>
+            <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+            <div class="task-options-menu" id="menu-${task.id}">
+                <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
+            </div>
+        </div>`;
+        compContainer.appendChild(item);
+    });
+}
+
+// ✅ FIXED: Detach menu using position: fixed so it cannot be clipped by column borders
+let activeMenu = null;
+let activeAssignMenu = null;
+
+function toggleMenu(event, id) {
+    event.stopPropagation();
+    const menu = document.getElementById('menu-' + id);
+    const btn = event.currentTarget;
+    
+    if (activeMenu && activeMenu !== menu) activeMenu.style.display = 'none';
+    if (activeAssignMenu) { activeAssignMenu.style.display = 'none'; activeAssignMenu = null; }
+    
+    if(menu.style.display === 'block') {
+        menu.style.display = 'none';
+        activeMenu = null;
+    } else {
+        menu.style.display = 'block';
+        
+        // Break out of overflow boundaries
+        const rect = btn.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = rect.bottom + 'px';
+        menu.style.left = 'auto';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.zIndex = '99999';
+        
+        activeMenu = menu;
+    }
+}
+
+function toggleCustomMenu(event, id) {
+    const menu = document.getElementById('assign-menu-' + id);
+    const btn = event.currentTarget;
+
+    if (activeAssignMenu && activeAssignMenu !== menu) activeAssignMenu.style.display = 'none';
+    if (activeMenu) { activeMenu.style.display = 'none'; activeMenu = null; }
+    
+    if(menu.style.display === 'block') {
+        menu.style.display = 'none';
+        activeAssignMenu = null;
+    } else {
+        menu.style.display = 'block';
+        
+        // Break out of overflow boundaries
+        const rect = btn.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = rect.bottom + 'px';
+        menu.style.left = rect.left + 'px';
+        menu.style.zIndex = '99999';
+        
+        activeAssignMenu = menu;
+    }
+}
+
+// Close all menus when clicking outside
+document.addEventListener('click', () => { 
+    if (activeMenu) { activeMenu.style.display = 'none'; activeMenu = null; }
+    if (activeAssignMenu) { activeAssignMenu.style.display = 'none'; activeAssignMenu = null; }
+});
+
+let taskToDeleteId = null;
+function openSingleDelete(id) { taskToDeleteId = id; document.getElementById("singleDeleteModal").style.display = "flex"; }
+document.getElementById("cancelSingleDelete").onclick = () => document.getElementById("singleDeleteModal").style.display = "none";
+document.getElementById("confirmSingleDelete").onclick = async () => {
+    await fetch(`/assign_by_me/delete-task/${taskToDeleteId}`, { method: "POST" });
+    document.getElementById("singleDeleteModal").style.display = "none";
+};
+
+document.getElementById('delete-completed').onclick = () => document.getElementById('deleteModal').style.display = 'flex';
+document.getElementById('cancelDelete').onclick = () => document.getElementById('deleteModal').style.display = 'none';
+document.getElementById('confirmDelete').onclick = async () => {
+    await fetch('/assign_by_me/delete-all-completed', { method: 'POST' });
+    document.getElementById('deleteModal').style.display = 'none';
+};
+
+const socket = io();
+socket.on('update_tasks', () => { refreshABMUI(); });
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderTasks(<%- JSON.stringify(openTasks) %>, <%- JSON.stringify(completedTasks) %>);
+    
+    // Auto-close floating menus when user scrolls the task list
+    document.querySelectorAll('.task-list-container').forEach(container => {
+        container.addEventListener('scroll', () => {
+            if (activeMenu) { activeMenu.style.display = 'none'; activeMenu = null; }
+            if (activeAssignMenu) { activeAssignMenu.style.display = 'none'; activeAssignMenu = null; }
+        });
+    });
+});
+</script>
+</body>
+</html>

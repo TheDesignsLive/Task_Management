@@ -1,0 +1,49 @@
+{
+  "name": "task-management",
+  "version": "1.0.0",
+  "description": "Task Management System for thedesigns.live",
+  "main": "app.js",
+  "scripts": {
+    "start": "cross-env DEBUG_MODE=true nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaykatakiyajadav69-blip/Task-Management.git"
+  },
+  "keywords": [
+    "express",
+    "mysql",
+    "ejs",
+    "task-management"
+  ],
+  "author": "Jay",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jaykatakiyajadav69-blip/Task-Management/issues"
+  },
+  "homepage": "https://github.com/jaykatakiyajadav69-blip/Task-Management#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "express-mysql-session": "^3.0.3",
+    "express-session": "^1.18.0",
+    "googleapis": "^171.4.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.9.7",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^6.9.13",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1"
+  }
+}

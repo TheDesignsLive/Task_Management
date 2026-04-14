@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>Roles</title>
+<link rel="icon" type="image/svg" href="/images/tms.svg">
+<style>
+/* ===== Body - Matching Theme ===== */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #3C3A3A;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Layout ===== */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar-container {
+  width: 55px;
+  background: #095959;
+  height: 100%;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background: #3C3A3A;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Custom Scrollbar */
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: #2E2D2D; }
+.main-content::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+
+/* ===== Sub Header ===== */
+.sub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 50px;
+}
+
+/* ✅ Added styling for the filter select box */
+.search-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-container select {
+  padding: 10px;
+  border: none;
+  border-radius: 100px;
+  background: #0F8989;
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.sub-header input[type="text"] {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 100px;
+  background: white;
+  color: #333;
+  width: 300px;
+  outline: none;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  padding: 8px 18px;
+  border: none;
+  cursor: pointer;
+  background-color: #0F8989;
+  color: white;
+  border-radius: 100px;
+  font-weight: bold;
+  font-size: 13px;
+  transition: background 0.3s;
+}
+
+.header-buttons button:hover { background-color: #12a3a3; }
+
+/* ===== Table - Dark Theme ===== */
+.table-container {
+  background-color: rgba(255,255,255,0.05);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 0 50px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+}
+
+table th {
+  background-color: #CDF4F4;
+  color: #095959;
+  text-align: center;
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+}
+
+table tr:hover td {
+  background-color: rgba(255,255,255,0.02);
+}
+
+.no-records {
+  text-align: center;
+  color: #888;
+  padding: 40px;
+}
+
+/* ===== Dialog Overlay ===== */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* ===== Dialog Box ===== */
+.dialog-box {
+  background: #fff;
+  width: 420px; 
+  padding: 25px;
+  border-radius: 8px;
+  position: relative;
+  color: #333;
+}
+
+.dialog-box input,
+.dialog-box select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+.dialog-box button {
+  width: 100%;
+  padding: 10px;
+  background: #209595;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.close-btn {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #999;
+}
+.close-btn:hover { color: red; }
+
+/* ===== Action Icons ===== */
+.actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.action-icon {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  color: #aaa;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+.edit-icon:hover { color: #f1c40f; }
+.delete-icon:hover { color: #ff4d4d; }
+
+/* ===== Confirmation Modal Style ===== */
+.confirm-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 380px;
+  text-align: center;
+  color: #333;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}
+
+.modal-buttons { 
+  margin-top: 25px; 
+  display: flex; 
+  justify-content: center; 
+  gap: 15px; 
+}
+
+.btn { 
+  flex: 1; 
+  height: 44px;
+  border: none; 
+  cursor: pointer; 
+  border-radius: 8px; 
+  font-size: 15px; 
+  font-weight: bold; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  transition: 0.2s;
+  box-sizing: border-box;
+}
+.btn-danger { background-color: #e74c3c; color: #fff; }
+.btn-danger:hover { background-color: #c0392b; }
+.btn-cancel { background-color: #f1f1f1; color: #333; }
+.btn-cancel:hover { background-color: #e2e2e2; }
+.btn-success { background-color: #0F8989; color: #fff; } 
+.btn-success:hover { background-color: #0c7575; }
+
+/* ===== Permissions Guide Style ===== */
+.permissions-guide {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed #ddd;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.permissions-guide strong { color: #209595; display: block; margin-top: 5px; }
+
+</style>
+</head>
+
+<body>
+
+<%- include('navbar') %>
+
+<div class="layout">
+
+  <div class="sidebar-container">
+    <%- include('sidebar') %>
+  </div>
+
+  <div class="main-content">
+
+    <div class="sub-header">
+      <div class="search-container">
+        
+        <div style="position: relative; display: flex; align-items: center; color: white;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16" style="position: absolute; left: 14px; pointer-events: none;">
+            <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
+          </svg>
+          <select id="searchFilter" style="padding-left: 38px; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+            <option value="name">By Name</option>
+            <option value="team">By Department</option>
+            <option value="control">By Control Type</option>
+          </select>
+        </div>
+
+        <input type="text" placeholder="Search..." id="searchRole">
+      </div>
+      
+      <div class="header-buttons">
+        <button onclick="openCategoryDialog()">Add Role</button>
+          <% if (session.role === 'admin') { %>
+        <button onclick="location.href='/view-teams'">Department Panel</button>
+        <% } %>
+        <button onclick="location.href='/view_member'">Members Panel</button>
+      </div>
+    </div>
+
+    <div class="table-container" id="tableContent">
+      <% if (roles && roles.length > 0) { %>
+        <table id="rolesTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Role Name</th>
+              <th>Control Type</th>
+              <th>Department</th> 
+              <th>Created</th>
+              <th>Actions</th> 
+            </tr>
+          </thead>
+
+          <tbody>
+            <% roles.forEach((r, index) => { %>
+             <tr class="role-row">
+                <td><%= index + 1 %></td>
+              <td class="role-name"><%= r.role_name %></td>
+              <td class="role-control"><%= r.control_type %></td>
+              <td class="role-team"><%= r.team_name ? r.team_name : 'No Department' %></td> 
+              <td><%= new Date(r.created_at).toLocaleDateString() %></td>
+
+              <td>
+                <div class="actions-container">
+
+                  <a href="javascript:void(0)" 
+                     onclick="openEditDialog('<%= r.id %>','<%= r.role_name %>','<%= r.control_type %>', '<%= r.team_id %>')" 
+                     class="action-icon edit-icon">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </a>
+
+                  <a href="javascript:void(0)" onclick="openDeletePopup('<%= r.id %>', '<%= r.role_name %>')" class="action-icon delete-icon">
+                    <i class="fa-solid fa-trash"></i>
+                  </a>
+
+                </div>
+              </td>
+
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="no-records">No roles found</div>
+      <% } %>
+    </div>
+
+  </div>
+</div>
+
+<div class="dialog-overlay" id="categoryDialog">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeCategoryDialog()">✖</span>
+    <h3 style="margin-top:0; text-align: center;">Add Role</h3>
+    <form id="addRoleForm">
+      <label style="display: block; font-weight: bold; margin-bottom: 5px;">Role Name</label>
+      <input type="text" name="role_name" placeholder="Enter role name" required>
+
+      <label style="display: block; font-weight: bold; margin-bottom: 5px;">Control Type</label>
+      <select name="control_type" required>
+        <option value="">Select Control Type</option>
+        <option value="OWNER">OWNER</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="PARTIAL">PARTIAL</option>
+        <option value="NONE">NONE</option>
+      </select>
+
+      <label style="display: block; font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Assign Team</label>
+      <select name="team_id" required>
+        <option value="" >No Team</option>
+        <% if(teams && teams.length > 0) { %>
+          <% teams.forEach(t => { %>
+            <option value="<%= t.id %>"><%= t.name %></option>
+          <% }) %>
+        <% } %>
+      </select>
+
+      <button type="submit" style="margin-top: 15px;">Create Role</button>
+    </form>
+
+    <div class="permissions-guide">
+      <span style="font-weight: bold; color: #333; text-decoration: underline;">Control Type Guide:</span>
+      <strong>ADMIN</strong>
+      High-level access. Can manage members, roles, and full administrative tasks.
+      <strong>PARTIAL</strong>
+      Supervisor access. Can view all team tasks but cannot add, remove, or suspend members.
+      <strong>NONE</strong>
+      Standard User. Access is limited to personal tasks and general platform usage.
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="editRoleDialog">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeEditDialog()">✖</span>
+    <h3 style="margin-top:0; text-align: center;">Edit Role</h3>
+    <form id="editRoleForm">
+      <label style="display: block; font-weight: bold; margin-bottom: 5px;">Role Name</label>
+      <input type="text" name="role_name" id="edit_role_name"  required>
+
+      <label style="display: block; font-weight: bold; margin-bottom: 5px;">Control Type</label>
+      <select name="control_type" id="edit_control_type" required>
+           <option value="OWNER">OWNER</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="PARTIAL">PARTIAL</option>
+        <option value="NONE">NONE</option>
+      </select>
+
+      <label style="display: block; font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Assign to Team (Optional)</label>
+      <select name="team_id" id="edit_team_id" required>
+        <option value="">No Team</option>
+        <% if(teams && teams.length > 0) { %>
+          <% teams.forEach(t => { %>
+            <option value="<%= t.id %>"><%= t.name %></option>
+          <% }) %>
+        <% } %>
+      </select>
+
+      <button type="submit" style="margin-top: 15px;">Update Role</button>
+    </form>
+
+    <div class="permissions-guide">
+      <span style="font-weight: bold; color: #333; text-decoration: underline;">Control Type Guide:</span>
+      <strong>ADMIN</strong>
+      High-level access. Can manage members, roles, and full administrative tasks.
+      <strong>PARTIAL</strong>
+      Supervisor access. Can view all team tasks but cannot add, remove, or suspend members.
+      <strong>NONE</strong>
+      Standard User. Access is limited to personal tasks and general platform usage.
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="deleteModal">
+  <div class="confirm-modal-content">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: #e74c3c; margin-bottom: 10px;"></i>
+    <h3 style="margin-top:0;">Are you sure?</h3>
+    <p id="deleteMessage"></p>
+    <div class="modal-buttons">
+        <button id="confirmDeleteBtn" class="btn btn-danger">Yes</button>
+        <button onclick="closeDeletePopup()" class="btn btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="confirm-modal-content">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons">
+        <button id="customAlertBtn" class="btn btn-success" style="width: 100%;">Okay</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let isProcessingAjax = false;
+
+// ================= ZERO RELOAD REFRESH FUNCTION =================
+async function refreshTable() {
+    try {
+        const response = await fetch(window.location.href);
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTable = doc.getElementById('tableContent').innerHTML;
+        document.getElementById('tableContent').innerHTML = newTable;
+    } catch (err) {
+        console.error("Failed to refresh table:", err);
+    }
+}
+
+// ================= CUSTOM ALERT FUNCTION =================
+function showAlertDialog(title, message, isSuccess) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  isProcessingAjax = false; 
+});
+
+// ✅ UPDATED SEARCH LOGIC WITH FILTER
+document.getElementById('searchRole').addEventListener('input', filterTable);
+document.getElementById('searchFilter').addEventListener('change', filterTable);
+
+function filterTable() {
+  const query = document.getElementById('searchRole').value.toLowerCase();
+  const filterType = document.getElementById('searchFilter').value;
+  const rows = document.querySelectorAll('.role-row');
+  
+  rows.forEach(row => {
+    let textToSearch = "";
+    
+    if (filterType === 'name') {
+        textToSearch = row.querySelector('.role-name').textContent.trim().toLowerCase();
+    } else if (filterType === 'team') {
+        textToSearch = row.querySelector('.role-team').textContent.trim().toLowerCase();
+    } else if (filterType === 'control') {
+        textToSearch = row.querySelector('.role-control').textContent.trim().toLowerCase();
+    }
+
+    row.style.display = textToSearch.includes(query) ? "" : "none";
+  });
+}
+
+function openCategoryDialog() {
+  document.getElementById("categoryDialog").style.display = "flex";
+}
+function closeCategoryDialog() {
+  document.getElementById("categoryDialog").style.display = "none";
+}
+
+function openEditDialog(id, name, control, teamId) {
+  document.getElementById("editRoleDialog").style.display = "flex";
+  document.getElementById("edit_role_name").value = name;
+  document.getElementById("edit_control_type").value = control;
+  
+  const teamDropdown = document.getElementById("edit_team_id");
+  if (teamId && teamId !== 'null' && teamId !== '') {
+      teamDropdown.value = teamId;
+  } else {
+      teamDropdown.value = "";
+  }
+
+  document.getElementById("editRoleForm").dataset.action = "/edit-role/" + id;
+}
+
+function closeEditDialog() {
+  document.getElementById("editRoleDialog").style.display = "none";
+}
+
+let deleteTargetId = null;
+function openDeletePopup(id, name) {
+  deleteTargetId = id;
+  document.getElementById("deleteMessage").innerText = `Permanently delete the role "${name}"?`;
+  document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeletePopup() {
+  document.getElementById("deleteModal").style.display = "none";
+}
+
+// ADD ROLE
+document.getElementById('addRoleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        role_name: this.role_name.value,
+        control_type: this.control_type.value,
+        team_id: this.team_id.value 
+    };
+    
+    isProcessingAjax = true; 
+    try {
+        const response = await fetch('/add-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resData = await response.json();
+        if (resData.success) {
+            closeCategoryDialog();
+            this.reset();
+            showAlertDialog("Success!", resData.message, true);
+        } else {
+            isProcessingAjax = false; 
+            showAlertDialog("Error", resData.message, false);
+        }
+    } catch (err) {
+        isProcessingAjax = false; 
+        showAlertDialog("Error", "Server Error", false);
+    }
+});
+
+// EDIT ROLE
+document.getElementById('editRoleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        role_name: document.getElementById('edit_role_name').value,
+        control_type: document.getElementById('edit_control_type').value,
+        team_id: document.getElementById('edit_team_id').value 
+    };
+    
+    isProcessingAjax = true; 
+    try {
+        const response = await fetch(this.dataset.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resData = await response.json();
+        if (resData.success) {
+            closeEditDialog();
+            showAlertDialog("Updated!", resData.message, true);
+        } else {
+            isProcessingAjax = false; 
+            showAlertDialog("Error", resData.message, false);
+        }
+    } catch (err) {
+        isProcessingAjax = false; 
+        showAlertDialog("Error", "Server Error", false);
+    }
+});
+
+// DELETE ROLE
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    if (deleteTargetId) {
+        isProcessingAjax = true; 
+        try {
+            const response = await fetch('/delete-role/' + deleteTargetId);
+            const resData = await response.json();
+            closeDeletePopup();
+            if (resData.success) {
+                showAlertDialog("Deleted!", resData.message, true);
+            } else {
+                isProcessingAjax = false; 
+                showAlertDialog("Error", resData.message, false);
+            }
+        } catch (err) {
+            isProcessingAjax = false; 
+            showAlertDialog("Error", "Server Error", false);
+        }
+    }
+});
+
+// DIALOG CLICK LOGIC (Only close via Cross)
+window.onclick = function(event) {
+  if (event.target.className === 'dialog-overlay') {
+    if (event.target.id === 'deleteModal') {
+        event.target.style.display = "none";
+    }
+  }
+}
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('update_roles', () => {
+        refreshTable();
+    });
+</script>
+
+</body>
+</html>

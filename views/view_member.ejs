@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Members</title>
+<link rel="icon" type="image/svg" href="/images/tms.svg">
+  <style>
+    /* ====== Body - Matching Theme ====== */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #3C3A3A;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ====== Layout ====== */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar-container {
+      width: 55px;
+      background: #095959;
+      height: 100%;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      background: #3C3A3A;
+      overflow-y: auto;
+      height: 100%;
+    }
+
+    /* Custom Scrollbar */
+    .main-content::-webkit-scrollbar { width: 6px; }
+    .main-content::-webkit-scrollbar-track { background: #2E2D2D; }
+    .main-content::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+
+    /* ====== Sub Header ====== */
+    .sub-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 0 50px;
+    }
+
+    .sub-header input[type="text"] {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 100px;
+      background: white;
+      color: #333;
+      width: 300px;
+      outline: none;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .header-buttons button {
+      padding: 8px 18px;
+      border: none;
+      cursor: pointer;
+      background-color: #0F8989;
+      color: white;
+      border-radius: 100px;
+      font-weight: bold;
+      font-size: 13px;
+      transition: background 0.3s;
+    }
+
+    .header-buttons button:hover { background-color: #12a3a3; }
+
+    /* ====== Table - Styled for Dark Theme ====== */
+    .table-container {
+      background-color: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 0 50px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: white;
+    }
+
+    table th {
+      background-color: #CDF4F4;
+      color: #095959;
+      text-align: center;
+      padding: 12px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+    }
+
+    .avatar-circle {
+      width: 35px;
+      height: 35px;
+      background-color: #095959;
+      color: white;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    /* ====== Actions ====== */
+    .action-btn { 
+      padding: 6px 12px; 
+      border: none; 
+      cursor: pointer; 
+      border-radius: 4px; 
+      font-weight: bold; 
+      transition: opacity 0.2s; 
+    }
+    .action-btn:hover { opacity: 0.9; }
+    
+    .accept-btn { background: #2ecc71; color: white; }
+    .reject-btn { background: #e74c3c; color: white; }
+
+    .action-icon {
+      margin-left: 10px;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.2s;
+    }
+    .edit-icon:hover { color: #FFD000; }
+    .delete-icon:hover { color: #ff4d4d; }
+
+    /* ====== Dialogs ====== */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .dialog-box {
+      background: white;
+      width: 420px;
+      padding: 25px;
+      border-radius: 8px;
+      position: relative;
+      color: #333;
+    }
+
+    .dialog-box h3 { text-align: center; margin-top: 0; color: #333; }
+    .dialog-box label { display: block; margin-top: 15px; font-weight: bold; color: #333; }
+    .dialog-box input, .dialog-box select {
+      width: 100%; margin-top: 6px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+    }
+    .dialog-box button {
+      width: 100%; padding: 10px; background: #209595; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; font-weight: bold;
+    }
+
+    .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px; color: #999; }
+    .close-btn:hover { color: #333; }
+
+    .error-msg { color: #e74c3c; font-size: 11px; margin-top: 4px; display: none; }
+
+    .confirm-modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 380px;
+      text-align: center;
+      color: #333;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    }
+
+    .modal-buttons { 
+      margin-top: 25px; 
+      display: flex; 
+      justify-content: center; 
+      gap: 15px; 
+    }
+
+    .btn { 
+      flex: 1; 
+      height: 44px;
+      border: none; 
+      cursor: pointer; 
+      border-radius: 8px; 
+      font-size: 15px; 
+      font-weight: bold; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      transition: 0.2s;
+      box-sizing: border-box;
+    }
+    .btn-danger { background-color: #e74c3c; color: #fff; }
+    .btn-danger:hover { background-color: #c0392b; }
+    .btn-cancel { background-color: #f1f1f1; color: #333; }
+    .btn-cancel:hover { background-color: #e2e2e2; }
+    .btn-success { background-color: #0F8989; color: #fff; } 
+    .btn-success:hover { background-color: #0c7575; }
+
+    .empty-role-warning {
+      text-align: center;
+      padding: 20px;
+    }
+    .empty-role-warning i { font-size: 40px; color: #f39c12; margin-bottom: 15px; }
+    .empty-role-warning p { margin-bottom: 20px; color: #555; }
+
+  </style>
+</head>
+<body>
+
+<%- include('navbar') %>
+
+<div class="layout">
+  <div class="sidebar-container">
+    <%- include('sidebar') %>
+  </div>
+
+  <div class="main-content">
+    <div class="sub-header">
+      <input type="text" placeholder="Search member" id="searchMember">
+      <div class="header-buttons">
+        <% if (session.role === 'admin' || session.role === 'owner') { %>
+        <button onclick="location.href='/view-teams'">Department Panel</button>
+        <% } %>
+        <button onclick="location.href='/view-roles'">Roles Panel</button>
+        <button onclick="openDialog()"><i class="fa-solid fa-plus"></i> Add Member</button>
+      </div>
+    </div>
+
+    <div class="table-container" id="tableContent">
+      <% if (users && users.length > 0) { %>
+        <table id="membersTable">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Profile</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach((user, index) => { %>
+              <tr class="member-row">
+                <td><%= index + 1 %></td>
+                <td>
+                  <% if (user.profile_pic) { %>
+                    <img src="/images/<%= user.profile_pic %>" width="35" height="35" style="border-radius:50%; object-fit: cover;">
+                  <% } else { %>
+                    <div class="avatar-circle"><%= user.name.charAt(0) %></div>
+                  <% } %>
+                </td>
+                <td class="member-name"><%= user.name %></td>
+                <td><%= user.email %></td>
+                <td><%= user.role_name %></td>
+                <td>
+                  <span style="color: <%= user.status === 'ACTIVE' ? '#2ecc71' : '#e74c3c' %>; font-weight: bold; font-size: 11px;">
+                    <%= user.status %>
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="action-btn" 
+                      style="background-color: <%= user.status === 'ACTIVE' ? '#e74c3c' : '#2ecc71' %>; color: white; font-size: 11px;"
+                      onclick="openSuspendPopup(<%= user.id %>, '<%= user.name %>', '<%= user.status %>')">
+                      <%= user.status === 'ACTIVE' ? 'Suspend' : 'Activate' %>
+                    </button>
+
+                    <a href="javascript:void(0)" onclick="openEditDialog('<%= user.id %>','<%= user.role_id %>','<%= user.team_id || 'none' %>','<%= user.name %>','<%= user.email %>','<%= user.phone %>')" class="action-icon edit-icon">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </a>
+
+                    <a href="javascript:void(0)" onclick="openDeletePopup(<%= user.id %>, '<%= user.name %>')" class="action-icon delete-icon">
+                      <i class="fa-solid fa-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div style="text-align: center; color: #888; padding: 40px;">No records found</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="dialogBox">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeDialog()">✖</span>
+    <% if (roles && roles.length > 0) { %>
+      <h3>Add Member</h3>
+      <form id="addMemberForm">
+        <label>Department</label>
+        <select id="add_team_id" required onchange="filterAddRoles()" required>
+          <option value="" disabled selected>Select Department</option>
+          <% if (typeof teams !== 'undefined') { teams.forEach(t => { %>
+            <option value="<%= t.id %>"><%= t.name %></option>
+          <% }) } %>
+
+        </select>
+
+        <label>Role</label>
+        <select name="role_id" id="add_role_id" required>
+          <option value="" disabled selected>Select Role</option>
+        </select>
+
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="text" name="phone" id="addPhone" placeholder="Phone (10 digits)" maxlength="10" >
+        <div id="addPhoneError" class="error-msg">Please enter a valid 10-digit phone number.</div>
+        <div style="position: relative; margin-top: 15px;">
+          <input type="password" id="addPassword" name="password" placeholder="Password" required>
+          <i class="fa-solid fa-eye-slash" id="toggleAddPassword" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
+        </div>
+        <div id="addPassError" class="error-msg">Min 8 chars, 1 Upper, 1 Lower, 1 Number.</div>
+        <div style="position: relative; margin-top: 15px;">
+          <input type="password" id="addConfirmPassword" placeholder="Confirm Password" required>
+          <i class="fa-solid fa-eye-slash" id="toggleAddConfirm" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
+        </div>
+        <div id="addConfirmError" class="error-msg">Passwords do not match.</div>
+        <label>Profile Picture</label>
+        <input type="file" name="profile_pic" accept="image/*">
+        <small style="display: block; color: #666; font-size: 11px; margin-top: 3px;">Supported formats: jpeg, jpg, png, gif, webp</small>
+        <button type="submit">Submit</button>
+      </form>
+    <% } else { %>
+      <div class="empty-role-warning">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <h3>No Roles Found</h3>
+        <p>Please create a role in the Roles Panel before adding a new member.</p>
+        <button onclick="location.href='/view-roles'">Go to Roles Panel</button>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="editDialogBox">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeEditDialog()">✖</span>
+    <h3>Edit Member</h3>
+    <form id="editMemberForm">
+      <label>Department</label>
+      <select id="edit_team_id" required onchange="filterEditRoles()" required>
+        <option value="" disabled>Select Department</option>
+        <% if (typeof teams !== 'undefined') { teams.forEach(t => { %>
+          <option value="<%= t.id %>"><%= t.name %></option>
+        <% }) } %>
+      </select>
+
+      <label>Role</label>
+      <select name="role_id" id="edit_role_id" required>
+        <option value="" disabled>Select Role</option>
+      </select>
+
+      <input type="text" name="name" id="edit_name" placeholder="Name" required>
+      <input type="email" name="email" id="edit_email" placeholder="Email" required>
+      <input type="text" name="phone" id="edit_phone" placeholder="Phone">
+      <div id="editPhoneError" class="error-msg">10 digits required.</div>
+      <div style="position: relative; margin-top: 15px;">
+        <input type="password" id="editPassword" name="password" placeholder="New Password (optional)">
+        <i class="fa-solid fa-eye-slash" id="toggleEditPassword" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
+      </div>
+      <div style="position: relative; margin-top: 15px;">
+        <input type="password" id="editConfirmPassword" placeholder="Confirm New Password">
+        <i class="fa-solid fa-eye-slash" id="toggleEditConfirm" style="position:absolute; right:10px; top:12px; cursor:pointer; color:#999;"></i>
+      </div>
+      <label>Profile Picture</label>
+      <input type="file" name="profile_pic" accept="image/*">
+      <small style="display: block; color: #666; font-size: 11px; margin-top: 3px;">Supported formats: jpeg, jpg, png, gif, webp</small>
+      <button type="submit">Update Member</button>
+    </form>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="suspendModal">
+  <div class="confirm-modal-content">
+    <i class="fa-solid fa-circle-exclamation" style="font-size: 40px; color: #f39c12; margin-bottom: 10px;"></i>
+    <h3 style="margin-top:0;">Confirmation</h3>
+    <p id="suspendMessage"></p>
+    <div class="modal-buttons">
+        <button id="confirmSuspendBtn" class="btn btn-danger">Yes</button>
+        <button onclick="closeSuspendPopup()" class="btn btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="deleteModal">
+  <div class="confirm-modal-content">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: #e74c3c; margin-bottom: 10px;"></i>
+    <h3 style="margin-top:0;">Are you sure?</h3>
+    <p id="deleteMessage"></p>
+    <div class="modal-buttons">
+        <button id="confirmDeleteBtn" class="btn btn-danger">Yes</button>
+        <button onclick="closeDeletePopup()" class="btn btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="customAlertModal">
+  <div class="confirm-modal-content">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div class="modal-buttons">
+        <button id="customAlertBtn" class="btn btn-success" style="width: 100%;">Okay</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const userRole = '<%= session.role %>';
+let isProcessingAjax = false;
+
+// ✅ Store all roles dynamically in JavaScript
+const allRoles = <%- JSON.stringify(roles || []) %>;
+
+// ✅ Filter Add Roles based on Team Selection
+function filterAddRoles() {
+  const teamId = document.getElementById('add_team_id').value;
+  const roleSelect = document.getElementById('add_role_id');
+  roleSelect.innerHTML = '<option value="" disabled selected>Select Role</option>';
+  
+  allRoles.forEach(r => {
+    if ((teamId === "none" && !r.team_id) || r.team_id == teamId) {
+      roleSelect.innerHTML += `<option value="${r.id}">${r.role_name}</option>`;
+    }
+  });
+}
+
+// ✅ Filter Edit Roles based on Team Selection
+function filterEditRoles() {
+  const teamId = document.getElementById('edit_team_id').value;
+  const roleSelect = document.getElementById('edit_role_id');
+  roleSelect.innerHTML = '<option value="" disabled selected>Select Role</option>';
+  
+  allRoles.forEach(r => {
+    if ((teamId === "none" && !r.team_id) || r.team_id == teamId) {
+      roleSelect.innerHTML += `<option value="${r.id}">${r.role_name}</option>`;
+    }
+  });
+}
+
+// ================= ZERO RELOAD REFRESH FUNCTION =================
+async function refreshTable() {
+    try {
+        const response = await fetch(window.location.href);
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTable = doc.getElementById('tableContent').innerHTML;
+        document.getElementById('tableContent').innerHTML = newTable;
+    } catch (err) {
+        console.error("Failed to refresh table:", err);
+    }
+}
+
+// ================= CUSTOM ALERT FUNCTION =================
+function showAlertDialog(title, message, isSuccess) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "btn btn-success";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "btn btn-danger";
+  }
+  
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  isProcessingAjax = false; 
+});
+
+// Search Logic
+document.getElementById('searchMember').addEventListener('input', function() {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll('.member-row');
+  rows.forEach(row => {
+    const nameText = row.querySelector('.member-name').textContent.toLowerCase();
+    row.style.display = nameText.includes(filter) ? "" : "none";
+  });
+});
+
+function openDialog() { 
+  document.getElementById("dialogBox").style.display = "flex"; 
+  document.getElementById('add_team_id').value = ""; // Reset team dropdown
+  document.getElementById('add_role_id').innerHTML = '<option value="" disabled selected>Select Role</option>'; // Reset role dropdown
+}
+function closeDialog() { document.getElementById("dialogBox").style.display = "none"; resetErrors(); }
+
+let editTargetId = null;
+function openEditDialog(id, roleId, teamId, name, email, phone) {
+  editTargetId = id;
+  
+  // Set Team and trigger role filtering
+  document.getElementById("edit_team_id").value = teamId;
+  filterEditRoles();
+  
+  // Then select the exact Role
+  document.getElementById("edit_role_id").value = roleId;
+  
+  document.getElementById("edit_name").value = name;
+  document.getElementById("edit_email").value = email;
+  document.getElementById("edit_phone").value = phone;
+  document.getElementById("editDialogBox").style.display = "flex";
+}
+function closeEditDialog() { document.getElementById("editDialogBox").style.display = "none"; resetErrors(); }
+function resetErrors() { document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none'); }
+
+function togglePassword(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.replace("fa-eye-slash", "fa-eye");
+  } else {
+    input.type = "password";
+    icon.classList.replace("fa-eye", "fa-eye-slash");
+  }
+}
+
+const toggleAddPass = document.getElementById("toggleAddPassword");
+if (toggleAddPass) toggleAddPass.addEventListener("click", () => togglePassword("addPassword", "toggleAddPassword"));
+const toggleAddConf = document.getElementById("toggleAddConfirm");
+if (toggleAddConf) toggleAddConf.addEventListener("click", () => togglePassword("addConfirmPassword", "toggleAddConfirm"));
+document.getElementById("toggleEditPassword").addEventListener("click", () => togglePassword("editPassword", "toggleEditPassword"));
+document.getElementById("toggleEditConfirm").addEventListener("click", () => togglePassword("editConfirmPassword", "toggleEditConfirm"));
+
+const passRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+
+// Add Member POST
+const addForm = document.getElementById("addMemberForm");
+if (addForm) {
+  addForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      resetErrors();
+      const phone = document.getElementById("addPhone").value;
+      const pass = document.getElementById("addPassword").value;
+      const confirm = document.getElementById("addConfirmPassword").value;
+      let hasError = false;
+
+      if(phone.length > 0 && phone.length !== 10) { document.getElementById("addPhoneError").style.display = 'block'; hasError = true; }
+      if(!passRegex.test(pass)) { document.getElementById("addPassError").style.display = 'block'; hasError = true; }
+      if(pass !== confirm) { document.getElementById("addConfirmError").style.display = 'block'; hasError = true; }
+      if(hasError) return;
+
+      isProcessingAjax = true; 
+      const formData = new FormData(this);
+      try {
+          const response = await fetch('/add-member', { method: 'POST', body: formData });
+          const data = await response.json();
+          if (data.success) {
+              closeDialog();
+              addForm.reset();
+              showAlertDialog("Success!", data.message, true);
+          } else {
+              isProcessingAjax = false;
+              showAlertDialog("Error", data.message, false);
+          }
+      } catch (err) {
+          isProcessingAjax = false;
+          showAlertDialog("Error", "Server Error", false);
+      }
+  });
+}
+
+// Edit Member POST
+document.getElementById("editMemberForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    isProcessingAjax = true;
+    const formData = new FormData(this);
+    try {
+        const response = await fetch('/edit-member/' + editTargetId, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+            closeEditDialog();
+            showAlertDialog("Updated!", "Member updated successfully", true);
+        } else {
+            isProcessingAjax = false;
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch (err) {
+        isProcessingAjax = false;
+        showAlertDialog("Error", "Server Error", false);
+    }
+});
+
+let selectedUserId = null;
+function openSuspendPopup(userId, userName, status) {
+    selectedUserId = userId;
+    let actionText = (status === 'ACTIVE') ? 'suspend' : 'activate';
+    document.getElementById("suspendMessage").innerText = `Confirm to ${actionText} "${userName}"?`;
+    document.getElementById("suspendModal").style.display = "flex";
+}
+function closeSuspendPopup() { document.getElementById("suspendModal").style.display = "none"; }
+
+document.getElementById("confirmSuspendBtn").addEventListener("click", async () => {
+    if (selectedUserId) {
+        isProcessingAjax = true;
+        try {
+            const response = await fetch("/suspend-member/" + selectedUserId);
+            const data = await response.json();
+            closeSuspendPopup();
+            if (data.success) {
+                showAlertDialog("Success!", data.message, true);
+            } else {
+                isProcessingAjax = false;
+                showAlertDialog("Error", data.message, false);
+            }
+        } catch (err) {
+            isProcessingAjax = false;
+            showAlertDialog("Error", "Failed to update status", false);
+        }
+    }
+});
+
+let deleteUserId = null;
+function openDeletePopup(userId, userName) {
+    deleteUserId = userId;
+    let msg = (userRole === 'user') ? `Send request to delete "${userName}"?` : `Permanently delete "${userName}"?`;
+    document.getElementById("deleteMessage").innerText = msg;
+    document.getElementById("deleteModal").style.display = "flex";
+}
+function closeDeletePopup() { document.getElementById("deleteModal").style.display = "none"; }
+
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    if (deleteUserId) {
+        isProcessingAjax = true;
+        try {
+            const response = await fetch("/delete-member/" + deleteUserId);
+            const data = await response.json();
+            closeDeletePopup();
+            if (data.success) {
+                showAlertDialog("Done!", data.message, true);
+            } else {
+                isProcessingAjax = false;
+                showAlertDialog("Error", data.message, false);
+            }
+        } catch (err) {
+            isProcessingAjax = false;
+            showAlertDialog("Error", "Server Error", false);
+        }
+    }
+});
+
+// SOCKET LOGIC
+const socket = io();
+socket.on('update_members', () => {
+    // If we are showing an alert or processing, the refresh will happen when user clicks "Okay"
+    // Otherwise, refresh immediately in the background
+    refreshTable();
+});
+</script>
+
+</body>
+</html>

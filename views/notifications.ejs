@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications</title>
+<link rel="icon" type="image/svg" href="/images/tms.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+/* ===== MATCHING ASSIGN BY ME THEME ===== */
+body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+.layout{ display:flex; flex: 1; overflow: hidden; } 
+.sidebar-container{ width:55px; background: #095959; height: 100%; }
+
+/* Main Content Background matching Task List Container */
+.main-content{ flex:1; padding:20px; background:#3C3A3A; overflow-y: auto; height: 100%; } 
+
+/* Custom Scrollbar for Dark Theme */
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: #2E2D2D; }
+.main-content::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+
+/* Horizontal wrapper for Admin sections */
+.admin-horizontal-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Individual boxes - Styled like task-column */
+.box{ 
+    background-color: rgba(255,255,255,0.05); 
+    padding:20px; 
+    border-radius:8px; 
+    margin-bottom: 20px; 
+    flex: 1; 
+    min-width: 0; 
+    color: white;
+}
+
+/* Section Titles */
+.box h2 { color: #fff; font-size: 18px; margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+
+.action-btn{ padding:6px 10px; border:none; cursor:pointer; border-radius:4px; font-weight:bold; transition: opacity 0.2s; }
+.action-btn:hover { opacity: 0.9; }
+.accept-btn{ background:#2ecc71; color:white; }
+.reject-btn{ background:#e74c3c; color:white; }
+
+/* Announcement Button matching column-header style */
+.announce-btn {
+    padding: 8px 18px;
+    border: none;
+    cursor: pointer;
+    background-color: #0F8989;
+    color: white;
+    border-radius: 100px;
+    font-weight: bold;
+    float: right;
+    font-size: 13px;
+    transition: background 0.3s;
+}
+.announce-btn:hover { background-color: #12a3a3; }
+
+.avatar-circle {
+  width: 40px; height: 40px; background-color: #095959; color: white;
+  border-radius: 50%; display: inline-flex; align-items: center;
+  justify-content: center; font-weight: bold; font-size: 16px; text-transform: uppercase;
+}
+
+/* Modal Style - AS PER YOUR REQUEST */
+.modal {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  justify-content:center; align-items:center; z-index:1000;
+}
+.modal-content {
+  background:white; padding:25px; border-radius:8px; width:420px; box-sizing:border-box; color: #333;
+}
+.modal-content h3{ text-align:center; margin-top:0; margin-bottom:20px; color: #333; }
+.modal-content label{ display:block; margin-top:15px; font-weight:bold; text-align:left; color: #333; }
+.modal-content input, .modal-content select {
+  width:100%; margin-top:6px; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing: border-box;
+}
+.modal-content textarea{
+  width:100%; height:120px; resize:none; margin-top:6px; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;
+}
+
+/* Announcement Card - Better separation and Hover lift */
+.announcement-card {
+    border-left: 5px solid #0F8989; 
+    background: #444; 
+    padding: 18px;
+    margin-top: 15px; 
+    border-radius: 4px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    position: relative;
+    color: #fff;
+    transition: transform 0.2s;
+}
+.announcement-card:hover { transform: translateY(-2px); }
+
+.card-actions {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 12px;
+}
+
+/* Fixed Invisible Hover: Added background circle on hover */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #aaa;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.icon-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.delete-icon:hover { color: #ff4d4d !important; background: rgba(255,77,77,0.1); }
+
+/* Member Request Box Style */
+.request-card {
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 15px;
+    margin-top: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #2E2D2D;
+    color: white;
+}
+.request-info { flex: 1; }
+.request-info h4 { margin: 0; color: #fff; font-size: 15px; }
+.request-info p { margin: 4px 0; color: #bbb; font-size: 12px; }
+.request-actions { display: flex; flex-direction: column; gap: 8px; }
+
+/* Headers for sub-sections */
+.sub-section-header {
+    color: #CDF4F4;
+    border-bottom: 1px solid #555;
+    padding-bottom: 8px;
+    font-size: 14px;
+    margin-top: 25px;
+    letter-spacing: 0.5px;
+}
+
+/* Member request border logic */
+.add-border { border-left: 5px solid #2ecc71; background: #2a352a; }
+.deletion-border { border-left: 5px solid #ff4d4d; background: #352525; }
+
+/* Hidden state for max 10 logic */
+.hidden-announcement { display: none; }
+
+/* Responsive adjustment */
+@media (max-width: 1024px) {
+    .admin-horizontal-layout { flex-direction: column; }
+    .box { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<%- include('navbar') %>
+
+<div class="layout">
+  <div class="sidebar-container">
+    <%- include('sidebar') %>
+  </div>
+
+  <div class="main-content">
+    
+    <div class="<%= (session.role === 'admin' || session.role === 'owner') ? 'admin-horizontal-layout' : '' %>">
+        
+        <div class="box">
+          <div style="overflow: hidden; margin-bottom: 10px;">
+            <h2 style="display:inline-block; border:none; padding:0;">Announcements</h2>
+            <% if (session.role === 'admin' || session.role === 'owner' || session.control_type === 'ADMIN') { %>
+                <button class="announce-btn" onclick="openAnnounce()">
+                    <i class="fa-solid fa-plus" style="font-size:11px; margin-right:5px;"></i> Add Announcement
+                </button>
+            <% } %>
+          </div>
+
+          <div id="announcement-list">
+            <% if (announcements.length > 0) { %>
+                <% announcements.forEach((a, index) => { %>
+                    <div class="announcement-card <%= index >= 10 ? 'hidden-announcement' : '' %>" data-index="<%= index %>" id="announce-<%= a.id %>">
+                        <% if (session.role === 'admin' || session.role === 'owner' || session.control_type === 'ADMIN') { %>
+                        <div class="card-actions">
+                            <button class="icon-btn edit-btn-target" title="Edit" onclick="openEditAnnounce('<%= a.id %>', '<%= a.title.replace(/'/g, "\\'") %>', `<%= a.description.replace(/`/g, "\\`") %>`, '<%= a.role_id %>')">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="icon-btn delete-icon" title="Delete" onclick="confirmDeleteAnnounce('<%= a.id %>')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <% } %>
+
+                        <h3 class="ann-title" style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;"><%= a.title %></h3>
+                        <p style="color:#aaa; font-size: 11px; margin: 8px 0;">
+                          <i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> <strong><%= a.added_by_name %></strong> 
+                          <span style="margin: 0 8px; opacity:0.3;">|</span>
+                          <i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong class="ann-role"><%= a.target_role || (a.role_id == 0 ? 'All' : 'Your Role') %></strong> 
+                          <span style="margin: 0 8px; opacity:0.3;">|</span>
+                          <i class="fa-regular fa-clock" style="margin-right:4px;"></i> <%= new Date(a.created_at).toLocaleDateString() %>
+                        </p>
+                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+                        <p class="ann-desc" style="font-size: 13px; line-height: 1.5; color: #eee;"><%= a.description %></p>
+                        
+                        <div class="ann-attachment-container">
+                        <% if (a.attachment) { %>
+                            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;">
+                                <a href="/uploads/<%= a.attachment %>" target="_blank"
+                                   style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;">
+                                   <i class="fa-solid fa-paperclip"></i> View Attachment
+                                </a>
+                            </div>
+                        <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div id="empty-announcements" style="padding: 40px 0; text-align: center;">
+                    <i class="fa-solid fa-bullhorn" style="font-size: 30px; color: #555; margin-bottom: 10px;"></i>
+                    <p style="color:#888; font-size: 13px;">No announcements found.</p>
+                </div>
+            <% } %>
+          </div>
+          <div id="toggle-btn-container"></div>
+        </div>
+
+        <% if (session.role === 'admin' || session.role === 'owner') { %>
+        <div class="box">
+          <h2>Member Requests</h2>
+
+          <div id="request-list">
+          <h4 class="sub-section-header" style="color: #2ecc71;"><i class="fa-solid fa-user-plus" style="margin-right:8px;"></i> Add Requests</h4>
+          <% if (memberRequests.length > 0) { %>
+                <% memberRequests.forEach((r) => { %>
+                  <div class="request-card add-border" id="req-card-<%= r.id %>">
+                    <div class="request-profile">
+                      <% if (r.profile_pic) { %>
+                        <img src="/images/<%= r.profile_pic %>" width="50" height="50" style="border-radius:50%; object-fit: cover; border: 2px solid #2ecc71;">
+                      <% } else { %>
+                        <div class="avatar-circle" style="width: 50px; height: 50px; font-size: 20px; background-color: #2ecc71;"><%= r.name.charAt(0) %></div>
+                      <% } %>
+                    </div>
+                    <div class="request-info">
+                      <h4 style="color: #2ecc71;"><%= r.name %></h4>
+                      <p><strong>Email:</strong> <%= r.email %></p>
+                      <p><strong>Role:</strong> <%= r.role_name %></p>
+                      <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <div class="request-actions">
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/approve-member/<%= r.id %>', '<%= r.id %>')">Accept</button>
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/reject-member/<%= r.id %>', '<%= r.id %>')">Reject</button>
+                    </div>
+                  </div>
+                <% }) %>
+          <% } else { %>
+            <p style="color:#888; font-size: 12px; margin: 20px 0; text-align: center; font-style: italic;">No pending add requests.</p>
+          <% } %>
+
+          <h4 class="sub-section-header" style="color: #ff4d4d; margin-top: 35px;"><i class="fa-solid fa-user-minus" style="margin-right:8px;"></i> Deletion Requests</h4>
+          <% if (deletionRequests.length > 0) { %>
+                <% deletionRequests.forEach((r) => { %>
+                  <div class="request-card deletion-border" id="req-card-<%= r.id %>">
+                    <div class="request-profile">
+                      <% if (r.profile_pic) { %>
+                        <img src="/images/<%= r.profile_pic %>" width="50" height="50" style="border-radius:50%; object-fit: cover; border: 2px solid #ff4d4d;">
+                      <% } else { %>
+                        <div class="avatar-circle" style="width: 50px; height: 50px; font-size: 20px; background-color:#ff4d4d;"><%= r.name.charAt(0) %></div>
+                      <% } %>
+                    </div>
+                    <div class="request-info">
+                      <h4 style="color: #ff4d4d;"><%= r.name %> <span style="font-size:10px; background: rgba(255,77,77,0.2); padding: 2px 6px; border-radius: 4px; margin-left: 5px;">TO DELETE</span></h4>
+                      <p><strong>Email:</strong> <%= r.email %></p>
+                      <p><strong>Role:</strong> <%= r.role_name %></p>
+                      <p style="font-size: 11px; color: #888;">Requested by <%= r.requested_by_name %> on <%= new Date(r.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <div class="request-actions">
+                      <button class="action-btn reject-btn" onclick="processMemberRequest('/confirm-deletion/<%= r.id %>', '<%= r.id %>')">Approve</button>
+                      <button class="action-btn accept-btn" onclick="processMemberRequest('/reject-deletion/<%= r.id %>', '<%= r.id %>')">Keep</button>
+                    </div>
+                  </div>
+                <% }) %>
+          <% } else { %>
+            <p style="color:#888; font-size: 12px; margin: 20px 0; text-align: center; font-style: italic;">No pending deletion requests.</p>
+          <% } %>
+          </div>
+        </div>
+        <% } %>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="modal" id="announceModal">
+    <div class="modal-content">
+        <h3>Create Announcement</h3>
+        <form id="addAnnounceForm" action="/add-announcement" method="POST" enctype="multipart/form-data">
+            <label>Title</label>
+            <input type="text" name="title" required placeholder="Announcement Title">
+            
+            <label>Description</label>
+            <textarea name="description" placeholder="Detail description..."></textarea>
+            
+            <label>Who should receive this?</label>
+            <select name="role_id" required>
+                <option value="0">All</option> 
+                <% roles.forEach(role => { %>
+                    <option value="<%= role.id %>"><%= role.role_name %></option>
+                <% }) %>
+            </select>
+            
+            <label>Attachment (Image/PDF)</label>
+            <input type="file" name="attachment">
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" class="action-btn accept-btn" style="flex:1;">Post Now</button>
+                <button type="button" class="action-btn reject-btn" style="flex:1;" onclick="closeAnnounce()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="editAnnounceModal">
+    <div class="modal-content">
+        <h3>Edit Announcement</h3>
+        <form id="editForm" method="POST" enctype="multipart/form-data">
+            <label>Title</label>
+            <input type="text" name="title" id="edit_title" required>
+            
+            <label>Description</label>
+            <textarea name="description" id="edit_description"></textarea>
+            
+            <label>Target Role</label>
+            <select name="role_id" id="edit_role_id" required>
+                <option value="0">All</option> 
+                <% roles.forEach(role => { %>
+                    <option value="<%= role.id %>"><%= role.role_name %></option>
+                <% }) %>
+            </select>
+            
+            <label>Change Attachment (Keep empty to retain old)</label>
+            <input type="file" name="attachment">
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" class="action-btn accept-btn" style="flex:1;">Update</button>
+                <button type="button" class="action-btn reject-btn" style="flex:1;" onclick="closeEditAnnounce()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="deleteAnnounceModal">
+    <div class="modal-content" style="text-align: center;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: #e74c3c;"></i>
+        <h3 style="margin-top: 10px;">Are you sure?</h3>
+        <p>This announcement will be permanently deleted.</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button type="button" id="confirmDeleteBtn" class="action-btn reject-btn" style="flex:1;">Delete</button>
+            <button type="button" class="action-btn accept-btn" style="flex:1;" onclick="closeDeleteAnnounce()">No, Keep it</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="customAlertModal">
+  <div class="modal-content" style="text-align: center;">
+    <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
+    <h3 id="customAlertTitle" style="margin-top:0;">Message</h3>
+    <p id="customAlertMessage" style="color: #555; font-size: 15px; margin-bottom: 25px;"></p>
+    <div style="display:flex;">
+        <button id="customAlertBtn" class="action-btn accept-btn" style="flex: 1; height: 44px; font-size: 15px;">Okay</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// GLOBAL ZERO RELOAD FLAG
+let isProcessingAjax = false;
+
+// ================= TOGGLE VISIBILITY REFRESH LOGIC =================
+function updateToggleVisibility() {
+    const cards = document.querySelectorAll('.announcement-card');
+    const total = cards.length;
+    const container = document.getElementById('toggle-btn-container');
+    
+    // Update Indices
+    cards.forEach((card, i) => {
+        card.setAttribute('data-index', i);
+        if (!isShowingAll && i >= 10) {
+            card.classList.add('hidden-announcement');
+        } else {
+            card.classList.remove('hidden-announcement');
+        }
+    });
+
+    if (total > 10) {
+        const text = isShowingAll ? "Show Less" : "View All Announcements (" + total + ")";
+        const icon = isShowingAll ? "fa-chevron-up" : "fa-chevron-down";
+        container.innerHTML = `<p id="toggle-announcements-btn" onclick="toggleAnnouncements()" style="text-align: center; color: #0F8989; font-size: 12px; cursor: pointer; margin-top: 20px; font-weight: bold;">
+            ${text} <i class="fa-solid ${icon}" style="font-size: 10px; margin-left: 5px;"></i>
+        </p>`;
+    } else {
+        container.innerHTML = '';
+    }
+}
+
+// ================= MEMBER REQUEST PROCESSOR =================
+async function processMemberRequest(url, reqId) {
+    isProcessingAjax = true; 
+    try {
+        const res = await fetch(url, { method: 'GET' });
+        const data = await res.json();
+        if(data.success) {
+            const card = document.getElementById('req-card-' + reqId);
+            if (card) card.remove();
+            showAlertDialog("Success!", data.message, true, false);
+            setTimeout(() => isProcessingAjax = false, 500);
+        } else {
+            isProcessingAjax = false;
+            showAlertDialog("Error", data.message, false, false);
+        }
+    } catch(err) {
+        console.error(err);
+        isProcessingAjax = false;
+        showAlertDialog("Error", "Server Error", false, false);
+    }
+}
+
+// ================= CUSTOM ALERT RESULT FUNCTION =================
+let alertReloadFlag = false;
+
+function showAlertDialog(title, message, isSuccess, shouldReload = false) {
+  document.getElementById("customAlertTitle").innerText = title;
+  document.getElementById("customAlertMessage").innerText = message;
+  
+  const icon = document.getElementById("customAlertIcon");
+  const btn = document.getElementById("customAlertBtn");
+
+  if(isSuccess) {
+      icon.className = "fa-solid fa-circle-check";
+      icon.style.color = "#2ecc71";
+      btn.className = "action-btn accept-btn";
+  } else {
+      icon.className = "fa-solid fa-triangle-exclamation";
+      icon.style.color = "#e74c3c";
+      btn.className = "action-btn reject-btn";
+  }
+  
+  alertReloadFlag = shouldReload;
+  document.getElementById("customAlertModal").style.display = "flex";
+}
+
+document.getElementById("customAlertBtn").addEventListener("click", function() {
+  document.getElementById("customAlertModal").style.display = "none";
+  if(alertReloadFlag) {
+      window.location.reload();
+  } else {
+      isProcessingAjax = false; 
+  }
+});
+
+function openAnnounce() { document.getElementById('announceModal').style.display='flex'; }
+function closeAnnounce() { document.getElementById('announceModal').style.display='none'; }
+
+let editTargetId = null;
+function openEditAnnounce(id, title, desc, roleId) {
+    editTargetId = id;
+    document.getElementById('editForm').action = '/edit-announcement/' + id;
+    document.getElementById('edit_title').value = title;
+    document.getElementById('edit_description').value = desc;
+    document.getElementById('edit_role_id').value = roleId;
+    document.getElementById('editAnnounceModal').style.display = 'flex';
+}
+function closeEditAnnounce() { document.getElementById('editAnnounceModal').style.display = 'none'; }
+
+let deleteTargetId = null;
+function confirmDeleteAnnounce(id) {
+    deleteTargetId = id;
+    document.getElementById('deleteAnnounceModal').style.display = 'flex';
+}
+function closeDeleteAnnounce() { document.getElementById('deleteAnnounceModal').style.display = 'none'; }
+
+// ADD ANNOUNCEMENT FORM
+document.getElementById('addAnnounceForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    isProcessingAjax = true;
+    const formData = new FormData(this);
+    try {
+        const res = await fetch(this.action, { method: 'POST', body: formData });
+        const data = await res.json();
+        
+        if(data.success) {
+            const a = data.announcement;
+            if (document.getElementById('announce-' + a.id)) {
+                closeAnnounce();
+                this.reset();
+                setTimeout(() => isProcessingAjax = false, 500);
+                return;
+            }
+            // Logic handled by Socket.io, or manual prepend here
+            closeAnnounce();
+            this.reset();
+            updateToggleVisibility();
+            setTimeout(() => isProcessingAjax = false, 500);
+        }
+    } catch(err) { 
+        console.error(err); 
+        isProcessingAjax = false; 
+    }
+});
+
+// EDIT ANNOUNCEMENT
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    isProcessingAjax = true;
+    const formData = new FormData(this);
+    try {
+        const res = await fetch(this.action, { method: 'POST', body: formData });
+        const data = await res.json();
+        
+        if(data.success) {
+            const card = document.getElementById('announce-' + editTargetId);
+            if(card) {
+                card.querySelector('.ann-title').textContent = data.title;
+                card.querySelector('.ann-desc').textContent = data.description;
+                card.querySelector('.ann-role').textContent = data.target_role;
+                if(data.attachment) {
+                    card.querySelector('.ann-attachment-container').innerHTML = `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;"><a href="/uploads/${data.attachment}" target="_blank" style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;"><i class="fa-solid fa-paperclip"></i> View Attachment</a></div>`;
+                }
+                const editBtn = card.querySelector('.edit-btn-target');
+                if (editBtn) {
+                    const safeTitle = data.title.replace(/'/g, "\\'");
+                    const safeDesc = data.description.replace(/`/g, "\\`");
+                    editBtn.setAttribute('onclick', `openEditAnnounce('${editTargetId}', '${safeTitle}', \`${safeDesc}\`, '${data.role_id}')`);
+                }
+            }
+            closeEditAnnounce();
+            setTimeout(() => isProcessingAjax = false, 500);
+        }
+    } catch(err) { console.error(err); isProcessingAjax = false; }
+});
+
+// DELETE ANNOUNCEMENT
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+    if(!deleteTargetId) return;
+    isProcessingAjax = true;
+    try {
+        const res = await fetch('/delete-announcement/' + deleteTargetId, { method: 'GET' });
+        const data = await res.json();
+        if(data.success) {
+            const card = document.getElementById('announce-' + deleteTargetId);
+            if (card) card.remove();
+            updateToggleVisibility();
+            closeDeleteAnnounce();
+            setTimeout(() => isProcessingAjax = false, 500);
+        }
+    } catch(err) { console.error(err); isProcessingAjax = false; }
+});
+
+let isShowingAll = false;
+function toggleAnnouncements() {
+    isShowingAll = !isShowingAll;
+    updateToggleVisibility();
+    if (!isShowingAll) document.querySelector('.main-content').scrollTop = 0;
+}
+
+window.onclick = function(event) {
+    if (event.target.id === 'customAlertModal' && alertReloadFlag) return;
+    const modals = document.querySelectorAll('.modal, .dialog-overlay');
+    modals.forEach(m => {
+        if (event.target == m && m.id !== 'customAlertModal') m.style.display = "none";
+    });
+}
+
+document.addEventListener('DOMContentLoaded', updateToggleVisibility);
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    const mySessionRole = "<%= session.role %>";
+    const mySessionRoleId = "<%= session.role_id || 0 %>"; 
+    const isControlAdmin = <%= session.control_type === 'ADMIN' ? 'true' : 'false' %>;
+    const isAdmin = (mySessionRole === 'admin' || mySessionRole === 'owner' || isControlAdmin);
+
+    socket.on('new_announcement', (a) => {
+        if (document.getElementById('announce-' + a.id)) return;
+        if (!isAdmin && a.role_id != 0 && a.role_id != mySessionRoleId) return;
+
+        const dateStr = new Date(a.created_at).toLocaleDateString();
+        let attachmentHtml = a.attachment ? `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;"><a href="/uploads/${a.attachment}" target="_blank" style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;"><i class="fa-solid fa-paperclip"></i> View Attachment</a></div>` : '';
+        let actionsHtml = isAdmin ? `<div class="card-actions"><button class="icon-btn edit-btn-target" title="Edit" onclick="openEditAnnounce('${a.id}', '${a.title.replace(/'/g, "\\'")}', \`${a.description.replace(/`/g, "\\`")}\`, '${a.role_id}')"><i class="fa-solid fa-pen-to-square"></i></button><button class="icon-btn delete-icon" title="Delete" onclick="confirmDeleteAnnounce('${a.id}')"><i class="fa-solid fa-trash"></i></button></div>` : '';
+
+        const newCard = document.createElement('div');
+        newCard.className = 'announcement-card';
+        newCard.id = 'announce-' + a.id;
+        newCard.innerHTML = `${actionsHtml}<h3 class="ann-title" style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;">${a.title}</h3><p style="color:#aaa; font-size: 11px; margin: 8px 0;"><i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> <strong>${a.added_by_name}</strong> <span style="margin: 0 8px; opacity:0.3;">|</span><i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong class="ann-role">${a.target_role}</strong> <span style="margin: 0 8px; opacity:0.3;">|</span><i class="fa-regular fa-clock" style="margin-right:4px;"></i> ${dateStr}</p><div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div><p class="ann-desc" style="font-size: 13px; line-height: 1.5; color: #eee;">${a.description}</p><div class="ann-attachment-container">${attachmentHtml}</div>`;
+
+        const list = document.getElementById('announcement-list');
+        const emptyMsg = document.getElementById('empty-announcements');
+        if (emptyMsg) emptyMsg.remove();
+        list.prepend(newCard);
+        updateToggleVisibility();
+    });
+
+    socket.on('delete_announcement', (deletedId) => {
+        const card = document.getElementById('announce-' + deletedId);
+        if (card) card.remove();
+        updateToggleVisibility();
+    });
+
+    socket.on('edit_announcement', (data) => {
+        const card = document.getElementById('announce-' + data.id);
+        if(card) {
+            if (!isAdmin && data.role_id != 0 && data.role_id != mySessionRoleId) { card.remove(); updateToggleVisibility(); return; }
+            card.querySelector('.ann-title').textContent = data.title;
+            card.querySelector('.ann-desc').textContent = data.description;
+            card.querySelector('.ann-role').textContent = data.target_role;
+            if(data.attachment) card.querySelector('.ann-attachment-container').innerHTML = `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;"><a href="/uploads/${data.attachment}" target="_blank" style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;"><i class="fa-solid fa-paperclip"></i> View Attachment</a></div>`;
+            const editBtn = card.querySelector('.edit-btn-target');
+            if (editBtn) editBtn.setAttribute('onclick', `openEditAnnounce('${data.id}', '${data.title.replace(/'/g, "\\'")}', \`${data.description.replace(/`/g, "\\`")}\`, '${data.role_id}')`);
+        }
+    });
+
+    socket.on('update_members', () => { if (!isProcessingAjax) window.location.reload(); });
+</script>
+</body>
+</html>
