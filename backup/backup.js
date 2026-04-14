@@ -12,38 +12,48 @@ const auth = new google.auth.GoogleAuth({
 
 const drive = google.drive({ version: 'v3', auth });
 
-// CONFIG
 const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF';
 const DB_NAME = process.env.DB_NAME;
 
-// MAIN FUNCTION
 async function backupDatabase() {
     try {
         const fileName = `backup-${Date.now()}.sql`;
         const filePath = path.join(__dirname, fileName);
 
-        // 1. CREATE MYSQL BACKUP
-  const dbUser = process.env.DB_USER;
-const dbPass = process.env.DB_PASS ? `-p${process.env.DB_PASS}` : "";
+        const dbUser = process.env.DB_USER;
+        const dbPass = process.env.DB_PASS ? `-p${process.env.DB_PASS}` : "";
 
-const command = `/usr/bin/mysqldump -h ${process.env.DB_HOST} -u ${dbUser} ${dbPass} ${DB_NAME} > "${filePath}"`;
+        const command = `/usr/bin/mysqldump -h ${process.env.DB_HOST} -u ${dbUser} ${dbPass} ${DB_NAME} > "${filePath}"`;
 
-        exec(command, async (err) => {
+        console.log("Running Command:", command);
+
+        exec(command, async (err, stdout, stderr) => {
             if (err) {
-                console.error("Backup Error:", err);
+                console.error("❌ Backup Error:", err);
+                console.error("STDERR:", stderr);
                 return;
             }
 
-            // 2. CHECK FILE SIZE
+            if (stderr) {
+                console.log("STDERR (warning):", stderr);
+            }
+
+            // Check file
+            if (!fs.existsSync(filePath)) {
+                console.log("❌ Backup file not created");
+                return;
+            }
+
             const stats = fs.statSync(filePath);
+
             if (stats.size === 0) {
                 console.log("❌ Empty backup file");
                 return;
             }
 
-            console.log("✅ Backup created");
+            console.log("✅ Backup created:", fileName);
 
-            // 3. UPLOAD TO GOOGLE DRIVE
+            // Upload to Drive
             const response = await drive.files.create({
                 requestBody: {
                     name: fileName,
@@ -54,22 +64,21 @@ const command = `/usr/bin/mysqldump -h ${process.env.DB_HOST} -u ${dbUser} ${dbP
                 }
             });
 
-            console.log("✅ Uploaded:", response.data.id);
+            console.log("✅ Uploaded File ID:", response.data.id);
 
-            // 4. DELETE LOCAL FILE
+            // Delete local file
             fs.unlinkSync(filePath);
 
-            // 5. KEEP ONLY 30 FILES
+            // Clean old backups
             await cleanOldBackups();
 
         });
 
     } catch (error) {
-        console.error("Backup Failed:", error);
+        console.error("❌ Backup Failed:", error);
     }
 }
 
-// DELETE OLD FILES
 async function cleanOldBackups() {
     const res = await drive.files.list({
         q: `'${BACKUP_FOLDER_ID}' in parents`,
