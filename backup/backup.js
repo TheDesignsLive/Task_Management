@@ -2,34 +2,24 @@ const mysqldump = require('mysqldump');
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
-const con = require('../config/db');
 
-function debugLog(msg, data = "") {
-    console.log("🟢 [BACKUP DEBUG]", msg, data);
+// ✅ Load service account from ENV (no file needed, safe for git)
+function getAuth() {
+    const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    if (!raw) {
+        throw new Error("❌ GOOGLE_SERVICE_ACCOUNT_JSON env var is missing!");
+    }
+    const credentials = JSON.parse(raw);
+    return new google.auth.GoogleAuth({
+        credentials,   // ✅ pass object directly, NOT keyFile
+        scopes: ['https://www.googleapis.com/auth/drive']
+    });
 }
 
-// ✅ LOCAL FILE PATH (CORRECT)
-const serviceAccountPath = path.join(__dirname, '../service-account.json');
-
-if (!fs.existsSync(serviceAccountPath)) {
-    throw new Error("❌ service-account.json NOT FOUND");
-}
-
-debugLog("Service Account Path", serviceAccountPath);
-
-const auth = new google.auth.GoogleAuth({
-    keyFile: serviceAccountPath,
-    scopes: ['https://www.googleapis.com/auth/drive']
-});
-
-const drive = google.drive({ version: 'v3', auth });
-
-const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF';
+const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF'; // ✅ your existing folder ID
 
 function getISTTime() {
-    return new Date().toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata"
-    });
+    return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 }
 
 async function backupDatabase() {
@@ -40,53 +30,75 @@ async function backupDatabase() {
         console.log("🕒 IST:", getISTTime());
         console.log("==============================");
 
-        const [rows] = await con.query("SELECT COUNT(*) as count FROM tasks");
+        // ✅ Test auth FIRST before dumping
+        const auth = getAuth();
+        const drive = google.drive({ version: 'v3', auth });
 
-        debugLog("Task count", rows[0].count);
-
-        if (rows[0].count === 0) {
-            debugLog("Backup skipped (empty DB)");
+        // ✅ Verify folder is accessible
+        try {
+            await drive.files.get({ fileId: BACKUP_FOLDER_ID, fields: 'id,name' });
+            console.log("✅ Google Drive folder verified");
+        } catch (e) {
+            console.error("❌ Cannot access Drive folder:", e.message);
             return;
         }
 
+        // ✅ Use /tmp for Hostinger (writable on all plans)
         const fileName = `backup-${Date.now()}.sql`;
-        const filePath = path.join(__dirname, fileName);
+        const filePath = path.join('/tmp', fileName);
 
-        debugLog("Dump path", filePath);
+        console.log("📁 Temp file:", filePath);
 
         await mysqldump({
             connection: {
-                host: process.env.DB_HOST,
-                user: process.env.DB_USER,
-                password: process.env.DB_PASS,
-                database: process.env.DB_NAME,
+                host:     process.env.DB_HOST     || "srv832.hstgr.io",
+                user:     process.env.DB_USER     || "u213405511_dilip",
+                password: process.env.DB_PASS     || "Dilip@8133",
+                database: process.env.DB_NAME     || "u213405511_tmsDB"
             },
             dumpToFile: filePath,
         });
 
-        debugLog("SQL dump created");
+        console.log("✅ SQL dump created");
+
+        if (!fs.existsSync(filePath)) {
+            console.error("❌ Dump file not found after mysqldump");
+            return;
+        }
 
         const stats = fs.statSync(filePath);
-        debugLog("File size", stats.size);
+        console.log("📦 File size:", stats.size, "bytes");
 
+        if (stats.size === 0) {
+            console.error("❌ Dump file is empty — check DB credentials");
+            fs.unlinkSync(filePath);
+            return;
+        }
+
+        // ✅ Upload to Google Drive
         const response = await drive.files.create({
             requestBody: {
-                name: fileName,
+                name:    fileName,
                 parents: [BACKUP_FOLDER_ID],
             },
             media: {
-                body: fs.createReadStream(filePath)
+                mimeType: 'application/octet-stream',
+                body:     fs.createReadStream(filePath)
             },
-            supportsAllDrives: true,     // 🔥 IMPORTANT FIX
+            fields: 'id, name, size'
         });
 
-        debugLog("Uploaded to Drive", response.data.id);
+        console.log("☁️  Uploaded to Drive:");
+        console.log("    ID:  ", response.data.id);
+        console.log("    Name:", response.data.name);
+        console.log("    Size:", response.data.size, "bytes");
 
         fs.unlinkSync(filePath);
-        debugLog("Local file deleted");
+        console.log("🧹 Local temp file deleted");
+        console.log("✅ BACKUP COMPLETE\n");
 
     } catch (err) {
-        console.error("❌ BACKUP FAILED:", err.message);
+        console.error("❌ Backup Failed:", err.message || err);
     }
 }
 
