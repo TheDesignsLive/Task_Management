@@ -1,8 +1,8 @@
 require('dotenv').config();
+const mysqldump = require('mysqldump');
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
 
 // Google Auth
 const auth = new google.auth.GoogleAuth({
@@ -13,90 +13,59 @@ const auth = new google.auth.GoogleAuth({
 const drive = google.drive({ version: 'v3', auth });
 
 const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF';
-const DB_NAME = process.env.DB_NAME;
 
 async function backupDatabase() {
     try {
         const fileName = `backup-${Date.now()}.sql`;
         const filePath = path.join(__dirname, fileName);
 
-        const dbUser = process.env.DB_USER;
-        const dbPass = process.env.DB_PASS ? `-p${process.env.DB_PASS}` : "";
+        console.log("🚀 Starting LOCAL Backup...");
 
-        const command = `/usr/bin/mysqldump -h ${process.env.DB_HOST} -u ${dbUser} ${dbPass} ${DB_NAME} > "${filePath}"`;
-
-        console.log("Running Command:", command);
-
-        exec(command, async (err, stdout, stderr) => {
-            if (err) {
-                console.error("❌ Backup Error:", err);
-                console.error("STDERR:", stderr);
-                return;
-            }
-
-            if (stderr) {
-                console.log("STDERR (warning):", stderr);
-            }
-
-            // Check file
-            if (!fs.existsSync(filePath)) {
-                console.log("❌ Backup file not created");
-                return;
-            }
-
-            const stats = fs.statSync(filePath);
-
-            if (stats.size === 0) {
-                console.log("❌ Empty backup file");
-                return;
-            }
-
-            console.log("✅ Backup created:", fileName);
-
-            // Upload to Drive
-            const response = await drive.files.create({
-                requestBody: {
-                    name: fileName,
-                    parents: [BACKUP_FOLDER_ID]
-                },
-                media: {
-                    body: fs.createReadStream(filePath)
-                }
-            });
-
-            console.log("✅ Uploaded File ID:", response.data.id);
-
-            // Delete local file
-            fs.unlinkSync(filePath);
-
-            // Clean old backups
-            await cleanOldBackups();
-
+        // ✅ LOCAL DATABASE BACKUP
+        await mysqldump({
+            connection: {
+                host: process.env.DB_HOST,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASS,
+                database: process.env.DB_NAME,
+            },
+            dumpToFile: filePath,
         });
 
-    } catch (error) {
-        console.error("❌ Backup Failed:", error);
-    }
-}
+        console.log("✅ Backup file created");
 
-async function cleanOldBackups() {
-    const res = await drive.files.list({
-        q: `'${BACKUP_FOLDER_ID}' in parents`,
-        orderBy: 'createdTime asc',
-        fields: 'files(id, name)'
-    });
-
-    const files = res.data.files;
-
-    if (files.length > 30) {
-        const deleteCount = files.length - 30;
-
-        for (let i = 0; i < deleteCount; i++) {
-            await drive.files.delete({
-                fileId: files[i].id
-            });
-            console.log("🗑 Deleted:", files[i].name);
+        // Check file
+        if (!fs.existsSync(filePath)) {
+            console.log("❌ File not created");
+            return;
         }
+
+        const stats = fs.statSync(filePath);
+        console.log("📦 File size:", stats.size);
+
+        if (stats.size === 0) {
+            console.log("❌ Empty file");
+            return;
+        }
+
+        // ✅ Upload to Google Drive
+        const response = await drive.files.create({
+            requestBody: {
+                name: fileName,
+                parents: [BACKUP_FOLDER_ID]
+            },
+            media: {
+                body: fs.createReadStream(filePath)
+            }
+        });
+
+        console.log("✅ Uploaded to Drive:", response.data.id);
+
+        // Delete local file
+        fs.unlinkSync(filePath);
+
+    } catch (err) {
+        console.error("❌ Backup Failed:", err);
     }
 }
 

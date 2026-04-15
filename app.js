@@ -167,29 +167,41 @@ function scheduleBackup(hour, minute, period) {
     hour = parseInt(hour);
     minute = parseInt(minute);
 
+    if (hour < 1 || hour > 12) {
+        console.log("❌ Invalid hour");
+        return;
+    }
+
+    if (minute < 0 || minute > 59) {
+        console.log("❌ Invalid minute");
+        return;
+    }
+
     let cronHour;
 
     if (period === "AM") {
         cronHour = (hour === 12) ? 0 : hour;
-    } else {
+    } else if (period === "PM") {
         cronHour = (hour === 12) ? 12 : hour + 12;
+    } else {
+        console.log("❌ Invalid period");
+        return;
     }
 
+    // ✅ NOW includes minutes
     const cronTime = `${minute} ${cronHour} * * *`;
 
     console.log("✅ Backup Scheduled:", `${hour}:${minute} ${period}`);
 
+
     cron.schedule(cronTime, () => {
         console.log("🚀 Running DB Backup...");
         backupDatabase();
-    }, {
-        timezone: "Asia/Kolkata" // ✅ VERY IMPORTANT
     });
 }
 
-scheduleBackup(4, 33, "PM");
-
-
+scheduleBackup(10,13, "AM");
+backupDatabase();
 
 // ================= ROUTES EXECUTION =================
 
