@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const con = require('../config/db');
 
-const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+// const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const serviceAccountPath = '/home/u213405511/domains/tms.thedesigns.live/nodejs/service-account.json';
 
 console.log("📌 Service Account Path:", serviceAccountPath);
 
