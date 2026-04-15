@@ -5,13 +5,9 @@ const path = require('path');
 
 function getAuth() {
     let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    if (!raw) {
-        throw new Error("❌ GOOGLE_SERVICE_ACCOUNT_JSON env var is missing!");
-    }
+    if (!raw) throw new Error("❌ GOOGLE_SERVICE_ACCOUNT_JSON env var is missing!");
 
     raw = raw.trim();
-
-    // ✅ Decode Base64 → JSON string → object (Hostinger cannot break Base64)
     let decoded;
     try {
         decoded = Buffer.from(raw, 'base64').toString('utf8');
@@ -35,6 +31,7 @@ function getAuth() {
     });
 }
 
+// Your personal Google Drive folder ID (shared with the service account)
 const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF';
 
 function getISTTime() {
@@ -52,12 +49,17 @@ async function backupDatabase() {
         const auth = getAuth();
         const drive = google.drive({ version: 'v3', auth });
 
-        // Verify Drive folder is accessible
+        // Verify the folder is accessible (it will be after you share it)
         try {
-            const folder = await drive.files.get({ fileId: BACKUP_FOLDER_ID, fields: 'id,name' });
+            const folder = await drive.files.get({
+                fileId: BACKUP_FOLDER_ID,
+                fields: 'id,name',
+                supportsAllDrives: false  // ✅ We're using personal Drive
+            });
             console.log("✅ Google Drive folder verified:", folder.data.name);
         } catch (e) {
             console.error("❌ Cannot access Drive folder:", e.message);
+            console.error("👉 Did you share the folder with the service account email?");
             return;
         }
 
@@ -91,6 +93,7 @@ async function backupDatabase() {
             return;
         }
 
+        // ✅ THE FIX: Upload using your personal Drive quota via folder sharing
         const response = await drive.files.create({
             requestBody: {
                 name:    fileName,
@@ -100,7 +103,8 @@ async function backupDatabase() {
                 mimeType: 'application/octet-stream',
                 body:     fs.createReadStream(filePath)
             },
-            fields: 'id, name, size'
+            fields: 'id, name, size',
+            // ✅ Do NOT set supportsAllDrives: true — keep it as personal Drive
         });
 
         console.log("☁️  Uploaded to Drive:");
