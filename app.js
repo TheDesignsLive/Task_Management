@@ -200,8 +200,7 @@ function scheduleBackup(hour, minute, period) {
     });
 }
 
-scheduleBackup(10,13, "AM");
-backupDatabase();
+
 
 // ================= ROUTES EXECUTION =================
 
@@ -263,4 +262,5 @@ app.use("/masterpage",panel)
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
     console.log("Server running on port " + PORT);
+      scheduleBackup(12, 23, "PM");
 });
