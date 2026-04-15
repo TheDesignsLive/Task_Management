@@ -5,13 +5,34 @@ const path = require('path');
 
 // ✅ Load service account from ENV (no file needed, safe for git)
 function getAuth() {
-    const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     if (!raw) {
         throw new Error("❌ GOOGLE_SERVICE_ACCOUNT_JSON env var is missing!");
     }
-    const credentials = JSON.parse(raw);
+
+    // ✅ Fix 1: Hostinger sometimes wraps value in outer quotes — strip them
+    raw = raw.trim();
+    if (raw.startsWith('"') && raw.endsWith('"')) {
+        raw = raw.slice(1, -1);
+    }
+
+    // ✅ Fix 2: Hostinger escapes backslashes — unescape \\n back to \n
+    raw = raw.replace(/\\n/g, '\n');
+
+    // ✅ Fix 3: Also fix any double-escaped backslashes
+    raw = raw.replace(/\\\\/g, '\\');
+
+    let credentials;
+    try {
+        credentials = JSON.parse(raw);
+    } catch (e) {
+        // ✅ Fix 4: Log first 200 chars to see exactly what is wrong
+        console.error("❌ JSON parse failed. Raw value start:", raw.substring(0, 200));
+        throw new Error("Invalid GOOGLE_SERVICE_ACCOUNT_JSON: " + e.message);
+    }
+
     return new google.auth.GoogleAuth({
-        credentials,   // ✅ pass object directly, NOT keyFile
+        credentials,
         scopes: ['https://www.googleapis.com/auth/drive']
     });
 }
