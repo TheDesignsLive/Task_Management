@@ -5,7 +5,8 @@ const path = require('path');
 const con = require('../config/db');
 
 // const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-const serviceAccountPath = path.join(__dirname, '../service-account.json');
+// const serviceAccountPath = path.join(__dirname, '../service-account.json');
+const serviceAccountPath='https://srv832-files.hstgr.io/c21144ae59f048ac/files/nodejs/service-account.json';
 
 console.log("📌 Service Account Path:", serviceAccountPath);
 
