@@ -3,33 +3,31 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
 
-// ✅ Load service account from ENV (no file needed, safe for git)
 function getAuth() {
     let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     if (!raw) {
         throw new Error("❌ GOOGLE_SERVICE_ACCOUNT_JSON env var is missing!");
     }
 
-    // ✅ Fix 1: Hostinger sometimes wraps value in outer quotes — strip them
     raw = raw.trim();
-    if (raw.startsWith('"') && raw.endsWith('"')) {
-        raw = raw.slice(1, -1);
+
+    // ✅ Decode Base64 → JSON string → object (Hostinger cannot break Base64)
+    let decoded;
+    try {
+        decoded = Buffer.from(raw, 'base64').toString('utf8');
+    } catch (e) {
+        throw new Error("❌ Base64 decode failed: " + e.message);
     }
-
-    // ✅ Fix 2: Hostinger escapes backslashes — unescape \\n back to \n
-    raw = raw.replace(/\\n/g, '\n');
-
-    // ✅ Fix 3: Also fix any double-escaped backslashes
-    raw = raw.replace(/\\\\/g, '\\');
 
     let credentials;
     try {
-        credentials = JSON.parse(raw);
+        credentials = JSON.parse(decoded);
     } catch (e) {
-        // ✅ Fix 4: Log first 200 chars to see exactly what is wrong
-        console.error("❌ JSON parse failed. Raw value start:", raw.substring(0, 200));
-        throw new Error("Invalid GOOGLE_SERVICE_ACCOUNT_JSON: " + e.message);
+        console.error("❌ JSON parse failed. Decoded start:", decoded.substring(0, 150));
+        throw new Error("❌ Invalid JSON after decode: " + e.message);
     }
+
+    console.log("✅ Service account loaded for:", credentials.client_email);
 
     return new google.auth.GoogleAuth({
         credentials,
@@ -37,7 +35,7 @@ function getAuth() {
     });
 }
 
-const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF'; // ✅ your existing folder ID
+const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF';
 
 function getISTTime() {
     return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
@@ -51,23 +49,20 @@ async function backupDatabase() {
         console.log("🕒 IST:", getISTTime());
         console.log("==============================");
 
-        // ✅ Test auth FIRST before dumping
         const auth = getAuth();
         const drive = google.drive({ version: 'v3', auth });
 
-        // ✅ Verify folder is accessible
+        // Verify Drive folder is accessible
         try {
-            await drive.files.get({ fileId: BACKUP_FOLDER_ID, fields: 'id,name' });
-            console.log("✅ Google Drive folder verified");
+            const folder = await drive.files.get({ fileId: BACKUP_FOLDER_ID, fields: 'id,name' });
+            console.log("✅ Google Drive folder verified:", folder.data.name);
         } catch (e) {
             console.error("❌ Cannot access Drive folder:", e.message);
             return;
         }
 
-        // ✅ Use /tmp for Hostinger (writable on all plans)
         const fileName = `backup-${Date.now()}.sql`;
         const filePath = path.join('/tmp', fileName);
-
         console.log("📁 Temp file:", filePath);
 
         await mysqldump({
@@ -96,7 +91,6 @@ async function backupDatabase() {
             return;
         }
 
-        // ✅ Upload to Google Drive
         const response = await drive.files.create({
             requestBody: {
                 name:    fileName,
