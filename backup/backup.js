@@ -1,42 +1,59 @@
-require('dotenv').config();
+// ❌ No dotenv (using Hostinger environment variables)
+// require('dotenv').config();
+
 const mysqldump = require('mysqldump');
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
+const con = require('../config/db');
 
-// Google Auth
+// ================= GOOGLE AUTH =================
+const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+if (!serviceAccountPath) {
+    console.error("❌ GOOGLE_APPLICATION_CREDENTIALS not set");
+}
+
 const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, '../service-account.json'),
+    keyFile: serviceAccountPath || path.join(__dirname, '../service-account.json'),
     scopes: ['https://www.googleapis.com/auth/drive']
 });
-
 const drive = google.drive({ version: 'v3', auth });
 
+// ================= DRIVE FOLDER =================
 const BACKUP_FOLDER_ID = '1sf8V2HrGj3owkPVomKnZcD_wPFoOUmLF';
 
+// ================= BACKUP FUNCTION =================
 async function backupDatabase() {
     try {
+        console.log("🚀 Backup Triggered...");
+
+        // Check if DB has tasks
+        const [rows] = await con.query("SELECT COUNT(*) as count FROM tasks");
+
+        if (rows[0].count === 0) {
+            console.log("❌ DB Empty, backup skipped");
+            return;
+        }
+
         const fileName = `backup-${Date.now()}.sql`;
         const filePath = path.join(__dirname, fileName);
 
-        console.log("🚀 Starting LOCAL Backup...");
-
-        // ✅ LOCAL DATABASE BACKUP
+        // ================= MYSQL DUMP =================
         await mysqldump({
             connection: {
-                host: process.env.DB_HOST,
-                user: process.env.DB_USER,
-                password: process.env.DB_PASS,
-                database: process.env.DB_NAME,
+                host: process.env.DB_HOST || "srv832.hstgr.io",   
+                user: process.env.DB_USER || "u213405511_dilip",  
+                password: process.env.DB_PASS || "Dilip@8133",    
+                database: process.env.DB_NAME || "u213405511_tmsDB",
             },
             dumpToFile: filePath,
         });
 
         console.log("✅ Backup file created");
 
-        // Check file
         if (!fs.existsSync(filePath)) {
-            console.log("❌ File not created");
+            console.log("❌ File not found");
             return;
         }
 
@@ -44,15 +61,16 @@ async function backupDatabase() {
         console.log("📦 File size:", stats.size);
 
         if (stats.size === 0) {
-            console.log("❌ Empty file");
+            console.log("❌ Empty backup file");
             return;
         }
 
-        // ✅ Upload to Google Drive
+        // ================= UPLOAD TO GOOGLE DRIVE =================
         const response = await drive.files.create({
             requestBody: {
                 name: fileName,
-                parents: [BACKUP_FOLDER_ID]
+                parents: [BACKUP_FOLDER_ID],
+                supportsAllDrives: true
             },
             media: {
                 body: fs.createReadStream(filePath)
@@ -61,11 +79,11 @@ async function backupDatabase() {
 
         console.log("✅ Uploaded to Drive:", response.data.id);
 
-        // Delete local file
+        // delete local file
         fs.unlinkSync(filePath);
 
     } catch (err) {
-        console.error("❌ Backup Failed:", err);
+        console.error("❌ Backup Failed:", err.message || err);
     }
 }
 
