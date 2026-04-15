@@ -163,43 +163,43 @@ cron.schedule('0 0 * * *', () => {
 
 
 
+
+
+function getISTTime() {
+    return new Date().toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata"
+    });
+}
+
 function scheduleBackup(hour, minute, period) {
-    hour = parseInt(hour);
-    minute = parseInt(minute);
-
-    if (hour < 1 || hour > 12) {
-        console.log("❌ Invalid hour");
-        return;
-    }
-
-    if (minute < 0 || minute > 59) {
-        console.log("❌ Invalid minute");
-        return;
-    }
 
     let cronHour;
 
     if (period === "AM") {
         cronHour = (hour === 12) ? 0 : hour;
-    } else if (period === "PM") {
-        cronHour = (hour === 12) ? 12 : hour + 12;
     } else {
-        console.log("❌ Invalid period");
-        return;
+        cronHour = (hour === 12) ? 12 : hour + 12;
     }
 
-    // ✅ NOW includes minutes
     const cronTime = `${minute} ${cronHour} * * *`;
 
-    console.log("✅ Backup Scheduled:", `${hour}:${minute} ${period}`);
+    console.log("==================================");
+    console.log("🕒 Current Server Time (UTC):", new Date().toString());
+    console.log("🕒 Current IST Time:", getISTTime());
+    console.log("⏰ Backup Scheduled (IST):", `${hour}:${minute} ${period}`);
+    console.log("⚙️ Cron Expression:", cronTime);
+    console.log("==================================");
 
+    cron.schedule(cronTime, async () => {
+        console.log("\n🚀 CRON TRIGGERED");
+        console.log("🕒 Trigger Time UTC:", new Date().toString());
+        console.log("🕒 Trigger Time IST:", getISTTime());
 
-    cron.schedule(cronTime, () => {
-        console.log("🚀 Running DB Backup...");
-        backupDatabase();
+        await backupDatabase();
+    }, {
+        timezone: "Asia/Kolkata"   // 🔥 THIS IS THE FIX
     });
 }
-
 
 
 // ================= ROUTES EXECUTION =================
@@ -262,5 +262,5 @@ app.use("/masterpage",panel)
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
     console.log("Server running on port " + PORT);
-      scheduleBackup(12, 40, "PM");
+      scheduleBackup(12, 50, "PM");
 });
