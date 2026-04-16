@@ -269,16 +269,10 @@ app.get('/reset-password', (req, res) => {
 
 app.use("/masterpage",panel)
 
-// ⚠️ TEMPORARY — remove after confirming backup works
-app.get('/run-backup-now', async (req, res) => {
-    console.log("🧪 Manual backup triggered via HTTP");
-    await backupDatabase();
-    await uploadLatestSQL();   
-    res.send("Backup triggered — check server logs");
-});
+
 // ================= START SERVER =================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
     console.log("Server running on port " + PORT);
-      scheduleBackup(9,54,"AM");
+      scheduleBackup(10,4,"AM");
 });
