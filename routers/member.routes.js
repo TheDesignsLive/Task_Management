@@ -4,6 +4,7 @@ const con = require('../config/db');
 const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const { debugLog } = require('../utils/logger');
 
 // Multer Config
 const storage = multer.diskStorage({
@@ -61,6 +62,7 @@ router.post('/add-member', (req, res) => {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', NOW())`,
                     [admin_id, role_id, name, email, phone, hashedPassword, profile_pic, admin_id]
                 );
+                debugLog('Admin added a new member', { adminId: admin_id, newMemberEmail: email, roleId: role_id });
             }
 
             // ================= USER =================
@@ -87,6 +89,7 @@ router.post('/add-member', (req, res) => {
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', NOW())`,
                         [admin_id, role_id, name, email, phone, hashedPassword, profile_pic, userId]
                     );
+                    debugLog('Owner added a new member', { ownerId: userId, newMemberEmail: email, roleId: role_id });
                 }
 
                 // ✅ PARTIAL → request
@@ -98,6 +101,7 @@ router.post('/add-member', (req, res) => {
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())`,
                         [admin_id, role_id, userId, name, email, phone, hashedPassword, profile_pic]
                     );
+                    debugLog('User requested to add a new member', { requestedBy: userId, newMemberEmail: email });
 
                     // 🔔 notify admin
                     req.io.emit("member_request");
@@ -142,6 +146,7 @@ router.post('/edit-member/:id', (req, res) => {
                 values = password ? [role_id, name, email, phone, hashedPassword, id] : [role_id, name, email, phone, id];
             }
             await con.query(sql, values);
+            debugLog('Member details updated', { memberId: id, updatedByRole: req.session.role });
 
             // --- ZERO RELOAD NAME UPDATE EMIT ---
             req.io.emit('update_session_name', { userId: id, newName: name });
@@ -161,6 +166,7 @@ router.get('/delete-member/:id', async (req, res) => {
         const memberId = req.params.id;
         if (req.session.role === 'admin' || req.session.role === 'owner') {
             await con.execute('DELETE FROM users WHERE id = ?', [memberId]);
+            debugLog('Member deleted directly', { deletedMemberId: memberId, deletedByRole: req.session.role });
             // Force logout if the user is currently online
             req.io.emit('force_logout', memberId);
         } else {
@@ -171,6 +177,7 @@ router.get('/delete-member/:id', async (req, res) => {
                 `INSERT INTO member_requests (admin_id, role_id, request_type, requested_by, name, email, phone, profile_pic, status, created_at) VALUES (?, ?, 'DELETE', ?, ?, ?, ?, ?, 'PENDING', NOW())`,
                 [m.admin_id, m.role_id, req.session.userId, m.name, m.email, m.phone, m.profile_pic]
             );
+            debugLog('Member deletion requested', { targetMemberId: memberId, requestedBy: req.session.userId });
                 // 🔔 notify admin instantly
             req.io.emit('member_request');
         }
@@ -190,7 +197,7 @@ router.get('/suspend-member/:id', async (req, res) => {
         
         const newStatus = rows[0].status === "ACTIVE" ? "SUSPEND" : "ACTIVE";
         await con.query("UPDATE users SET status = ? WHERE id = ?", [newStatus, userId]);
-        
+        debugLog(`Member status changed to ${newStatus}`, { targetMemberId: userId, changedByRole: req.session.role });
         // Force logout if the status is changed to SUSPEND
         if (newStatus === "SUSPEND") {
             req.io.emit('force_logout', userId);
