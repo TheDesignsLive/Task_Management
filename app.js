@@ -9,6 +9,7 @@ const socketIo = require('socket.io'); // Required for Socket.io
 const cron = require('node-cron'); // Added for automatic cleanup
 
 const backupDatabase = require('./backup/backup');
+const uploadLatestSQL = require('./drive');
 // const cron = require('node-cron');
 
 const app = express();
@@ -190,15 +191,25 @@ function scheduleBackup(hour, minute, period) {
     console.log("⚙️ Cron Expression:", cronTime);
     console.log("==================================");
 
-    cron.schedule(cronTime, async () => {
-        console.log("\n🚀 CRON TRIGGERED");
-        console.log("🕒 Trigger Time UTC:", new Date().toString());
-        console.log("🕒 Trigger Time IST:", getISTTime());
+    // cron.schedule(cronTime, async () => {
+    //     console.log("\n🚀 CRON TRIGGERED");
+    //     console.log("🕒 Trigger Time UTC:", new Date().toString());
+    //     console.log("🕒 Trigger Time IST:", getISTTime());
 
-        await backupDatabase();
-    }, {
-        timezone: "Asia/Kolkata"   // 🔥 THIS IS THE FIX
-    });
+    //     await backupDatabase();
+    // }, {
+    //     timezone: "Asia/Kolkata"   // 🔥 THIS IS THE FIX
+    // });
+
+    cron.schedule(cronTime, async () => {
+    console.log("\n🚀 CRON TRIGGERED");
+
+    await backupDatabase();      // create file
+    await uploadLatestSQL();     // upload file
+
+}, {
+    timezone: "Asia/Kolkata"
+});
 }
 
 
@@ -262,11 +273,12 @@ app.use("/masterpage",panel)
 app.get('/run-backup-now', async (req, res) => {
     console.log("🧪 Manual backup triggered via HTTP");
     await backupDatabase();
+    await uploadLatestSQL();   
     res.send("Backup triggered — check server logs");
 });
 // ================= START SERVER =================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
     console.log("Server running on port " + PORT);
-      scheduleBackup(3,53,"PM");
+      scheduleBackup(9,35,"AM");
 });
