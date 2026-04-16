@@ -25,6 +25,17 @@ async function backupDatabase() {
             fs.mkdirSync(backupDir, { recursive: true });
         }
 
+                    // ✅ DELETE OLD FILES
+            const files = fs.readdirSync(backupDir);
+
+            files.forEach(file => {
+                if (file.endsWith(".sql")) {
+                    fs.unlinkSync(path.join(backupDir, file));
+                    debugLog("🗑️ Deleted old file:", file);
+                }
+            });
+
+              // ✅ CREATE NEW FILES
         filePath = path.join(backupDir, fileName);
 
         await mysqldump({
