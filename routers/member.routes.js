@@ -33,6 +33,9 @@ router.post('/add-member', (req, res) => {
             }
 
             const { role_id, name, email, phone, password } = req.body;
+            if (!email || !name || !role_id || !password) {
+                return res.json({ success: false, message: 'All required fields must be filled' });
+            }
             const admin_id = req.session.adminId;
             const userId = req.session.userId;
 
