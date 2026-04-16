@@ -1,6 +1,7 @@
 const mysqldump = require('mysqldump');
 const fs = require('fs');
 const path = require('path');
+const { debugLog } = require('../utils/logger');
 
 function getISTTime() {
     return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
@@ -10,10 +11,10 @@ async function backupDatabase() {
     let filePath = null;
 
     try {
-        console.log("\n==============================");
-        console.log("🚀 BACKUP STARTED");
-        console.log("🕒 IST:", getISTTime());
-        console.log("==============================");
+        debugLog("\n==============================");
+        debugLog("🚀 BACKUP STARTED");
+        debugLog("🕒 IST:", getISTTime());
+        debugLog("==============================");
 
         const fileName = `backup-${Date.now()}.sql`;
 
@@ -36,13 +37,13 @@ async function backupDatabase() {
             dumpToFile: filePath,
         });
 
-        console.log("✅ SQL dump created");
-        console.log("💾 Saved at:", filePath);
+        debugLog("✅ SQL dump created");
+        debugLog("💾 Saved at:", filePath);
 
-        console.log("✅ BACKUP COMPLETE\n");
+        debugLog("✅ BACKUP COMPLETE\n");
 
     } catch (err) {
-        console.error("❌ Backup Failed:", err.message);
+        debugLog("❌ Backup Failed:", err.message);
     }
 }
 
