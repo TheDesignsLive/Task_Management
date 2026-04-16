@@ -1,6 +1,7 @@
 const { google } = require("googleapis");
 const fs = require("fs");
 const path = require("path");
+const { debugLog } = require('./utils/logger');
 
 // Service Account Credentials
 const serviceEmail = "social-designs-live@task-management-system-493306.iam.gserviceaccount.com";
@@ -29,7 +30,7 @@ const backupDir = path.join(__dirname, 'backup', 'backup_files');
     const sqlFiles = files.filter(file => file.endsWith(".sql"));
 
     if (sqlFiles.length === 0) {
-      console.log("❌ No .sql files found");
+      debugLog("❌ No .sql files found");
       return;
     }
 
@@ -49,7 +50,7 @@ const backupDir = path.join(__dirname, 'backup', 'backup_files');
 
     const latestFilePath = path.join(backupDir, latestFile);
 
-    console.log("📂 Latest file:", latestFile);
+    debugLog("📂 Latest file:", latestFile);
 
     // 4️⃣ Upload to Drive
     const response = await drive.files.create({
@@ -64,10 +65,10 @@ const backupDir = path.join(__dirname, 'backup', 'backup_files');
       fields: "id",
     });
 
-    console.log("✅ Uploaded:", response.data.id);
+    debugLog("✅ Uploaded:", response.data.id);
 
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    debugLog("❌ Error:", error.message);
   }
 }
 
