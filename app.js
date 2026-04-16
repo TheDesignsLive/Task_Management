@@ -191,15 +191,6 @@ function scheduleBackup(hour, minute, period) {
     console.log("⚙️ Cron Expression:", cronTime);
     console.log("==================================");
 
-    // cron.schedule(cronTime, async () => {
-    //     console.log("\n🚀 CRON TRIGGERED");
-    //     console.log("🕒 Trigger Time UTC:", new Date().toString());
-    //     console.log("🕒 Trigger Time IST:", getISTTime());
-
-    //     await backupDatabase();
-    // }, {
-    //     timezone: "Asia/Kolkata"   // 🔥 THIS IS THE FIX
-    // });
 
 let isBackupRunning = false; // 🔥 LOCK
 
