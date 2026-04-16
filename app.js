@@ -201,11 +201,27 @@ function scheduleBackup(hour, minute, period) {
     //     timezone: "Asia/Kolkata"   // 🔥 THIS IS THE FIX
     // });
 
-    cron.schedule(cronTime, async () => {
-    console.log("\n🚀 CRON TRIGGERED");
+let isBackupRunning = false; // 🔥 LOCK
 
-    await backupDatabase();      // create file
-    await uploadLatestSQL();     // upload file
+cron.schedule(cronTime, async () => {
+    if (isBackupRunning) {
+        console.log("⛔ Backup already running, skipping...");
+        return;
+    }
+
+    isBackupRunning = true;
+
+    try {
+        console.log("\n🚀 CRON TRIGGERED");
+
+        await backupDatabase();  
+        await uploadLatestSQL();
+
+    } catch (err) {
+        console.error("❌ Cron Error:", err.message);
+    } finally {
+        isBackupRunning = false; // 🔓 UNLOCK
+    }
 
 }, {
     timezone: "Asia/Kolkata"
@@ -274,5 +290,5 @@ app.use("/masterpage",panel)
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
     console.log("Server running on port " + PORT);
-      scheduleBackup(10,4,"AM");
+      scheduleBackup(10,9,"AM");
 });
