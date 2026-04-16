@@ -285,5 +285,6 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
    
     debugLog("server running on port " + PORT);
-      scheduleBackup(10,32,"AM");
+        scheduleBackup(12,0,"AM");
+    
 });
