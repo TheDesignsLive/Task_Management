@@ -9,7 +9,7 @@ const socketIo = require('socket.io'); // Required for Socket.io
 const cron = require('node-cron'); // Added for automatic cleanup
 
 const backupDatabase = require('./backup/backup');
-const uploadLatestSQL = require('./drive');
+// const uploadLatestSQL = require('./drive');
 // const cron = require('node-cron');
 
 const app = express();
@@ -188,8 +188,8 @@ function scheduleBackup(hour, minute, period) {
     debugLog("==================================");
     debugLog("🕒 Current Server Time (UTC):", new Date().toString());
     debugLog("🕒 Current IST Time:", getISTTime());
-    debugLog("⏰ Backup Scheduled (IST):", `${hour}:${minute} ${period}`);
-    debugLog("⚙️ Cron Expression:", cronTime);
+    debugLog("⏰ Backup Time(IST):", `${hour}:${minute} ${period}`);
+  
     debugLog("==================================");
 
 
@@ -209,7 +209,7 @@ cron.schedule(cronTime, async () => {
         debugLog("\n🚀 CRON TRIGGERED");
 
         await backupDatabase();  
-        await uploadLatestSQL();
+       
 
     } catch (err) {
         console.error("❌ Cron Error:", err.message);
@@ -285,5 +285,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
    
     debugLog("server running on port " + PORT);
-      scheduleBackup(10,9,"AM");
+      scheduleBackup(10,32,"AM");
 });
