@@ -43,6 +43,7 @@ const allMemberTask=require('./routers/all-member-task.routes');
 const ma=require('./routers/master.routes');
 const panel=require('./routers/masterpanel.routes');
 const viewTeamsRoutes = require('./routers/view-teams.routes');
+const { debugLog } = require('./utils/logger');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -136,7 +137,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ================= AUTOMATIC CLEANUP (CRON JOB) =================
 // Runs every day at 00:00 (Midnight)
 cron.schedule('0 0 * * *', () => {
-    console.log('Running auto-cleanup: Deleting old data...');
+    debugLog('Running auto-cleanup: Deleting old data...');
 
     // 1. Delete Announcements older than 1 month
     const deleteAnnouncementsSql = `
@@ -152,13 +153,13 @@ cron.schedule('0 0 * * *', () => {
     // Execute Announcements deletion
     con.query(deleteAnnouncementsSql, (err) => {
         if (err) console.error('Auto-cleanup Announcements Error:', err);
-        else console.log('Old announcements cleaned up.');
+        else debugLog('Old announcements cleaned up.');
     });
 
     // Execute Tasks deletion
     con.query(deleteTasksSql, (err) => {
         if (err) console.error('Auto-cleanup Tasks Error:', err);
-        else console.log('Old completed tasks cleaned up.');
+        else debugLog('Old completed tasks cleaned up.');
     });
 });
 
@@ -184,26 +185,28 @@ function scheduleBackup(hour, minute, period) {
 
     const cronTime = `${minute} ${cronHour} * * *`;
 
-    console.log("==================================");
-    console.log("🕒 Current Server Time (UTC):", new Date().toString());
-    console.log("🕒 Current IST Time:", getISTTime());
-    console.log("⏰ Backup Scheduled (IST):", `${hour}:${minute} ${period}`);
-    console.log("⚙️ Cron Expression:", cronTime);
-    console.log("==================================");
+    debugLog("==================================");
+    debugLog("🕒 Current Server Time (UTC):", new Date().toString());
+    debugLog("🕒 Current IST Time:", getISTTime());
+    debugLog("⏰ Backup Scheduled (IST):", `${hour}:${minute} ${period}`);
+    debugLog("⚙️ Cron Expression:", cronTime);
+    debugLog("==================================");
+
+
 
 
 let isBackupRunning = false; // 🔥 LOCK
 
 cron.schedule(cronTime, async () => {
     if (isBackupRunning) {
-        console.log("⛔ Backup already running, skipping...");
+        debugLog("⛔ Backup already running, skipping...");
         return;
     }
 
     isBackupRunning = true;
 
     try {
-        console.log("\n🚀 CRON TRIGGERED");
+        debugLog("\n🚀 CRON TRIGGERED");
 
         await backupDatabase();  
         await uploadLatestSQL();
@@ -280,6 +283,7 @@ app.use("/masterpage",panel)
 // ================= START SERVER =================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => { // Changed app.listen to server.listen
-    console.log("Server running on port " + PORT);
+   
+    debugLog("server running on port " + PORT);
       scheduleBackup(10,9,"AM");
 });
