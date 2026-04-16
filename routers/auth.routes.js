@@ -147,6 +147,7 @@ router.post("/login", async (req, res) => {
                 req.session.adminName = rows[0].name;
                 
                 debugLog('Admin successfully logged in:', { adminId: rows[0].id, email: rows[0].email });
+                console.log('Admin successfully logged in:', { adminId: rows[0].id, email: rows[0].email });
                 return res.redirect("/home");
 
             } else {

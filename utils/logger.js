@@ -2,7 +2,7 @@
 
 const debugLog = (message, data = null) => {
     // This checks the variable you just set in your package.json
-    if (true) {
+    if (process.env.DEBUG_MODE === 'true') {
         const timestamp = new Date().toLocaleTimeString();
         
         if (data) {
