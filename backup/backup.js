@@ -1,5 +1,7 @@
+
 const mysqldump = require('mysqldump');
 const fs = require('fs');
+const fsPromises = require('fs/promises');
 const path = require('path');
 const { debugLog } = require('../utils/logger');
 
@@ -17,27 +19,18 @@ async function backupDatabase() {
         debugLog("==============================");
 
         const fileName = `backup-${Date.now()}.sql`;
-
-        // ✅ Save directly into backup_files folder
         const backupDir = path.join(__dirname, 'backup_files');
 
+        // ✅ Create folder if not exists
         if (!fs.existsSync(backupDir)) {
             fs.mkdirSync(backupDir, { recursive: true });
         }
 
-                    // ✅ DELETE OLD FILES
-            const files = fs.readdirSync(backupDir);
-
-            files.forEach(file => {
-                if (file.endsWith(".sql")) {
-                    fs.unlinkSync(path.join(backupDir, file));
-                    debugLog("🗑️ Deleted old file:", file);
-                }
-            });
-
-              // ✅ CREATE NEW FILES
         filePath = path.join(backupDir, fileName);
 
+        // =========================
+        // ✅ STEP 1: CREATE DUMP
+        // =========================
         await mysqldump({
             connection: {
                 host: process.env.DB_HOST || "srv832.hstgr.io",
@@ -46,15 +39,64 @@ async function backupDatabase() {
                 database: process.env.DB_NAME || "u213405511_tmsDB"
             },
             dumpToFile: filePath,
+            dump: {
+                schema: {
+                    table: {
+                        dropIfExist: true
+                    }
+                },
+                data: {
+                    lockTables: false
+                }
+            }
         });
 
-        debugLog("✅ SQL dump created");
-        debugLog("💾 Saved at:", filePath);
+        // =========================
+        // ✅ STEP 2: VERIFY FILE
+        // =========================
+        const stats = await fsPromises.stat(filePath);
+        const fileSize = stats.size;
+
+        if (!fileSize || fileSize < 100) {
+            debugLog("❌ Backup file is EMPTY or TOO SMALL");
+
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                debugLog("🗑️ Deleted invalid backup");
+            }
+
+            return;
+        }
+
+        debugLog("✅ VALID BACKUP CREATED");
+        debugLog("📦 Size:", fileSize, "bytes");
+
+        // =========================
+        // ✅ STEP 3: DELETE OLD FILES (SAFE)
+        // =========================
+        const files = await fsPromises.readdir(backupDir);
+
+        for (const file of files) {
+            if (file.endsWith(".sql") && file !== fileName) {
+                try {
+                    await fsPromises.unlink(path.join(backupDir, file));
+                    debugLog("🗑️ Deleted old file:", file);
+                } catch (err) {
+                    debugLog("⚠️ Delete failed:", file);
+                }
+            }
+        }
 
         debugLog("✅ BACKUP COMPLETE\n");
 
     } catch (err) {
         debugLog("❌ Backup Failed:", err.message);
+
+        // ❌ If failed, remove broken file
+        if (filePath && fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            debugLog("🗑️ Removed broken file");
+        }
     }
 }
 
