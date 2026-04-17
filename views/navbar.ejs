@@ -330,6 +330,119 @@ select::-ms-expand { display: none; }
 .dropdown-item {
   color: #222;   /* 🔥 force dark text */
 }
+
+/* Priority Dropdown design*/
+/* ===== FLAG DROPDOWN (High / Medium / Low) FIX ===== */
+#flag {
+  background-color: #fff;
+  border: 1px solid #d6e3df !important;  /* 🔥 FORCE BORDER */
+  border-radius: 20px;
+
+  padding: 6px 34px 6px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Segoe UI, Arial, sans-serif;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  height: 34px;
+  display: flex;
+  align-items: center;
+
+  /* arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center;
+  background-size: 12px;
+}
+
+/* remove default dropdown arrow in IE */
+#flag::-ms-expand {
+  display: none;
+}
+
+/* ===== OPTION COLORS ===== */
+#flag option[value="High"] {
+  color: red;
+  font-weight: 600;
+}
+
+#flag option[value="Medium"] {
+  color: #f4b400; /* yellow */
+  font-weight: 600;
+}
+
+#flag option[value="Low"] {
+  color: #1a73e8; /* blue */
+  font-weight: 600;
+}
+
+#flag {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+
+  border-radius: 20px !important;   /* FORCE SAME RADIUS */
+  overflow: hidden;                /* IMPORTANT FOR SAFETY */
+
+  box-sizing: border-box;
+}
+
+/* extra safety for browser rendering */
+#flag:focus {
+  outline: none;
+  border-radius: 20px !important;
+}
+
+.priority-wrapper{
+  position: relative;
+  width: 140px;
+  font-size: 13px;
+}
+
+.priority-selected{
+  background:#fff;
+  border:1px solid #d6e3df;
+  border-radius:20px;
+  padding:6px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+
+.priority-menu{
+  position:absolute;
+  top:110%;
+  left:0;
+  width:100%;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.12);
+  display:none;
+  overflow:hidden;
+  z-index:999;
+}
+
+.priority-item{
+  padding:8px 12px;
+  cursor:pointer;
+}
+
+.priority-item:hover{
+  background:#e9f2ef;
+}
+
+.priority-item.high{ color:red; font-weight:600; }
+.priority-item.medium{ color:#f4b400; font-weight:600; }
+.priority-item.low{ color:#1a73e8; font-weight:600; }
+
+.priority-item.selected {
+  background: #e9f2ef;
+  font-weight: 700;
+}
 </style>
 
 <div class="navbar">
@@ -344,11 +457,17 @@ select::-ms-expand { display: none; }
       <i class="fa-regular fa-calendar" onclick="openDate()" style="cursor:pointer; color:#14b8a6; font-size:16px; margin-left:-5px;"></i>
     </div>
 
-    <select id="flag">
-      <option value="High" class="flag-red">High</option>
-      <option value="Medium" class="flag-green" selected>Medium</option>
-      <option value="Low" class="flag-blue">Low</option>
-    </select>
+<div class="priority-wrapper" id="priorityBox">
+  <div class="priority-selected" id="prioritySelected">
+    Medium <i class="fa fa-chevron-down"></i>
+  </div>
+
+  <div class="priority-menu" id="priorityMenu">
+    <div class="priority-item high" data-value="High">High</div>
+    <div class="priority-item medium selected" data-value="Medium">Medium</div>
+    <div class="priority-item low" data-value="Low">Low</div>
+  </div>
+</div>
 
 <div class="custom-dropdown" id="assignDropdown">
   <div class="dropdown-selected" id="selectedValue">
@@ -504,7 +623,7 @@ function submitTask() {
   const title = lines[0];
   const description = lines.slice(1).join('\n');
   const date = dateInput.value;
-  const priority = flagDropdown.value;
+ const priority = window.priorityValue || "Medium";
 let assignedTo = window.assignedTo || "self";
 
 
@@ -537,9 +656,19 @@ fetch('/add-task', {
         dateDisplay.innerText = displayDate(todayDate);
         
         // RESET DROPDOWNS HERE
-        flagDropdown.value = "Medium";
-            window.assignedTo = "self";
-    selected.innerHTML = 'My Self <i class="fa fa-chevron-down"></i>';
+ // RESET PRIORITY
+window.priorityValue = "Medium";
+prioritySelected.innerHTML = 'Medium <i class="fa fa-chevron-down"></i>';
+
+// RESET ASSIGN DROPDOWN
+window.assignedTo = "self";
+selected.innerHTML = 'My Self <i class="fa fa-chevron-down"></i>';
+
+// OPTIONAL: visually reset selected highlight (safe fix)
+document.querySelectorAll(".priority-item").forEach(i => {
+  i.classList.remove("selected");
+});
+document.querySelector('.priority-item.medium')?.classList.add("selected");
 
         
         console.log("Task added successfully without reload");
@@ -645,6 +774,39 @@ function showToast(message) {
     toast.classList.remove("show");
   }, 1000);
 }
+
+// Priority DropDown 
+const priorityBox = document.getElementById("priorityBox");
+const prioritySelected = document.getElementById("prioritySelected");
+const priorityMenu = document.getElementById("priorityMenu");
+
+window.priorityValue = "Medium";
+
+// open/close
+prioritySelected.addEventListener("click", (e) => {
+  e.stopPropagation();
+  priorityMenu.style.display =
+    priorityMenu.style.display === "block" ? "none" : "block";
+});
+
+// close outside click
+document.addEventListener("click", () => {
+  priorityMenu.style.display = "none";
+});
+
+// select value
+priorityMenu.addEventListener("click", (e) => {
+  const item = e.target.closest(".priority-item");
+  if (!item) return;
+
+  window.priorityValue = item.dataset.value;
+
+  prioritySelected.innerHTML =
+    item.innerText + ' <i class="fa fa-chevron-down"></i>';
+
+  priorityMenu.style.display = "none";
+});
+//
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
