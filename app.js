@@ -43,7 +43,7 @@ const allMemberTask=require('./routers/all-member-task.routes');
 const ma=require('./routers/master.routes');
 const panel=require('./routers/masterpanel.routes');
 const exportMaster = require("./backup/export_master");
-const importRoutes = require('./backup/import_master.routes');
+
 
 const viewTeamsRoutes = require('./routers/view-teams.routes');
 const { debugLog } = require('./utils/logger');
@@ -288,7 +288,7 @@ app.get('/reset-password', (req, res) => {
 
 app.use("/masterpage",panel)
 app.use("/", exportMaster);
-app.use('/', importRoutes);
+
 
 // ================= START SERVER =================
 const PORT = process.env.PORT || 3000;
