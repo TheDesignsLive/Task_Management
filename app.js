@@ -42,9 +42,6 @@ const allMemberTask=require('./routers/all-member-task.routes');
 
 const ma=require('./routers/master.routes');
 const panel=require('./routers/masterpanel.routes');
-const exportMaster = require("./backup/export_master");
-
-
 const viewTeamsRoutes = require('./routers/view-teams.routes');
 const { debugLog } = require('./utils/logger');
 
@@ -80,8 +77,7 @@ app.use(session({
     saveUninitialized: false,  
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // Fixed to 30 days for permanent feel
-        httpOnly: true,
-        sameSite: "lax" 
+        httpOnly: true
     }
 }));
 
@@ -100,8 +96,6 @@ app.use(async (req, res, next) => {
 const isAdmin = req.session.role === 'admin' || req.session.role === 'owner';
 
         const adminId = req.session.adminId;
-
-
 
         if (!adminId) return next();
 
@@ -171,10 +165,7 @@ cron.schedule('0 0 * * *', () => {
 
 
 
-function openDialog(){
-    debugLog("Open Sent mail Dialog")
-    
-}
+
 
 function getISTTime() {
     return new Date().toLocaleString("en-IN", {
@@ -287,7 +278,6 @@ app.get('/reset-password', (req, res) => {
 });
 
 app.use("/masterpage",panel)
-app.use("/", exportMaster);
 
 
 // ================= START SERVER =================
@@ -297,9 +287,4 @@ server.listen(PORT, () => { // Changed app.listen to server.listen
     debugLog("server running on port " + PORT);
         scheduleBackup(12,0,"AM");
     
-    
-
 });
-
-
-
