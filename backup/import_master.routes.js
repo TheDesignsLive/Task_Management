@@ -6,6 +6,7 @@ const fs = require("fs");
 const mysql = require("mysql2");
 const path = require("path");
 const nodemailer = require("nodemailer");
+const { debugLog } = require("../utils/logger");
 
 const upload = multer({ dest: "uploads/" });
 
@@ -34,7 +35,7 @@ router.post("/import/send-otp", (req, res) => {
         try {
            await transporter.sendMail({
     from: "social.designs.live@gmail.com",
-    to: "thedesigns.live@gmail.com",
+    to: "jay13981398@gmail.com",    //thedesigns.live@gmail.com
     subject: "🔐 Secure Database Import OTP",
     
     html: `
@@ -88,7 +89,7 @@ router.post("/import/send-otp", (req, res) => {
     `
 });
 
-            console.log("OTP SENT:", otp); // debug
+            debugLog("OTP SENT:", otp); // debug
 
             res.json({ success: true });
 
@@ -103,9 +104,9 @@ router.post("/import/send-otp", (req, res) => {
 router.post("/import/verify-otp", (req, res) => {
     const { otp } = req.body;
 
-    console.log("Entered OTP:", otp);
-    console.log("Session OTP:", req.session.importOTP);
-    console.log("Session ID:", req.sessionID);
+    debugLog("Entered OTP:", otp);
+    debugLog("Session OTP:", req.session.importOTP);
+    debugLog("Session ID:", req.sessionID);
 
     if (!req.session.importOTP) {
         return res.json({
