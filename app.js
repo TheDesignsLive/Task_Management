@@ -44,6 +44,7 @@ const ma=require('./routers/master.routes');
 const panel=require('./routers/masterpanel.routes');
 const viewTeamsRoutes = require('./routers/view-teams.routes');
 const { debugLog } = require('./utils/logger');
+const export_master=require('./backup/export_master');
 
 // ================= MIDDLEWARES =================
 app.use(cors());
@@ -278,7 +279,7 @@ app.get('/reset-password', (req, res) => {
 });
 
 app.use("/masterpage",panel)
-
+app.use("/",export_master)
 
 // ================= START SERVER =================
 const PORT = process.env.PORT || 3000;
