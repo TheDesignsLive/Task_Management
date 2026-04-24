@@ -16,10 +16,11 @@ router.get('/view-teams', async (req, res) => {
 
     try {
 
+         adminId = req.session.adminId;
         // ================= ADMIN =================
         if (req.session.role === "admin") {
 
-            adminId = req.session.adminId;
+           
 
             // Admin name
             const [aRows] = await con.query(
@@ -57,14 +58,15 @@ router.get('/view-teams', async (req, res) => {
 
             // Owner sees ALL users
             const [mRows] = await con.query(
-                "SELECT id, name FROM users WHERE status='ACTIVE'"
-            );
-            members = mRows;
+    "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE'",
+    [adminId]
+);
 
             // Owner sees ALL teams
-            const [tRows] = await con.query(
-                "SELECT * FROM teams ORDER BY id DESC"
-            );
+        const [tRows] = await con.query(
+    "SELECT * FROM teams WHERE admin_id=? ORDER BY id DESC",
+    [adminId]
+);
             teams = tRows;
         }
 
