@@ -171,6 +171,18 @@ html,body{
   white-space:nowrap;
 }
 
+/* New class for task owner name */
+.task-owner-name {
+  font-size: 11px;
+  color: #14b8a6;
+  font-weight: bold;
+  margin: 0 5px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .task-checkbox{
   width:12px;
   height:12px;
@@ -401,7 +413,7 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-     <div class="task-date"><%= task.assigned_to_name %></div>
+     <div class="task-owner-name"><%= task.assigned_to_name %></div>
 <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
     </div>
     <div class="task-details">
@@ -442,7 +454,7 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-        <div class="task-date"><%= task.assigned_to_name %></div>
+        <div class="task-owner-name"><%= task.assigned_to_name %></div>
 <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
         </div>
         <div class="task-details">
@@ -480,7 +492,7 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-<div class="task-date"><%= task.assigned_to_name %></div>
+<div class="task-owner-name"><%= task.assigned_to_name %></div>
 <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
 </div>
 <div class="task-details"><div class="task-desc-text"><%= task.description || "No description provided." %></div></div>
@@ -500,14 +512,12 @@ if(task.due_date){
 <input type="checkbox" disabled class="task-checkbox <%= task.priority==='HIGH'?'checkbox-red':'' %> <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %> <%= task.priority==='LOW'?'checkbox-blue':'' %>">
 <div class="task-title"><%= task.title %></div>
 </div>
-<div class="other-name">
-<% if(selected_user === 'all'){ %><%= task.assigned_by_name %> → <%= task.assigned_to_name %><% } else { %><%= task.assigned_by_name %><% } %>
-</div>
 <% if(task.description && task.description.trim() !== ''){ %>
 <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
+<div class="task-owner-name"><%= task.assigned_to_name %></div>
 </div>
 </div>
 <div class="task-details"><div class="task-desc-text"><%= task.description || "No description provided." %></div></div>
@@ -526,10 +536,9 @@ if(task.due_date){
     <div class="task-row">
       <input type="checkbox" checked disabled class="task-checkbox <%= task.priority==='HIGH'?'checkbox-red':'' %> <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %> <%= task.priority==='LOW'?'checkbox-blue':'' %>">
 <div class="task-title"><%= task.title %></div>
-  <div class="task-date"><%= task.assigned_to_name %></div>
     </div>
 <div style="display:flex; flex-direction:column; align-items:flex-end;">
-
+  <div class="task-owner-name"><%= task.assigned_to_name %></div>
   <div class="task-date"><%= taskDate %></div>
 </div>
   </div>
