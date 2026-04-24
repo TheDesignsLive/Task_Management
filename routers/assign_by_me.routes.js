@@ -34,16 +34,47 @@ router.get('/', async (req, res) => {
         }
 
         // ✅ Admin & Owner see tasks they assigned, Users see tasks they assigned
-        const taskQuery = (sessionRole === "admin" || sessionRole === "owner") 
-            ? `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.section, t.assigned_to AS assignee_id, COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to 
-               FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0 LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0 
-               WHERE (t.who_assigned='admin' OR t.who_assigned='owner') AND t.assigned_by=? AND t.assigned_to != 0 ORDER BY t.due_date ASC`
-            : `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.section, t.assigned_to AS assignee_id, COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to 
-               FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0 LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0 
-               WHERE t.who_assigned='user' AND t.assigned_by=? AND t.assigned_to != ? ORDER BY t.due_date ASC`;
+const taskQuery = (sessionRole === "admin") 
+    ? `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.section, 
+              t.assigned_to AS assignee_id, 
+              COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to 
+       FROM tasks t 
+       LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0 
+       LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0 
+       WHERE t.who_assigned='admin' 
+         AND t.assigned_by=? 
+         AND t.assigned_to != 0 
+       ORDER BY t.due_date ASC`
+
+    : (sessionRole === "owner")
+    ? `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.section, 
+              t.assigned_to AS assignee_id, 
+              COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to 
+       FROM tasks t 
+       LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0 
+       LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0 
+       WHERE t.who_assigned='owner' 
+         AND t.assigned_by=? 
+         AND t.assigned_to != ?   -- ✅ MAIN FIX (exclude self)
+       ORDER BY t.due_date ASC`
+
+    : `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.section, 
+              t.assigned_to AS assignee_id, 
+              COALESCE(u.name, CONCAT(a.name, ' (Admin)')) AS assigned_to 
+       FROM tasks t 
+       LEFT JOIN users u ON t.assigned_to = u.id AND t.assigned_to != 0 
+       LEFT JOIN admins a ON t.admin_id = a.id AND t.assigned_to = 0 
+       WHERE t.who_assigned='user' 
+         AND t.assigned_by=? 
+         AND t.assigned_to != ? 
+       ORDER BY t.due_date ASC`;
 
         // If admin/owner, they pass adminId (since owner acts as admin). If user, pass userId.
-        const queryParams = (sessionRole === "admin" || sessionRole === "owner") ? [sessionRole === "admin" ? adminId : sessionUserId] : [sessionUserId, sessionUserId];
+const queryParams = (sessionRole === "admin") 
+    ? [adminId]
+    : (sessionRole === "owner")
+    ? [sessionUserId, sessionUserId]   // ✅ exclude self
+    : [sessionUserId, sessionUserId];
         const [rows] = await con.query(taskQuery, queryParams);
 
         rows.forEach(task => {
