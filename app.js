@@ -283,11 +283,17 @@ app.use("/masterpage",panel)
 app.use("/",export_master)
 app.use('/', import_master);
 
+
 // ================= START SERVER =================
+let backupSchedulerStarted = false;
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => { // Changed app.listen to server.listen
-   
+server.listen(PORT, () => {
     debugLog("server running on port " + PORT);
+
+    if (!backupSchedulerStarted) {
         scheduleBackup(12,0,"AM");
-    
+        backupSchedulerStarted = true;
+        debugLog("✅ Backup cron scheduled ONLY ONCE");
+    }
 });

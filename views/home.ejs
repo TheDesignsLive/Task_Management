@@ -1,3 +1,4 @@
+<!-- home.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +58,7 @@ html, body {
 .top-columns {
   display: flex;
   flex: 1;
-  min-width: 1200px;
+  min-width: 1086px;
   align-items: stretch;
   gap: 1px; 
   flex-wrap: nowrap; 
@@ -1260,21 +1261,23 @@ document.getElementById("cancelSingleDelete").addEventListener("click", () => {
 });
 
 
-document.querySelectorAll('.task-main, .task-change, .task-update, .task-other, .completed-section')
-.forEach(el => {
-  el.addEventListener('wheel', function(e) {
+// ✅ ONLY APPLY HORIZONTAL SCROLL ON BOARD (NOT INSIDE TASK COLUMNS)
+const board = document.querySelector('.board-scroll');
 
-    const canScrollVertically = el.scrollHeight > el.clientHeight;
+board.addEventListener('wheel', function(e) {
 
-    // ✅ If vertical scroll available → allow it
-    if (canScrollVertically) return;
+  const isInsideColumn = e.target.closest(
+    '.task-main, .task-change, .task-update, .task-other, .completed-section'
+  );
 
-    // ✅ Otherwise → horizontal scroll
-    e.preventDefault();
-    document.querySelector('.board-scroll').scrollLeft += e.deltaY;
+  // ✅ If mouse is inside any column → allow normal vertical scroll
+  if (isInsideColumn) return;
 
-  }, { passive: false });
-});
+  // ✅ Otherwise → do horizontal scroll
+  e.preventDefault();
+  board.scrollLeft += e.deltaY;
+
+}, { passive: false });
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <script>

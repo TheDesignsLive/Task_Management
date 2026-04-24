@@ -695,6 +695,8 @@ function connectGoogle() {
   client.requestAccessToken();
 }
 
+
+
 function showPopup(message, type="success") {
     const popup = document.getElementById("popup");
 
@@ -846,18 +848,22 @@ otpInput.focus();
     }
 }
 
-// ❌ prevent single click outside
+//  prevent single click outside
 document.getElementById("importModal").addEventListener("click", function(e) {
     if (e.target.id === "importModal") {
         // do nothing (disable close)
     }
 });
-// ✅ double click outside = close
+//  double click outside = close
 document.getElementById("importModal").addEventListener("dblclick", function(e) {
     if (e.target.id === "importModal") {
         closeImportModal();
     }
 });
+
+
+
+
 
 
 </script>

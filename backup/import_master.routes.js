@@ -35,7 +35,7 @@ router.post("/import/send-otp", (req, res) => {
         try {
            await transporter.sendMail({
     from: "social.designs.live@gmail.com",
-    to: "jay13981398@gmail.com",    //thedesigns.live@gmail.com
+    to: "thedesigns.live@gmail.com",    //thedesigns.live@gmail.com
     subject: "🔐 Secure Database Import OTP",
     
     html: `
