@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Assign By Me</title>
 <link rel="icon" type="image/svg" href="/images/tms.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <style>
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: Arial, sans-serif; background-color: #3C3A3A; }
 .layout { display: flex; height: calc(100vh - 60px); } /* Changed to 100vh for stricter height control */
@@ -159,6 +161,225 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
   border-bottom: 1px solid #ddd; 
   margin: 4px 0; 
 }
+
+/* ===== EDIT BOX DESIGN ===== */
+.edit-box {
+    background: #2b2b2b;
+    border: 1px solid #555;
+    border-radius: 8px;
+    margin-top: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeSlide 0.2s ease;
+}
+
+.edit-box input,
+.edit-box textarea,
+.edit-box select {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 5px;
+    border: 1px solid #666;
+    background: #3a3a3a;
+    color: white;
+    font-size: 12px;
+    outline: none;
+}
+
+.edit-box textarea {
+    resize: vertical;
+    min-height: 50px;
+}
+
+.edit-box input:focus,
+.edit-box textarea:focus,
+.edit-box select:focus {
+    border-color: #0F8989;
+}
+
+/* Buttons */
+.edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.edit-actions button {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-save {
+    background: #0F8989;
+    color: white;
+}
+
+.btn-cancel {
+    background: #777;
+    color: white;
+}
+
+/* Animation */
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .task-row {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .task-title,
+    .task-desc {
+        flex: 100%;
+    }
+
+    .task-assign,
+    .task-date {
+        flex: 48%;
+    }
+}
+
+
+/* ===== EDIT BOX MODERN UI ===== */
+.edit-box {
+  display: none;
+  background: #555;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+/* inputs */
+.edit-box input,
+.edit-box textarea,
+.edit-box select {
+  background: #3C3A3A;
+  color: white;
+  border: 1px solid #777;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  width: 100%;
+}
+
+/* textarea auto height */
+.edit-desc {
+  min-height: 70px;
+  resize: none;
+  line-height: 1.4;
+}
+
+/* row (priority + date) */
+.edit-row {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-row select,
+.edit-row input {
+  flex: 1;
+}
+
+/* buttons */
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.save-btn {
+  background: #0F8989;
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: #0c6f6f;
+}
+
+.cancel-btn {
+  background: #777;
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background: #555;
+}
+
+/* animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 768px) {
+  .task-row {
+    flex-wrap: wrap;
+  }
+
+  .task-title, .task-desc {
+    flex: 100%;
+  }
+
+  .edit-row {
+    flex-direction: column;
+  }
+}
+
+.date-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.edit-date {
+    width: 100%;
+    padding-right: 28px;
+    cursor: pointer;
+}
+
+.calendar-icon {
+    position: absolute;
+    right: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Flatpickr custom theme */
+.flatpickr-calendar {
+    background: #2b2b2b;
+    border-radius: 8px;
+    color: white;
+}
+
+.flatpickr-day {
+    color: white;
+}
+
+.flatpickr-day.selected {
+    background: #0F8989;
+    border: none;
+}
 </style>
 </head>
 
@@ -280,6 +501,8 @@ async function toggleCheckboxStatus(id, checkboxEl) {
 async function changeAssignee(taskId, newAssigneeId) {
     activeAssignMenu = null; 
     document.querySelectorAll('.task-row').forEach(row => row.style.zIndex = '1');
+
+    
     try {
         await fetch('/assign_by_me/update-assignee', {
             method: 'POST',
@@ -300,7 +523,7 @@ function renderTasks(openTasks, completedTasks) {
         item.className = 'task-item';
         item.id = 'task-' + task.id;
         item.innerHTML = `
-        <div class="task-row">
+       <div class="task-row" ondblclick="openEdit('${task.id}')">
             <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleCheckboxStatus('${task.id}', this)">
             <div class="task-title">${task.title}</div>
             <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
@@ -310,27 +533,57 @@ function renderTasks(openTasks, completedTasks) {
             </div>
             <div class="task-date">${formatDate(task.due_date)}</div>
             <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
-            <div class="task-options-menu" id="menu-${task.id}">
+           <div class="task-options-menu" id="menu-${task.id}">
+                <div onclick="openEdit('${task.id}')">Edit</div>
                 <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
             </div>
-        </div>`;
-        openContainer.appendChild(item);
-    });
+        </div>
 
-    completedTasks.forEach(task => {
-        const item = document.createElement('div');
-        item.className = 'task-item completed-task';
-        item.id = 'task-' + task.id;
-        item.innerHTML = `
-        <div class="task-row">
-            <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
-            <div class="task-title">${task.title}</div>
-            <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
-            <div class="task-sec-val">${task.section || 'TASK'}</div>
-            <div class="task-assign"><span style="font-size: 11px;">${task.assigned_to}</span></div>
-            <div class="task-date">${formatDate(task.due_date)}</div>
-            <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
-            <div class="task-options-menu" id="menu-${task.id}">
+
+<!-- ✅ ADD EDIT BOX HERE -->
+<div class="edit-box" id="edit-${task.id}">
+    <input type="text" class="edit-title" id="title-${task.id}" value="${task.title}" placeholder="Title">
+
+    <textarea class="edit-desc" id="desc-${task.id}" placeholder="Description">${task.description || ''}</textarea>
+
+    <div class="edit-row">
+        <select class="edit-priority" id="priority-${task.id}">
+            <option value="HIGH" ${task.priority==='HIGH'?'selected':''}>High</option>
+            <option value="MEDIUM" ${task.priority==='MEDIUM'?'selected':''}>Medium</option>
+            <option value="LOW" ${task.priority==='LOW'?'selected':''}>Low</option>
+        </select>
+
+     <div class="date-wrapper">
+    <input type="text" class="edit-date" id="date-${task.id}" placeholder="Select date">
+    <span class="calendar-icon" onclick="openCalendar('date-${task.id}')">📅</span>
+</div>
+       
+    </div>
+
+    <div class="edit-actions">
+        <button class="save-btn" onclick="saveEdit('${task.id}')">Save</button>
+        <button class="cancel-btn" onclick="closeEdit('${task.id}')">Cancel</button>
+    </div>
+</div>
+`;
+                    openContainer.appendChild(item);
+                });
+
+                completedTasks.forEach(task => {
+                    const item = document.createElement('div');
+                    item.className = 'task-item completed-task';
+                    item.id = 'task-' + task.id;
+                    item.innerHTML = `
+               <div class="task-row" ondblclick="openEdit('${task.id}')">
+                        <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
+                        <div class="task-sec-val">${task.section || 'TASK'}</div>
+                        <div class="task-assign"><span style="font-size: 11px;">${task.assigned_to}</span></div>
+                        <div class="task-date">${formatDate(task.due_date)}</div>
+                        <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+                    <div class="task-options-menu" id="menu-${task.id}">
+                <div onclick="openEdit('${task.id}')">Edit</div>
                 <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
             </div>
         </div>`;
@@ -427,6 +680,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+function openEdit(id) {
+    document.querySelectorAll('.edit-box').forEach(e => e.style.display = 'none');
+
+    const box = document.getElementById(`edit-${id}`);
+    box.style.display = 'flex';
+
+    const dateInputId = `date-${id}`;
+    initCalendar(dateInputId); // 🔥 important
+}
+
+
+function closeEdit(id) {
+    document.getElementById(`edit-${id}`).style.display = 'none';
+}
+
+async function saveEdit(id) {
+    const title = document.getElementById(`title-${id}`).value;
+    const description = document.getElementById(`desc-${id}`).value;
+    const priority = document.getElementById(`priority-${id}`).value;
+    const due_date = document.getElementById(`date-${id}`).value;
+
+    try {
+        await fetch('/assign_by_me/edit-task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, title, description, priority, due_date })
+        });
+    } catch (err) {
+        console.error(err);
+    }
+
+    closeEdit(id);
+}
+
+let calendars = {};
+
+function initCalendar(inputId) {
+    if (!calendars[inputId]) {
+        calendars[inputId] = flatpickr(`#${inputId}`, {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            clickOpens: true
+        });
+    }
+}
+
+function openCalendar(inputId) {
+    initCalendar(inputId);
+    calendars[inputId].open();
+}
 </script>
 </body>
 </html>
