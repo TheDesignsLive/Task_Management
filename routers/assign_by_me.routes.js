@@ -179,4 +179,23 @@ router.post('/delete-all-completed', async (req, res) => {
     } catch (err) { res.status(500).json({ success: false }); }
 });
 
+
+router.post('/edit-task', async (req, res) => {
+    try {
+        const { id, title, description, priority, due_date } = req.body;
+
+        await con.query(
+            "UPDATE tasks SET title=?, description=?, priority=?, due_date=? WHERE id=?",
+            [title, description, priority, due_date, id]
+        );
+
+        req.io.emit('update_tasks');
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false });
+    }
+});
+
 module.exports = router;
