@@ -115,7 +115,7 @@ router.post('/add-team', async (req, res) => {
 
             await con.execute(
                 "INSERT INTO teams (admin_id, name) VALUES (?, ?)",
-                [null, name]   // owner creates global team
+                [req.session.adminId, name]// owner creates global team
             );
         }
 
