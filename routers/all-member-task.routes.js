@@ -46,27 +46,6 @@ router.get('/all-member-task', async (req, res) => {
             teamId = rData.length > 0 ? rData[0].team_id : null;
         }
 
-        // ================= NAVBAR MEMBERS =================
-        if (controlType === "OWNER") {
-            if (sessionRole !== "admin") {
-                members.push({ id: 0, name: adminName + ' (Admin)' });
-            }
-            const [mRows] = await con.query(`
-                SELECT u.id, 
-                CASE WHEN r.control_type = 'OWNER' THEN CONCAT(u.name, ' (Admin)') ELSE u.name END AS name 
-                FROM users u 
-                LEFT JOIN roles r ON u.role_id = r.id 
-                WHERE u.admin_id=? AND u.status='ACTIVE' AND u.id != ?
-            `, [adminId, sessionRole === 'admin' ? -1 : sessionUserId]);
-            members = members.concat(mRows);
-        } else {
-            const [mRows] = await con.query(
-                "SELECT id, name FROM users WHERE admin_id=? AND status='ACTIVE' AND id != ?",
-                [adminId, sessionUserId]
-            );
-            members = mRows;
-        }
-
         // ================= USERS DROPDOWN (4-LAYER HIERARCHY) =================
         if (controlType === "OWNER") {
             // LAYER 1: Admin/Owner sees EVERYONE
@@ -193,7 +172,7 @@ router.get('/all-member-task', async (req, res) => {
 
                     } else {
                         taskQuery += " AND t.assigned_to IN (?)";
-                        params.push(allowedIds);
+                        params.push([allowedIds]); // Correct way for IN clause in mysql2
                         
                         // Exclude own tasks from the "all" view
                         taskQuery += " AND t.assigned_to != ?";
@@ -211,7 +190,6 @@ router.get('/all-member-task', async (req, res) => {
         const renderData = {
             session: req.session,
             users,
-            members,
             adminName,
             tasks,
             selected_user: selectedUser,
