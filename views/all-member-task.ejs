@@ -401,7 +401,8 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-       <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
+     <div class="task-date"><%= task.assigned_to_name %></div>
+<div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
     </div>
     <div class="task-details">
       <div class="task-desc-text"><%= task.description || "No description provided." %></div>
@@ -418,7 +419,18 @@ if(task.due_date){
         <div class="column-header">Change</div>
       <div class="task-change">
       <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
-<% const taskDate = getTaskDate(task.due_date); %>
+<%
+let taskDate = getTaskDate(task.due_date);
+let isPast = false;
+
+if(task.due_date){
+  const d = new Date(task.due_date);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  if(d < today){ isPast = true; }
+}
+%>
       <div class="task-card priority-<%= task.priority.toLowerCase() %>">
         <div class="task-card-header">
           <div class="task-row">
@@ -430,7 +442,8 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-          <div class="task-date"><%= taskDate %></div>
+        <div class="task-date"><%= task.assigned_to_name %></div>
+<div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
         </div>
         <div class="task-details">
           <div class="task-desc-text"><%= task.description || "No description provided." %></div>
@@ -444,7 +457,18 @@ if(task.due_date){
 <div class="column-header">Update</div>
 <div class="task-update">
 <% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
-<% const taskDate = getTaskDate(task.due_date); %>
+<%
+let taskDate = getTaskDate(task.due_date);
+let isPast = false;
+
+if(task.due_date){
+  const d = new Date(task.due_date);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  if(d < today){ isPast = true; }
+}
+%>
 <div class="task-card priority-<%= task.priority.toLowerCase() %>">
 <div class="task-card-header">
 <div class="task-row">
@@ -456,7 +480,8 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-<div class="task-date"><%= taskDate %></div>
+<div class="task-date"><%= task.assigned_to_name %></div>
+<div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
 </div>
 <div class="task-details"><div class="task-desc-text"><%= task.description || "No description provided." %></div></div>
 </div>
@@ -500,9 +525,13 @@ if(task.due_date){
   <div class="task-card-header">
     <div class="task-row">
       <input type="checkbox" checked disabled class="task-checkbox <%= task.priority==='HIGH'?'checkbox-red':'' %> <%= task.priority==='MEDIUM'?'checkbox-yellow':'' %> <%= task.priority==='LOW'?'checkbox-blue':'' %>">
-      <div class="task-title"><%= task.title %> - <%= task.assigned_to_name %></div>
+<div class="task-title"><%= task.title %></div>
+  <div class="task-date"><%= task.assigned_to_name %></div>
     </div>
-    <div class="task-date"><%= taskDate %></div>
+<div style="display:flex; flex-direction:column; align-items:flex-end;">
+
+  <div class="task-date"><%= taskDate %></div>
+</div>
   </div>
 </div>
         <% }) %>
