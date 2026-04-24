@@ -63,7 +63,8 @@ app.use((req, res, next) => {
     // Agar user mobile par hai aur abhi desktop domain par hai
     if (isMobile && host === 'tms.thedesigns.live') {
         // Redirect to your new mobile domain (m.thedesigns.live ya jo aapne banaya hai)
-        return res.redirect('https://m-tms.thedesigns.live' + req.url);
+        // return res.redirect('https://m-tms.thedesigns.live' + req.url);
+        return res.redirect('/m');
     }
 
     next();
@@ -134,7 +135,14 @@ const isAdmin = req.session.role === 'admin' || req.session.role === 'owner';
 // ================= EJS & STATIC FILES =================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ Serve React Mobile App
+app.use('/m', express.static(path.join(__dirname, 'M_Task_management/dist')));
+
+app.get('/m/*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'M_Task_management/dist/index.html'));
+});
 
 // ================= AUTOMATIC CLEANUP (CRON JOB) =================
 // Runs every day at 00:00 (Midnight)
