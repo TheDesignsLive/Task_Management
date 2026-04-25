@@ -58,11 +58,13 @@ app.use((req, res, next) => {
 
     const isMobile = /android|iphone|ipad|ipod|mobile/i.test(userAgent);
 
-    const host = req.get('host');
+    const host = req.headers.host; // 🔥 use headers instead of req.get
 
-    // If desktop domain opened on mobile → redirect
-    if (isMobile && host === 'tms.thedesigns.live') {
-        return res.redirect('https://m-tms.thedesigns.live' + req.url);
+    console.log("HOST:", host);
+    console.log("UA:", userAgent);
+
+    if (isMobile && host.includes('tms.thedesigns.live')) {
+        return res.redirect(302, 'https://m-tms.thedesigns.live' + req.url);
     }
 
     next();
