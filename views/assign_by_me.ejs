@@ -531,7 +531,11 @@ function renderTasks(openTasks, completedTasks) {
             <div class="task-assign">
                 ${buildCustomDropdown(task.id, task.assignee_id, task.assigned_to)}
             </div>
-            <div class="task-date">${formatDate(task.due_date)}</div>
+            <div class="task-date" onclick="quickEditDate('${task.id}', '${task.due_date || ''}')">
+    ${formatDate(task.due_date)}
+</div>
+
+<input type="text" id="quick-date-${task.id}" style="display:none;">
             <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
            <div class="task-options-menu" id="menu-${task.id}">
                 <div onclick="openEdit('${task.id}')">Edit</div>
@@ -554,7 +558,11 @@ function renderTasks(openTasks, completedTasks) {
         </select>
 
      <div class="date-wrapper">
-    <input type="text" class="edit-date" id="date-${task.id}" placeholder="Select date">
+<input type="text" 
+       class="edit-date" 
+       id="date-${task.id}" 
+   value="${task.due_date ? formatInputDate(task.due_date) : ''}"
+       placeholder="Select date">
     <span class="calendar-icon" onclick="openCalendar('date-${task.id}')">📅</span>
 </div>
        
@@ -700,7 +708,9 @@ async function saveEdit(id) {
     const title = document.getElementById(`title-${id}`).value;
     const description = document.getElementById(`desc-${id}`).value;
     const priority = document.getElementById(`priority-${id}`).value;
-    const due_date = document.getElementById(`date-${id}`).value;
+   const due_date_input = document.getElementById(`date-${id}`).value;
+
+const due_date = due_date_input === "" ? null : due_date_input;
 
     try {
         await fetch('/assign_by_me/edit-task', {
@@ -717,15 +727,75 @@ async function saveEdit(id) {
 
 let calendars = {};
 
+
 function initCalendar(inputId) {
-    if (!calendars[inputId]) {
-        calendars[inputId] = flatpickr(`#${inputId}`, {
-            dateFormat: "Y-m-d",
-            allowInput: true,
-            clickOpens: true
-        });
+
+    // 🔥 destroy old instance (important)
+    if (calendars[inputId]) {
+        calendars[inputId].destroy();
     }
+
+    const input = document.getElementById(inputId);
+    const currentValue = input.value;
+
+    calendars[inputId] = flatpickr(input, {
+        dateFormat: "Y-m-d",
+        defaultDate: currentValue || null,
+        allowInput: true,
+        clickOpens: true,
+
+        // ✅ prevent past date but allow editing backward
+        minDate: "today"
+    });
 }
+
+function quickEditDate(taskId, currentDate) {
+    const inputId = `quick-date-${taskId}`;
+    const input = document.getElementById(inputId);
+
+    // destroy old calendar if exists
+    if (calendars[inputId]) {
+        calendars[inputId].destroy();
+    }
+
+    calendars[inputId] = flatpickr(input, {
+        dateFormat: "Y-m-d",
+        defaultDate: currentDate || null,
+        minDate: "today",   // ❌ no past date
+        clickOpens: false,
+
+        onChange: async function(selectedDates, dateStr) {
+            try {
+                await fetch('/assign_by_me/edit-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: taskId,
+                        title: null,
+                        description: null,
+                        priority: null,
+                        due_date: dateStr
+                    })
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    });
+
+    calendars[inputId].open();
+}
+
+function formatInputDate(dateStr) {
+    const d = new Date(dateStr);
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
 
 function openCalendar(inputId) {
     initCalendar(inputId);
