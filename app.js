@@ -54,15 +54,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // Mobile Detection & Redirect Middleware
 app.use((req, res, next) => {
-    const host = req.get('host');
-    const userAgent = req.headers['user-agent'].toLowerCase();
-    
-    // Mobile device keywords
-    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const userAgent = req.headers['user-agent'] || '';
 
-    // Agar user mobile par hai aur abhi desktop domain par hai
+    const isMobile = /android|iphone|ipad|ipod|mobile/i.test(userAgent);
+
+    const host = req.get('host');
+
+    // If desktop domain opened on mobile → redirect
     if (isMobile && host === 'tms.thedesigns.live') {
-        // Redirect to your new mobile domain (m.thedesigns.live ya jo aapne banaya hai)
         return res.redirect('https://m-tms.thedesigns.live' + req.url);
     }
 
