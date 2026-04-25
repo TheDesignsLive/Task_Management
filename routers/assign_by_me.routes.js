@@ -184,9 +184,38 @@ router.post('/edit-task', async (req, res) => {
     try {
         const { id, title, description, priority, due_date } = req.body;
 
+        let fields = [];
+        let values = [];
+
+        if (title !== null) {
+            fields.push("title=?");
+            values.push(title);
+        }
+
+        if (description !== null) {
+            fields.push("description=?");
+            values.push(description);
+        }
+
+        if (priority !== null) {
+            fields.push("priority=?");
+            values.push(priority);
+        }
+
+        if (due_date !== null) {
+            fields.push("due_date=?");
+            values.push(due_date);
+        }
+
+        if (fields.length === 0) {
+            return res.json({ success: true });
+        }
+
+        values.push(id);
+
         await con.query(
-            "UPDATE tasks SET title=?, description=?, priority=?, due_date=? WHERE id=?",
-            [title, description, priority, due_date, id]
+            `UPDATE tasks SET ${fields.join(", ")} WHERE id=?`,
+            values
         );
 
         req.io.emit('update_tasks');
