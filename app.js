@@ -9,8 +9,8 @@ const socketIo = require('socket.io'); // Required for Socket.io
 const cron = require('node-cron'); // Added for automatic cleanup
 
 const backupDatabase = require('./backup/backup');
-// const uploadLatestSQL = require('./drive');
-// const cron = require('node-cron');
+
+
 
 const app = express();
 const server = http.createServer(app); // Create HTTP server
@@ -60,8 +60,8 @@ app.use((req, res, next) => {
 
     const host = req.headers.host; // 🔥 use headers instead of req.get
 
-    console.log("HOST:", host);
-    console.log("UA:", userAgent);
+    debugLog("HOST:", host);
+    debugLog("UA:", userAgent);
 
     if (isMobile && host.includes('tms.thedesigns.live')) {
         return res.redirect(302, 'https://m-tms.thedesigns.live' + req.url);
