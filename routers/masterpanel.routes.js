@@ -84,21 +84,34 @@ router.get('/api/company-details/:id', async (req, res) => {
 // ==========================================
 router.get('/impersonate/:id', async (req, res) => {
     if (!req.session.role) return res.redirect('/');
-    
+
     try {
         const targetAdminId = req.params.id;
-        
-        // Save the master session ID so they can revert back later if needed
-        req.session.masterId = req.session.userId || req.session.adminId; 
-        
-        // Override the current session to become the Target Admin
+
+        // ✅ GET ADMIN NAME FROM DB
+        const [adminData] = await con.query(
+            "SELECT name FROM admins WHERE id = ?",
+            [targetAdminId]
+        );
+
+        if (adminData.length === 0) {
+            return res.send("Admin not found");
+        }
+
+        // ✅ SAVE MASTER ID (for revert if needed)
+        req.session.masterId = req.session.userId || req.session.adminId;
+
+        // ✅ SWITCH SESSION
         req.session.adminId = parseInt(targetAdminId);
-        req.session.userId = null; 
-        req.session.role = 'admin'; 
+        req.session.userId = null;
+        req.session.role = 'admin';
         req.session.control_type = 'ADMIN';
-        
-        // Because this was opened in target="_blank", this redirects the NEW tab to home
+
+        // 🔥 IMPORTANT FIX
+        req.session.adminName = adminData[0].name;
+
         res.redirect('/home');
+
     } catch (err) {
         console.error(err);
         res.status(500).send("Impersonation Error");
