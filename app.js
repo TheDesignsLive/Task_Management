@@ -143,9 +143,11 @@ cron.schedule('0 0 * * *', () => {
     debugLog('Running auto-cleanup: Deleting old data...');
 
     // 1. Delete Announcements older than 1 month
-    const deleteAnnouncementsSql = `
-        DELETE FROM announcements 
-        WHERE created_at < NOW() - INTERVAL 1 MONTH`;
+        const deleteAnnouncementsSql = `
+            DELETE FROM announcements 
+            WHERE created_at IS NOT NULL
+            AND created_at < DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+05:30'), INTERVAL 31 DAY)
+        `;
 
     // 2. Delete Completed Tasks older than 1 month
         const deleteTasksSql = `
