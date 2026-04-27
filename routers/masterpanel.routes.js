@@ -101,14 +101,38 @@ router.get('/impersonate/:id', async (req, res) => {
         // ✅ SAVE MASTER ID (for revert if needed)
         req.session.masterId = req.session.userId || req.session.adminId;
 
-        // ✅ SWITCH SESSION
-        req.session.adminId = parseInt(targetAdminId);
-        req.session.userId = null;
-        req.session.role = 'admin';
-        req.session.control_type = 'ADMIN';
+        // // ✅ SWITCH SESSION
+        // req.session.adminId = parseInt(targetAdminId);
+        // req.session.userId = null;
+        // req.session.role = 'admin';
+        // req.session.control_type = 'ADMIN';
 
-        // 🔥 IMPORTANT FIX
-        req.session.adminName = adminData[0].name;
+        // // 🔥 IMPORTANT FIX
+        // req.session.adminName = adminData[0].name;
+
+
+                    // ✅ SAVE ORIGINAL MASTER SESSION (IMPORTANT)
+        // ✅ SAVE ORIGINAL MASTER SESSION ONLY ONCE
+        if (!req.session.originalEmail) {
+            req.session.originalEmail = req.session.email;
+            req.session.originalAdminId = req.session.adminId;
+        }
+
+            // ✅ GET TARGET ADMIN EMAIL ALSO
+            const [targetAdmin] = await con.query(
+                "SELECT email FROM admins WHERE id = ?",
+                [targetAdminId]
+            );
+
+            // ✅ SWITCH SESSION
+            req.session.adminId = parseInt(targetAdminId);
+            req.session.userId = null;
+            req.session.role = 'admin';
+            req.session.control_type = 'ADMIN';
+            req.session.adminName = adminData[0].name;
+
+            // ✅ UPDATE EMAIL (VERY IMPORTANT)
+            req.session.email = targetAdmin[0].email;
 
         res.redirect('/home');
 
