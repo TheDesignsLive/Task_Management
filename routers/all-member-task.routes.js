@@ -31,19 +31,49 @@ router.get('/all-member-task', async (req, res) => {
         if (sessionRole === "admin") {
             controlType = "OWNER"; // Treat admin and owner identically as top tier
         } else {
-            const [uData] = await con.query(
+            // const [uData] = await con.query(
+            //     "SELECT role_id FROM users WHERE id=?", 
+            //     [sessionUserId]
+            // );
+            // const roleId = uData[0].role_id;
+
+            // const [rData] = await con.query(
+            //     "SELECT control_type, team_id FROM roles WHERE id=?",
+            //     [roleId]
+            // );
+
+            // controlType = rData.length > 0 ? rData[0].control_type : "NONE";
+            // teamId = rData.length > 0 ? rData[0].team_id : null;
+
+
+
+                                const [uData] = await con.query(
                 "SELECT role_id FROM users WHERE id=?", 
                 [sessionUserId]
             );
-            const roleId = uData[0].role_id;
 
-            const [rData] = await con.query(
-                "SELECT control_type, team_id FROM roles WHERE id=?",
-                [roleId]
-            );
+            // ✅ SAFETY CHECK
+            if (uData.length === 0) {
+                controlType = "NONE";
+                teamId = null;
+            } else {
 
-            controlType = rData.length > 0 ? rData[0].control_type : "NONE";
-            teamId = rData.length > 0 ? rData[0].team_id : null;
+                const roleId = uData[0].role_id;
+
+                const [rData] = await con.query(
+                    "SELECT control_type, team_id FROM roles WHERE id=?",
+                    [roleId]
+                );
+
+                // ✅ SAFETY CHECK
+                if (rData.length === 0) {
+                    controlType = "NONE";
+                    teamId = null;
+                } else {
+                    controlType = rData[0].control_type || "NONE";
+                    teamId = rData[0].team_id || null;
+                }
+            }
         }
 
         // ================= USERS DROPDOWN (4-LAYER HIERARCHY) =================
@@ -171,8 +201,8 @@ router.get('/all-member-task', async (req, res) => {
                         }
 
                     } else {
-                        taskQuery += " AND t.assigned_to IN (?)";
-                        params.push([allowedIds]); // Correct way for IN clause in mysql2
+                    taskQuery += ` AND t.assigned_to IN (${allowedIds.map(() => '?').join(',')})`;
+                    params.push(...allowedIds);
                         
                         // Exclude own tasks from the "all" view
                         taskQuery += " AND t.assigned_to != ?";
