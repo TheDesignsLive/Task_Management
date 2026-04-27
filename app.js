@@ -148,10 +148,12 @@ cron.schedule('0 0 * * *', () => {
         WHERE created_at < NOW() - INTERVAL 1 MONTH`;
 
     // 2. Delete Completed Tasks older than 1 month
-    const deleteTasksSql = `
-        DELETE FROM tasks 
-        WHERE status = 'COMPLETED' 
-        AND updated_at < NOW() - INTERVAL 1 MONTH`;
+        const deleteTasksSql = `
+            DELETE FROM tasks 
+            WHERE status = 'COMPLETED' 
+            AND due_date IS NOT NULL
+            AND due_date < DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+05:30'), INTERVAL 31 DAY)
+        `;
 
     // Execute Announcements deletion
     con.query(deleteAnnouncementsSql, (err) => {
