@@ -135,8 +135,7 @@ const isAdmin = req.session.role === 'admin' || req.session.role === 'owner';
 // ================= EJS & STATIC FILES =================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-//app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ================= AUTOMATIC CLEANUP (CRON JOB) =================
 // Runs every day at 00:00 (Midnight)
