@@ -15,7 +15,13 @@ const backupDatabase = require('./backup/backup');
 
 const app = express();
 const server = http.createServer(app); // Create HTTP server
-const io = socketIo(server); // Initialize Socket.io
+const io = socketIo(server, {
+    cors: {
+        origin: ["https://m-tms.thedesigns.live", "http://localhost:3000"], // Mobile App ka URL
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
 
 // ================= SESSION DB CONFIG =================
 const sessionStore = new MySQLStore({}, con); // Uses your existing 'sessions' table
