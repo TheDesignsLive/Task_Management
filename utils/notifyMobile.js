@@ -1,18 +1,20 @@
 // utils/notifyMobile.js — Desktop utility
-// Node v24+ has fetch built-in — no require needed
-
 const MOBILE_BASE_URL = 'https://m-tms.thedesigns.live';
 const MOBILE_SECRET   = 'tms_mobile_bridge_2026';
 
-function notifyMobile() {
-    fetch(`${MOBILE_BASE_URL}/api/notify-task-update`, {
+function notifyMobile(type = 'tasks') {
+    const endpoint = type === 'profile'
+        ? `${MOBILE_BASE_URL}/api/notify-profile-update`
+        : `${MOBILE_BASE_URL}/api/notify-task-update`;
+
+    fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'x-mobile-secret': MOBILE_SECRET,
-            'x-source': 'desktop',          // ✅ NEW: identify who sent this
+            'x-source': 'desktop',
         },
-        body: JSON.stringify({ event: 'update_tasks' }),
+        body: JSON.stringify({ event: type }),
     })
     .then(r => r.json())
     .then(d => { if (!d.success) console.warn('[notifyMobile] failed:', d); })

@@ -350,6 +350,13 @@ async function confirmRemovePic(){
         alert("Error removing picture");
     }
 }
+
+
+// ✅ Live profile update from mobile
+const profileSocket = io();
+profileSocket.on('update_profile', () => {
+    window.location.reload();
+});
 </script>
 
 </body>

@@ -161,10 +161,14 @@ router.post('/update-profile', (req, res) => {
                 }
             }
 
-            req.io.emit('update_session_name', { userId: currentId, adminId: req.session.adminId, newName: name });
-            req.io.emit('update_profiles', { userId: currentId, name, phone, company, profilePic: newPic });
+           req.io.emit('update_session_name', { userId: currentId, adminId: req.session.adminId, newName: name });
+req.io.emit('update_profiles', { userId: currentId, name, phone, company, profilePic: newPic });
 
-            return res.json({ success: true, name, phone, company, profilePic: newPic });
+// ✅ Notify mobile so it refreshes profile without reload
+const { notifyMobile } = require('../utils/notifyMobile');
+notifyMobile('profile');
+
+return res.json({ success: true, name, phone, company, profilePic: newPic });
         } catch (err) {
             console.error(err);
             return res.status(500).json({ success: false, message: "Profile update failed" });
