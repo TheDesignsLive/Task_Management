@@ -489,10 +489,10 @@ async function toggleCheckboxStatus(id, checkboxEl) {
     isProcessingAjax = true; 
     const newStatus = checkboxEl.checked ? 'COMPLETED' : 'OPEN';
     try {
-        await fetch('/update-task-status', {
+        await fetch('/assign_by_me/update-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status: newStatus, section: 'COMPLETED' })
+            body: JSON.stringify({ id, status: newStatus })
         });
     } catch(err) { console.error(err); }
     finally { setTimeout(() => isProcessingAjax = false, 500); }
