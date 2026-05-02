@@ -1,3 +1,4 @@
+// allmember task.routes.js for desktop 
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
@@ -137,13 +138,10 @@ router.get('/all-member-task', async (req, res) => {
         // ================= TASK FETCH =================
         if (controlType !== "NONE" || controlType === "NONE") { 
 
-            let taskQuery = `
+let taskQuery = `
                 SELECT t.*, 
                 CASE 
                     WHEN t.status = 'COMPLETED' THEN 'COMPLETED'
-                    WHEN t.assigned_to = 0 AND (t.who_assigned = 'user' OR t.who_assigned = 'owner') THEN 'OTHERS'
-                    WHEN t.assigned_to = 0 AND t.who_assigned = 'admin' THEN t.section
-                    WHEN t.assigned_to != t.assigned_by THEN 'OTHERS'
                     ELSE t.section
                 END AS section,
                 CASE 
