@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const { notifyMobile } = require('../utils/notifyMobile'); 
 
 /* ===============================
     NEW API ENDPOINT FOR NO-RELOAD
@@ -220,6 +221,7 @@ router.post('/update-task-date', async (req, res) => {
     try {
         await con.query("UPDATE tasks SET due_date=? WHERE id=?", [due_date, id]);
         req.io.emit('update_tasks');
+          notifyMobile(); // ✅ ADD — tells mobile clients to refresh
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -231,6 +233,7 @@ router.post('/update-task-status', async (req, res) => {
     try {
         await con.query("UPDATE tasks SET status=? WHERE id=?", [status, id]);
         req.io.emit('update_tasks');
+        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -242,6 +245,7 @@ router.post('/update-task-section', async (req, res) => {
     try {
         await con.query("UPDATE tasks SET section=? WHERE id=?", [section, id]);
         req.io.emit('update_tasks');
+          notifyMobile(); // ✅ ADD — tells mobile clients to refresh
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -311,6 +315,7 @@ router.post('/edit-task-details', async (req, res) => {
 
         // ================= SOCKET =================
         req.io.emit('update_tasks');
+        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
 
         res.json({ success: true });
 
@@ -324,6 +329,7 @@ router.post('/delete-task/:id', async (req, res) => {
     try {
         await con.query("DELETE FROM tasks WHERE id=?", [req.params.id]);
         req.io.emit('update_tasks');
+        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -334,6 +340,7 @@ router.post('/delete-completed-tasks', async (req, res) => {
         const adminId = req.session.adminId;
         await con.query("DELETE FROM tasks WHERE admin_id=? AND status='COMPLETED'", [adminId]);
         req.io.emit('update_tasks');
+        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });

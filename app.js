@@ -291,6 +291,21 @@ app.use("/",export_master)
 app.use('/', import_master);
 
 
+// ✅ NEW: Mobile pings this endpoint when a task changes
+// Desktop then broadcasts socket event to all its connected clients
+app.post('/api/notify-task-update', (req, res) => {
+    // ✅ Verify secret so only mobile backend can trigger this
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') {
+        return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    // ✅ Emit to ALL desktop clients — they will call refreshTasksUI()
+    io.emit('update_tasks');
+    console.log('[Desktop] 🔔 task update broadcast triggered by mobile');
+    return res.json({ success: true });
+});
+
+
 // ================= START SERVER =================
 let backupSchedulerStarted = false;
 
