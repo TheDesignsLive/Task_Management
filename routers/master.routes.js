@@ -4,7 +4,7 @@ const con = require('../config/db');
 const db = require('../config/db');
 
 // ==============================
-// ADD TASK *file name master routes.js
+// ADD TASK *file name master routes.js desktop
 // ==============================
 router.post('/add-task', async (req, res) => {
   try {
@@ -80,8 +80,10 @@ if (typeof assignedTo === "string" && assignedTo.startsWith("team_")) {
   }
 
   req.io.emit('update_tasks');
-  return res.json({ success: true });
+    notifyMobile();
+    return res.json({ success: true });
 }
+
 
     // HANDLE "ALL MEMBERS"
     if (assignedTo === "all") {
@@ -116,8 +118,8 @@ if (typeof assignedTo === "string" && assignedTo.startsWith("team_")) {
       } catch (err) {
         console.error('Failed to insert task for admin:', err);
       }
-
-      req.io.emit('update_tasks');
+req.io.emit('update_tasks');
+      notifyMobile();
       return res.json({ success: true, message: 'Task added successfully' });
     }
 
@@ -130,7 +132,8 @@ if (typeof assignedTo === "string" && assignedTo.startsWith("team_")) {
        finalDate, finalAssignedTo, assigned_by, who_assigned, sectionValue]
     );
 
-    req.io.emit('update_tasks');
+req.io.emit('update_tasks');
+    notifyMobile();
     res.json({ success: true, message: 'Task added successfully' });
 
   } catch (err) {
