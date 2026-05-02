@@ -164,7 +164,8 @@ router.post('/update-assignee', async (req, res) => {
             await con.query("UPDATE tasks SET assigned_to = ?, section = IF(status='COMPLETED', section, ?) WHERE id = ?", [finalAssignedTo, sectionValue, taskId]);
         }
 
-        req.io.emit('update_tasks');
+req.io.emit('update_tasks');
+        notifyMobile();
         res.json({ success: true });
     } catch (err) { 
         console.error(err); 
@@ -177,6 +178,7 @@ router.post('/delete-task/:id', async (req, res) => {
     try {
         await con.query("DELETE FROM tasks WHERE id = ?", [req.params.id]);
         req.io.emit('update_tasks');
+        notifyMobile();
         res.json({ success: true });
     } catch (err) { res.status(500).json({ success: false }); }
 });
@@ -192,6 +194,7 @@ router.post('/delete-all-completed', async (req, res) => {
             await con.query("DELETE FROM tasks WHERE who_assigned='user' AND assigned_by=? AND assigned_to != ? AND status='COMPLETED'", [req.session.userId, req.session.userId]);
         }
         req.io.emit('update_tasks');
+        notifyMobile();
         res.json({ success: true });
     } catch (err) { res.status(500).json({ success: false }); }
 });
@@ -236,6 +239,7 @@ router.post('/edit-task', async (req, res) => {
         );
 
         req.io.emit('update_tasks');
+        notifyMobile();
 
         res.json({ success: true });
     } catch (err) {
