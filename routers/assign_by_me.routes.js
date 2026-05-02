@@ -1,6 +1,8 @@
+// assignbyme.routes.js desktop
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const { notifyMobile } = require('../utils/notifyMobile');
 
 router.get('/', async (req, res) => {
     if (!req.session.role) return res.redirect('/');
@@ -90,6 +92,21 @@ const queryParams = (sessionRole === "admin")
     } catch (err) {
         console.error(err);
         res.status(500).send("Error loading Assign By Me");
+    }
+});
+
+router.post('/update-status', async (req, res) => {
+    if (!req.session.role) return res.status(401).json({ success: false });
+    const { id, status } = req.body;
+    if (!id || !status) return res.status(400).json({ success: false });
+    try {
+        await con.query('UPDATE tasks SET status=? WHERE id=?', [status, id]);
+        req.io.emit('update_tasks');
+        notifyMobile();
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[update-status]', err);
+        res.status(500).json({ success: false });
     }
 });
 
