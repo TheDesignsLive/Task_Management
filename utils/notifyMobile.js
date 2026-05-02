@@ -1,12 +1,10 @@
-// utils/notifyMobile.js — Desktop utility
-// ✅ When desktop changes a task, this pings the mobile server
-// Mobile then emits socket event to all its connected React clients
+// desktop/utils/notifyMobile.js
+const fetch = require('node-fetch'); // npm i node-fetch@2  (CJS compatible)
 
 const MOBILE_BASE_URL = 'https://m-tms.thedesigns.live';
 const MOBILE_SECRET   = 'tms_mobile_bridge_2026';
 
 function notifyMobile() {
-    // ✅ Fire and forget
     fetch(`${MOBILE_BASE_URL}/api/notify-task-update`, {
         method: 'POST',
         headers: {
