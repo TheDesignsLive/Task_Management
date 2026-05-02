@@ -10,6 +10,7 @@ function notifyMobile() {
         headers: {
             'Content-Type': 'application/json',
             'x-mobile-secret': MOBILE_SECRET,
+            'x-source': 'desktop',          // ✅ NEW: identify who sent this
         },
         body: JSON.stringify({ event: 'update_tasks' }),
     })
