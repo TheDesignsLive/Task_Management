@@ -330,6 +330,21 @@ app.post('/api/notify-profile-update', (req, res) => {
     return res.json({ success: true });
 });
 
+// ✅ Mobile pings this when members change → broadcast to desktop clients
+app.post('/api/notify-members-update', (req, res) => {
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') {
+        return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    const source = req.headers['x-source'];
+    if (source !== 'mobile') {
+        return res.status(400).json({ success: false, message: 'Bad source' });
+    }
+    io.emit('update_members');
+    console.log('[Desktop] 👥 members update broadcast triggered by mobile');
+    return res.json({ success: true });
+});
+
 
 // ✅ NEW: Announcement Bridge (Sirf bina refresh update dikhane ke liye)
 app.post('/api/notify-announcement', async (req, res) => {

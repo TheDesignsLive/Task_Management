@@ -3,9 +3,12 @@ const MOBILE_BASE_URL = 'https://m-tms.thedesigns.live';
 const MOBILE_SECRET   = 'tms_mobile_bridge_2026';
 
 function notifyMobile(type = 'tasks') {
-    const endpoint = type === 'profile'
-        ? `${MOBILE_BASE_URL}/api/notify-profile-update`
-        : `${MOBILE_BASE_URL}/api/notify-task-update`;
+    const endpoints = {
+        tasks:   `${MOBILE_BASE_URL}/api/notify-task-update`,
+        profile: `${MOBILE_BASE_URL}/api/notify-profile-update`,
+        members: `${MOBILE_BASE_URL}/api/notify-members-update`,
+    };
+    const endpoint = endpoints[type] || endpoints.tasks;
 
     fetch(endpoint, {
         method: 'POST',
