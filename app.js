@@ -316,6 +316,44 @@ app.post('/api/notify-task-update', (req, res) => {
 });
 
 
+// ✅ NEW: Announcement Bridge (Sirf bina refresh update dikhane ke liye)
+app.post('/api/notify-announcement', async (req, res) => {
+    const { announcement_id } = req.body;
+    const secret = req.headers['x-mobile-secret'];
+
+    // Security Check
+    if (secret !== 'tms_mobile_bridge_2026') {
+        return res.status(403).json({ success: false });
+    }
+
+    try {
+        // DB se naya data uthao taaki Laptop/Phone pe bina refresh ke dikh sake
+        const [newAnn] = await con.query(`
+            SELECT a.*, IF(a.role_id=0, 'All Members', t.name) AS target_team_name,
+            CASE 
+                WHEN a.who_added='ADMIN' THEN CONCAT(adm.name,' (Admin)') 
+                WHEN a.who_added='OWNER' THEN CONCAT(usr.name,' (Admin)') 
+                ELSE usr.name 
+            END AS added_by_name
+            FROM announcements a 
+            LEFT JOIN teams t ON a.role_id = t.id
+            LEFT JOIN admins adm ON a.added_by=adm.id AND a.who_added='ADMIN'
+            LEFT JOIN users usr ON a.added_by=usr.id AND (a.who_added='USER' OR a.who_added='OWNER')
+            WHERE a.id = ?`, [announcement_id]);
+
+        if (newAnn.length > 0) {
+            // 🟢 YEH LINE ASLI KAAM KAREGI: Sabke screen par bina refresh announcement bhej degi
+            io.emit('new_announcement', newAnn[0]);
+            console.log('[Desktop Hub] 📢 Real-time Announcement Sent!');
+        }
+        return res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false });
+    }
+});
+
+
 // ================= START SERVER =================
 let backupSchedulerStarted = false;
 
