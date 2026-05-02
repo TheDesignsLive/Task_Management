@@ -130,8 +130,6 @@ const isAdmin = req.session.role === 'admin' || req.session.role === 'owner';
     }
 });
 
-
-
 // ================= EJS & STATIC FILES =================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
