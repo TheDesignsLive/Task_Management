@@ -1,5 +1,5 @@
-// desktop/utils/notifyMobile.js
-const fetch = require('node-fetch'); // npm i node-fetch@2  (CJS compatible)
+// utils/notifyMobile.js — Desktop utility
+// Node v24+ has fetch built-in — no require needed
 
 const MOBILE_BASE_URL = 'https://m-tms.thedesigns.live';
 const MOBILE_SECRET   = 'tms_mobile_bridge_2026';
