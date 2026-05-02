@@ -1,3 +1,4 @@
+// app.js Desktop version
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -52,18 +53,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Mobile Detection & Redirect Middleware
+// ✅ FIXED: Mobile Detection & Redirect Middleware
+// Now skips redirect for server-to-server calls from mobile backend
 app.use((req, res, next) => {
     const userAgent = req.headers['user-agent'] || '';
-
     const isMobile = /android|iphone|ipad|ipod|mobile/i.test(userAgent);
-
-    const host = req.headers.host; // 🔥 use headers instead of req.get
+    const host = req.headers.host;
 
     debugLog("HOST:", host);
     debugLog("UA:", userAgent);
 
-    if (isMobile && host.includes('tms.thedesigns.live')) {
+    // ✅ KEY FIX: If request has our secret header, it's from mobile SERVER (not browser)
+    // Never redirect these — they are server-to-server API calls
+    const isInternalCall = req.headers['x-mobile-secret'] === 'tms_mobile_bridge_2026';
+
+    if (isMobile && host && host.includes('tms.thedesigns.live') && !isInternalCall) {
         return res.redirect(302, 'https://m-tms.thedesigns.live' + req.url);
     }
 

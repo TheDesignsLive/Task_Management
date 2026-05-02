@@ -1,3 +1,4 @@
+// profile.routes.js Desktop version
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
@@ -9,9 +10,10 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/images'),
     filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname)
 });
+
 const upload = multer({ 
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowedTypes = /jpeg|jpg|png|webp/;
         const ext = allowedTypes.test(file.originalname.toLowerCase());
@@ -66,7 +68,6 @@ router.get('/', async (req, res) => {
                 profilePic = profileRows[0].profile_pic;
             }
         } else {
-            // ✅ FIX: Set role label to 'Admin' for owner, 'User' for normal user
             role = sessionRole === "owner" ? "Admin" : "User";
             const [uRows] = await con.query(
                 `SELECT u.name, u.email, u.phone, u.profile_pic, u.admin_id, r.role_name 
@@ -75,7 +76,6 @@ router.get('/', async (req, res) => {
                  WHERE u.id=?`, 
                 [sessionUserId]
             );
-
             if (uRows.length) {
                 name = uRows[0].name;
                 email = uRows[0].email;
@@ -88,18 +88,9 @@ router.get('/', async (req, res) => {
         }
 
         res.render('profile', {
-            members,
-            adminName,
-            profilePic,
-            session: req.session,
-            name,
-            email,
-            phone,
-            company,
-            role,
-            userRoleName,
-            activePage: "profile"
-        
+            members, adminName, profilePic,
+            session: req.session, name, email, phone,
+            company, role, userRoleName, activePage: "profile"
         });
 
     } catch (err) {
@@ -165,8 +156,6 @@ router.post('/update-profile', (req, res) => {
                     await con.query("UPDATE users SET name=?,phone=? WHERE id=?", [name, phone, currentId]);
                 }
                 req.session.userName = name;
-
-                // ✅ FIX: If owner, also update the company name in the admins table
                 if (req.session.role === "owner" && company !== undefined) {
                     await con.query("UPDATE admins SET company_name=? WHERE id=?", [company, req.session.adminId]);
                 }
@@ -181,6 +170,57 @@ router.post('/update-profile', (req, res) => {
             return res.status(500).json({ success: false, message: "Profile update failed" });
         }
     });
+});
+
+// ================= MOBILE BRIDGE: UPLOAD IMAGE =================
+// ✅ Called by MOBILE backend (server-to-server) to save image on desktop
+// Mobile sends image here, desktop saves it, returns filename
+router.post('/upload-image', (req, res) => {
+    // ✅ Verify secret — only mobile backend can call this
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') {
+        console.log('[Desktop] upload-image blocked — bad secret:', secret);
+        return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+
+    upload.single('profile_pic')(req, res, function(err) {
+        if (err) {
+            console.error('[Desktop] upload-image multer error:', err.message);
+            return res.json({ success: false, message: err.message });
+        }
+        if (!req.file) {
+            console.error('[Desktop] upload-image — no file received');
+            return res.json({ success: false, message: 'No file received.' });
+        }
+        console.log('[Desktop] ✅ Image saved from mobile:', req.file.filename);
+        return res.json({ success: true, filename: req.file.filename });
+    });
+});
+
+// ================= MOBILE BRIDGE: DELETE IMAGE =================
+// ✅ Called by MOBILE backend to delete an image from desktop folder
+router.post('/delete-image', (req, res) => {
+    // ✅ Verify secret
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') {
+        return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+
+    const { filename } = req.body;
+    if (!filename) {
+        return res.json({ success: false, message: 'No filename provided.' });
+    }
+    try {
+        const filePath = 'public/images/' + filename;
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log('[Desktop] ✅ Image deleted by mobile request:', filename);
+        }
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('[Desktop] delete-image error:', err.message);
+        return res.status(500).json({ success: false, message: 'Delete failed.' });
+    }
 });
 
 module.exports = router;
