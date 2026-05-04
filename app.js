@@ -398,6 +398,61 @@ app.post('/api/notify-announcement', async (req, res) => {
     }
 });
 
+// ✅ Mobile pings when announcement added → broadcast to desktop clients
+app.post('/api/notify-announcement-add', async (req, res) => {
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') return res.status(403).json({ success: false });
+    const source = req.headers['x-source'];
+    if (source !== 'mobile') return res.status(400).json({ success: false });
+    try {
+        const [rows] = await con.query(`
+            SELECT a.*, IF(a.role_id=0, 'All Members', t.name) AS target_team_name,
+            CASE WHEN a.who_added='ADMIN' THEN CONCAT(adm.name,' (Admin)') WHEN a.who_added='OWNER' THEN CONCAT(usr.name,' (Admin)') ELSE usr.name END AS added_by_name
+            FROM announcements a LEFT JOIN teams t ON a.role_id = t.id
+            LEFT JOIN admins adm ON a.added_by=adm.id AND a.who_added='ADMIN'
+            LEFT JOIN users usr ON a.added_by=usr.id AND (a.who_added='USER' OR a.who_added='OWNER')
+            ORDER BY a.created_at DESC LIMIT 1`);
+        if (rows.length > 0) io.emit('new_announcement', rows[0]);
+        console.log('[Desktop] 📢 new_announcement broadcast triggered by mobile');
+        return res.json({ success: true });
+    } catch (err) { return res.status(500).json({ success: false }); }
+});
+
+// ✅ Mobile pings when announcement edited → broadcast to desktop clients
+app.post('/api/notify-announcement-edit', async (req, res) => {
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') return res.status(403).json({ success: false });
+    const source = req.headers['x-source'];
+    if (source !== 'mobile') return res.status(400).json({ success: false });
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false });
+        const [rows] = await con.query(`
+            SELECT a.*, IF(a.role_id=0, 'All',r.role_name) AS target_role,
+            CASE WHEN a.who_added='ADMIN' THEN CONCAT(adm.name,' (Admin)') WHEN a.who_added='OWNER' THEN CONCAT(usr.name,' (Admin)') ELSE usr.name END AS added_by_name
+            FROM announcements a LEFT JOIN roles r ON a.role_id=r.id
+            LEFT JOIN admins adm ON a.added_by=adm.id AND a.who_added='ADMIN'
+            LEFT JOIN users usr ON a.added_by=usr.id AND (a.who_added='USER' OR a.who_added='OWNER')
+            WHERE a.id=?`, [id]);
+        if (rows.length > 0) io.emit('edit_announcement', rows[0]);
+        console.log('[Desktop] ✏️ edit_announcement broadcast triggered by mobile');
+        return res.json({ success: true });
+    } catch (err) { return res.status(500).json({ success: false }); }
+});
+
+// ✅ Mobile pings when announcement deleted → broadcast to desktop clients
+app.post('/api/notify-announcement-delete', (req, res) => {
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') return res.status(403).json({ success: false });
+    const source = req.headers['x-source'];
+    if (source !== 'mobile') return res.status(400).json({ success: false });
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ success: false });
+    io.emit('delete_announcement', id);
+    console.log('[Desktop] 🗑️ delete_announcement broadcast triggered by mobile, id:', id);
+    return res.json({ success: true });
+});
+
 // ✅ Mobile pings this when roles change → broadcast to desktop clients
 app.post('/api/notify-roles-update', (req, res) => {
     const secret = req.headers['x-mobile-secret'];
