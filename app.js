@@ -179,6 +179,33 @@ app.post('/upload-attachment', (req, res) => {
     });
 });
 
+// ✅ Mobile uploads attachment as base64 JSON → desktop saves to public/uploads/
+app.post('/upload-attachment-base64', express.json({ limit: '15mb' }), (req, res) => {
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') {
+        return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    try {
+        const { filename, mimetype, data } = req.body;
+        if (!filename || !data) {
+            return res.json({ success: false, message: 'No file data received.' });
+        }
+        const dir = path.join(__dirname, 'public', 'uploads');
+        if (!require('fs').existsSync(dir)) require('fs').mkdirSync(dir, { recursive: true });
+
+        const finalName = Date.now() + '_' + filename;
+        const filePath = path.join(dir, finalName);
+        const buffer = Buffer.from(data, 'base64');
+        require('fs').writeFileSync(filePath, buffer);
+
+        console.log('[Desktop] ✅ Attachment saved from mobile (base64):', finalName);
+        return res.json({ success: true, filename: finalName });
+    } catch (err) {
+        console.error('[Desktop] upload-attachment-base64 error:', err.message);
+        return res.json({ success: false, message: err.message });
+    }
+});
+
 // ================= AUTOMATIC CLEANUP (CRON JOB) =================
 // Runs every day at 00:00 (Midnight)
 cron.schedule('0 0 * * *', () => {
