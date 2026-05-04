@@ -597,9 +597,12 @@ document.addEventListener('DOMContentLoaded', updateToggleVisibility);
     const isControlAdmin = <%= session.control_type === 'ADMIN' ? 'true' : 'false' %>;
     const isAdmin = (mySessionRole === 'admin' || mySessionRole === 'owner' || isControlAdmin);
 
-    socket.on('new_announcement', (a) => {
+socket.on('new_announcement', (a) => {
         if (document.getElementById('announce-' + a.id)) return;
         if (!isAdmin && a.role_id != 0 && a.role_id != mySessionRoleId) return;
+
+        // ✅ Handle both desktop (target_role) and mobile (target_team_name) field names
+        const displayRole = a.target_role || a.target_team_name || 'All';
 
         const dateStr = new Date(a.created_at).toLocaleDateString();
         let attachmentHtml = a.attachment ? `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #555;"><a href="/uploads/${a.attachment}" target="_blank" style="font-size:12px; color:#0F8989; font-weight: bold; text-decoration: none;"><i class="fa-solid fa-paperclip"></i> View Attachment</a></div>` : '';
@@ -608,7 +611,7 @@ document.addEventListener('DOMContentLoaded', updateToggleVisibility);
         const newCard = document.createElement('div');
         newCard.className = 'announcement-card';
         newCard.id = 'announce-' + a.id;
-        newCard.innerHTML = `${actionsHtml}<h3 class="ann-title" style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;">${a.title}</h3><p style="color:#aaa; font-size: 11px; margin: 8px 0;"><i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> <strong>${a.added_by_name}</strong> <span style="margin: 0 8px; opacity:0.3;">|</span><i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong class="ann-role">${a.target_role}</strong> <span style="margin: 0 8px; opacity:0.3;">|</span><i class="fa-regular fa-clock" style="margin-right:4px;"></i> ${dateStr}</p><div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div><p class="ann-desc" style="font-size: 13px; line-height: 1.5; color: #eee;">${a.description}</p><div class="ann-attachment-container">${attachmentHtml}</div>`;
+      newCard.innerHTML = `${actionsHtml}<h3 class="ann-title" style="margin:0; padding-right: 70px; color: #CDF4F4; font-size: 17px;">${a.title}</h3><p style="color:#aaa; font-size: 11px; margin: 8px 0;"><i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> <strong>${a.added_by_name}</strong> <span style="margin: 0 8px; opacity:0.3;">|</span><i class="fa-solid fa-users" style="margin-right:4px;"></i> <strong class="ann-role">${displayRole}</strong> <span style="margin: 0 8px; opacity:0.3;">|</span><i class="fa-regular fa-clock" style="margin-right:4px;"></i> ${dateStr}</p><div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div><p class="ann-desc" style="font-size: 13px; line-height: 1.5; color: #eee;">${a.description}</p><div class="ann-attachment-container">${attachmentHtml}</div>`;
 
         const list = document.getElementById('announcement-list');
         const emptyMsg = document.getElementById('empty-announcements');
