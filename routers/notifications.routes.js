@@ -10,12 +10,14 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname)
 });
 const upload = multer({ storage });
+// ✅ Mobile calls this to save attachment on desktop
 router.post('/upload-attachment', upload.single('attachment'), (req, res) => {
     const secret = req.headers['x-mobile-secret'];
     if (secret !== 'tms_mobile_bridge_2026') return res.status(403).json({ success: false });
     if (!req.file) return res.status(400).json({ success: false, message: 'No file received.' });
     return res.json({ success: true, filename: req.file.filename });
 });
+
 
 // =======================================================
 // GET NOTIFICATION COUNT (for red badge without refresh)
