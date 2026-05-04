@@ -7,7 +7,8 @@ function notifyMobile(type = 'tasks') {
         tasks:   `${MOBILE_BASE_URL}/api/notify-task-update`,
         profile: `${MOBILE_BASE_URL}/api/notify-profile-update`,
         members: `${MOBILE_BASE_URL}/api/notify-members-update`,
-        roles: `${MOBILE_BASE_URL}/api/notify-roles-update`,
+        roles:  `${MOBILE_BASE_URL}/api/notify-roles-update`,
+        teams:  `${MOBILE_BASE_URL}/api/notify-teams-update`,
     };
     const endpoint = endpoints[type] || endpoints.tasks;
 

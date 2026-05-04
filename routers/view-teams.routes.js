@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const { notifyMobile } = require('../utils/notifyMobile'); // ✅ ADD
 
 // ================= VIEW TEAMS =================
 router.get('/view-teams', async (req, res) => {
@@ -118,8 +119,8 @@ router.post('/add-team', async (req, res) => {
                 [req.session.adminId, name]// owner creates global team
             );
         }
-
-        req.io.emit('update_teams');
+req.io.emit('update_teams');
+        notifyMobile('teams'); // ✅ PUSH TO MOBILE
         res.json({ success: true, message: 'Team successfully created' });
 
     } catch (err) {
@@ -164,7 +165,8 @@ router.post('/edit-team/:id', async (req, res) => {
             );
         }
 
-        req.io.emit('update_teams');
+ req.io.emit('update_teams');
+        notifyMobile('teams'); // ✅ PUSH TO MOBILE
         res.json({ success: true, message: 'Team successfully updated' });
 
     } catch (err) {
@@ -204,7 +206,8 @@ router.get('/delete-team/:id', async (req, res) => {
             );
         }
 
-        req.io.emit('update_teams');
+req.io.emit('update_teams');
+        notifyMobile('teams'); // ✅ PUSH TO MOBILE
         res.json({ success: true, message: 'Team successfully deleted' });
 
     } catch (err) {
