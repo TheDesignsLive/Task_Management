@@ -321,69 +321,42 @@ router.get('/notifications', async (req, res) => {
 // =======================================================
 
 router.post('/add-announcement', upload.single('attachment'), async (req, res) => {
-
     try {
-
         const { title, description, role_id } = req.body;
-
         const attachment = req.file ? req.file.filename : null;
-
         const adminId = req.session.adminId;
-
-        // ✅ FIX: If admin, use adminId. If owner or user, use userId.
         const addedBy = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
-
         const whoAdded = req.session.role.toUpperCase();
 
         const [result] = await con.query(
-            `
-            INSERT INTO announcements
-            (admin_id,added_by,who_added,role_id,title,description,attachment)
-            VALUES (?,?,?,?,?,?,?)
-            `,
-            [adminId, addedBy, whoAdded, role_id, title, description, attachment]
-        );
+            "INSERT INTO announcements (admin_id, added_by, who_added, role_id, title, description, attachment) VALUES (?,?,?,?,?,?,?)",
+            [adminId, addedBy, whoAdded, role_id, title, description, attachment]);
 
-        const role = req.session.role;
-        const userId = (role === "admin" || role === "owner") ? 0 : req.session.userId;
+        // Mark as seen by poster
+        const userId = (req.session.role === 'admin' || req.session.role === 'owner') ? 0 : req.session.userId;
+        await con.query(
+            "INSERT IGNORE INTO announcement_seen (announcement_id, user_id, role, admin_id) VALUES (?,?,?,?)",
+            [result.insertId, userId, req.session.role, adminId]);
 
-        await con.query(`
-        INSERT INTO announcement_seen
-        (announcement_id,user_id,role,admin_id)
-        VALUES (?,?,?,?)
-        `, [result.insertId, userId, role, adminId]);
-
-
-
-        const [newAnn] = await con.query(
-            `
-            SELECT a.*,
-            IF(a.role_id=0,'All',r.role_name) AS target_role,
-            CASE
-                WHEN a.who_added='ADMIN' THEN CONCAT(adm.name,' (Admin)')
-                WHEN a.who_added='OWNER' THEN CONCAT(usr.name,' (Admin)')
-                ELSE usr.name
-            END AS added_by_name
+        // Fetch full row with both target_role and target_team_name so desktop + mobile clients both work
+        const [rows] = await con.query(`
+            SELECT a.*, IF(a.role_id=0,'All',r.role_name) AS target_role,
+            IF(a.role_id=0,'All Members',t.name) AS target_team_name,
+            CASE WHEN a.who_added='ADMIN' THEN CONCAT(adm.name,' (Admin)')
+                 WHEN a.who_added='OWNER' THEN CONCAT(usr.name,' (Admin)')
+                 ELSE usr.name END AS added_by_name
             FROM announcements a
             LEFT JOIN roles r ON a.role_id=r.id
+            LEFT JOIN teams t ON a.role_id=t.id
             LEFT JOIN admins adm ON a.added_by=adm.id AND a.who_added='ADMIN'
             LEFT JOIN users usr ON a.added_by=usr.id AND (a.who_added='USER' OR a.who_added='OWNER')
-            WHERE a.id=?
-            `,
-            [result.insertId]
-        );
+            WHERE a.id=?`, [result.insertId]);
 
+        const ann = rows[0];
+        req.io.emit('new_announcement', ann);
+        notifyMobile('announcement_add', { id: ann.id });
 
-
-// 🔔 realtime notification
-        req.io.emit('new_announcement', newAnn[0]);
-        notifyMobile('announcement_add'); // ✅ PUSH TO MOBILE
-
-        res.json({
-            success: true,
-            announcement: newAnn[0]
-        });
-
+        res.json({ success: true, announcement: ann });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false });
@@ -393,19 +366,22 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
 // GET ROUTE: DELETE ANNOUNCEMENT (Zero Reload Setup)
 router.get('/delete-announcement/:id', async (req, res) => {
     try {
-        if (req.session.role === 'admin' || req.session.role === 'owner' || req.session.control_type === 'ADMIN') {
-            await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
-            
-req.io.emit('delete_announcement', req.params.id);
-          notifyMobile('announcement_delete', { id: req.params.id }); // ✅ PUSH TO MOBILE
-            
-            res.json({ success: true });
-        } else {
-            res.status(403).json({ success: false, message: "Unauthorized to delete announcements" });
+        if (req.session.role !== 'admin' && req.session.role !== 'owner' && req.session.control_type !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
         }
+        const id = req.params.id;
+        // Verify ownership
+        const [check] = await con.query(
+            "SELECT id FROM announcements WHERE id=? AND admin_id=?", [id, req.session.adminId]);
+        if (!check.length) return res.status(404).json({ success: false });
+
+        await con.query("DELETE FROM announcements WHERE id=? AND admin_id=?", [id, req.session.adminId]);
+        req.io.emit('delete_announcement', id);
+        notifyMobile('announcement_delete', { id });
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Error deleting announcement" });
+        res.status(500).json({ success: false });
     }
 });
 
@@ -414,41 +390,46 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
     try {
         const { title, description, role_id } = req.body;
         const announcementId = req.params.id;
-        let query = "UPDATE announcements SET title=?, description=?, role_id=? WHERE id=?";
-        let params = [title, description, role_id, announcementId];
-        let attachmentName = null;
+        const adminId = req.session.adminId;
+
+        // Verify ownership
+        const [check] = await con.query(
+            "SELECT id FROM announcements WHERE id=? AND admin_id=?", [announcementId, adminId]);
+        if (!check.length) return res.status(404).json({ success: false });
 
         if (req.file) {
-            attachmentName = req.file.filename;
-            query = "UPDATE announcements SET title=?, description=?, role_id=?, attachment=? WHERE id=?";
-            params = [title, description, role_id, attachmentName, announcementId];
+            await con.query(
+                "UPDATE announcements SET title=?, description=?, role_id=?, attachment=? WHERE id=? AND admin_id=?",
+                [title, description, role_id, req.file.filename, announcementId, adminId]);
+        } else {
+            await con.query(
+                "UPDATE announcements SET title=?, description=?, role_id=? WHERE id=? AND admin_id=?",
+                [title, description, role_id, announcementId, adminId]);
         }
 
-        await con.query(query, params);
-        
-        // Fetch the new role name to send to frontend
-        let target_role = 'All';
-        if (role_id != 0) {
-            const [rRows] = await con.query("SELECT role_name FROM roles WHERE id=?", [role_id]);
-            if (rRows.length > 0) target_role = rRows[0].role_name;
-        }
+        // Fetch fresh row with both field name variants
+        const [rows] = await con.query(`
+            SELECT a.*, IF(a.role_id=0,'All',r.role_name) AS target_role,
+            IF(a.role_id=0,'All Members',t.name) AS target_team_name,
+            CASE WHEN a.who_added='ADMIN' THEN CONCAT(adm.name,' (Admin)')
+                 WHEN a.who_added='OWNER' THEN CONCAT(usr.name,' (Admin)')
+                 ELSE usr.name END AS added_by_name
+            FROM announcements a
+            LEFT JOIN roles r ON a.role_id=r.id
+            LEFT JOIN teams t ON a.role_id=t.id
+            LEFT JOIN admins adm ON a.added_by=adm.id AND a.who_added='ADMIN'
+            LEFT JOIN users usr ON a.added_by=usr.id AND (a.who_added='USER' OR a.who_added='OWNER')
+            WHERE a.id=?`, [announcementId]);
 
-        const updateData = { id: announcementId, title, description, role_id, target_role, attachment: attachmentName };
-        
-req.io.emit('edit_announcement', updateData);
-   notifyMobile('announcement_edit', { id: announcementId }); // ✅ PUSH TO MOBILE
+        const ann = rows[0];
+        req.io.emit('edit_announcement', ann);
+        notifyMobile('announcement_edit', { id: announcementId });
 
-        res.json({
-            success: true, 
-            title, 
-            description, 
-            role_id, 
-            target_role, 
-            attachment: attachmentName 
-        });
+        res.json({ success: true, title, description,
+            role_id, target_role: ann.target_role, attachment: ann.attachment || null });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Error updating announcement" });
+        res.status(500).json({ success: false });
     }
 });
 
