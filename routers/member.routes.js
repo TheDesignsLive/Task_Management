@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { debugLog } = require('../utils/logger');
+const { notifyMobile } = require('../utils/notifyMobile'); // ✅ ADD THIS
 
 // Multer Config
 const storage = multer.diskStorage({
@@ -109,6 +110,7 @@ router.post('/add-member', (req, res) => {
             }
 
             req.io.emit('update_members');
+                 notifyMobile('members'); // ✅ PUSH TO MOBILE
 
        return res.json({
     success: true,
@@ -152,6 +154,7 @@ router.post('/edit-member/:id', (req, res) => {
             req.io.emit('update_session_name', { userId: id, newName: name });
             
             req.io.emit('update_members');
+               notifyMobile('members'); // ✅ PUSH TO MOBILE
             res.json({ success: true, message: 'Member updated successfully' });
         } catch (dbErr) {
             res.status(500).json({ success: false, message: 'Database Error' });
@@ -160,14 +163,15 @@ router.post('/edit-member/:id', (req, res) => {
 });
 
 // 3. DELETE/SUSPEND ACTIONS
+// ================= DELETE MEMBER =================
 router.get('/delete-member/:id', async (req, res) => {
     try {
         if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
         const memberId = req.params.id;
+
         if (req.session.role === 'admin' || req.session.role === 'owner') {
             await con.execute('DELETE FROM users WHERE id = ?', [memberId]);
             debugLog('Member deleted directly', { deletedMemberId: memberId, deletedByRole: req.session.role });
-            // Force logout if the user is currently online
             req.io.emit('force_logout', memberId);
         } else {
             const [memberData] = await con.execute('SELECT * FROM users WHERE id = ?', [memberId]);
@@ -178,11 +182,14 @@ router.get('/delete-member/:id', async (req, res) => {
                 [m.admin_id, m.role_id, req.session.userId, m.name, m.email, m.phone, m.profile_pic]
             );
             debugLog('Member deletion requested', { targetMemberId: memberId, requestedBy: req.session.userId });
-                // 🔔 notify admin instantly
             req.io.emit('member_request');
+            // ❌ REMOVE notifyMobile from here
         }
+
         req.io.emit('update_members');
+        notifyMobile('members'); // ✅ CORRECT — outside the if/else, always runs
         res.json({ success: true, message: 'Operation successful' });
+
     } catch (error) {
         res.status(500).json({ success: false, message: 'Operation failed' });
     }
@@ -204,6 +211,7 @@ router.get('/suspend-member/:id', async (req, res) => {
         }
         
         req.io.emit('update_members');
+          notifyMobile('members'); // ✅ PUSH TO MOBILE
         res.json({ success: true, message: `Member ${newStatus.toLowerCase()}ed successfully` });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Database error' });
