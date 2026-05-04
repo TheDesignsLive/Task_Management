@@ -1,6 +1,8 @@
+// view_role.js desktop router
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const { notifyMobile } = require('../utils/notifyMobile');
 
 router.get('/view-roles', async (req, res) => {
 
@@ -116,6 +118,7 @@ router.post('/add-role', async (req, res) => {
     );
 
     req.io.emit('update_roles');
+        notifyMobile('roles'); // ✅ PUSH TO MOBILE
     res.json({ success: true, message: 'Role successfully created' });
 
   } catch (err) {
@@ -148,6 +151,7 @@ router.post("/edit-role/:id", async (req, res) => {
        await con.query(sql, [role_name, control_type, team_id, roleId]);
        
        req.io.emit('update_roles');
+          notifyMobile('roles'); // ✅ PUSH TO MOBILE
        res.json({ success: true, message: 'Role successfully updated' });
 
     } catch (err) {
@@ -174,6 +178,7 @@ router.get('/delete-role/:id', async (req, res) => {
     await con.execute("DELETE FROM roles WHERE id = ?", [roleId]);
     
     req.io.emit('update_roles');
+        notifyMobile('roles'); // ✅ PUSH TO MOBILE
     res.json({ success: true, message: 'Role successfully deleted' });
 
   } catch (err) {
