@@ -144,6 +144,40 @@ const isAdmin = req.session.role === 'admin' || req.session.role === 'owner';
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// ✅ Mobile uploads attachment here → desktop saves it to public/uploads/
+const multer = require('multer');
+const attachmentStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = path.join(__dirname, 'public', 'uploads');
+        if (!require('fs').existsSync(dir)) require('fs').mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => cb(null, Date.now() + '_' + file.originalname)
+});
+const uploadAttachment = multer({ 
+    storage: attachmentStorage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+app.post('/upload-attachment', (req, res) => {
+    const secret = req.headers['x-mobile-secret'];
+    if (secret !== 'tms_mobile_bridge_2026') {
+        return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    uploadAttachment.single('attachment')(req, res, function(err) {
+        if (err) {
+            console.error('[Desktop] upload-attachment error:', err.message);
+            return res.json({ success: false, message: err.message });
+        }
+        if (!req.file) {
+            return res.json({ success: false, message: 'No file received.' });
+        }
+        console.log('[Desktop] ✅ Attachment saved from mobile:', req.file.filename);
+        return res.json({ success: true, filename: req.file.filename });
+    });
+});
 
 // ================= AUTOMATIC CLEANUP (CRON JOB) =================
 // Runs every day at 00:00 (Midnight)
