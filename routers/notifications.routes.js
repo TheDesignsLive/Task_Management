@@ -1,8 +1,10 @@
+//notification.routes.js for desktop
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
 const multer = require('multer');
 const path = require('path');
+const { notifyMobile } = require('../utils/notifyMobile'); // ✅ ADD
 
 // ================= MULTER =================
 const storage = multer.diskStorage({
@@ -373,10 +375,9 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
 
 
 
-        // 🔔 realtime notification
+// 🔔 realtime notification
         req.io.emit('new_announcement', newAnn[0]);
-
-
+        notifyMobile('announcement_add'); // ✅ PUSH TO MOBILE
 
         res.json({
             success: true,
@@ -395,7 +396,8 @@ router.get('/delete-announcement/:id', async (req, res) => {
         if (req.session.role === 'admin' || req.session.role === 'owner' || req.session.control_type === 'ADMIN') {
             await con.query("DELETE FROM announcements WHERE id=?", [req.params.id]);
             
-            req.io.emit('delete_announcement', req.params.id);
+req.io.emit('delete_announcement', req.params.id);
+          notifyMobile('announcement_delete', { id: req.params.id }); // ✅ PUSH TO MOBILE
             
             res.json({ success: true });
         } else {
@@ -433,9 +435,10 @@ router.post('/edit-announcement/:id', upload.single('attachment'), async (req, r
 
         const updateData = { id: announcementId, title, description, role_id, target_role, attachment: attachmentName };
         
-        req.io.emit('edit_announcement', updateData);
+req.io.emit('edit_announcement', updateData);
+   notifyMobile('announcement_edit', { id: announcementId }); // ✅ PUSH TO MOBILE
 
-        res.json({ 
+        res.json({
             success: true, 
             title, 
             description, 
