@@ -520,20 +520,16 @@ document.getElementById('searchMember').addEventListener('input', function() {
 });
 
 function openDialog() { 
-    // 1. Pehle form ko poori tarah reset karo (saari fields empty ho jayengi)
+    // Isse sirf Add Member wala form saaf hoga
     const addForm = document.getElementById("addMemberForm");
-    if (addForm) {
-        addForm.reset(); 
-    }
+    if (addForm) addForm.reset(); 
 
-    // 2. Modal dikhao
+    // ✅ Phone manual empty (kyunki auto-fill tang karta hai)
+    document.getElementById("addPhone").value = "";
+
     document.getElementById("dialogBox").style.display = "flex"; 
-
-    // 3. Dropdowns ko default par set karo
     document.getElementById('add_team_id').value = ""; 
     document.getElementById('add_role_id').innerHTML = '<option value="" disabled selected>Select Role</option>'; 
-    
-    // 4. Purane error messages chhupao
     resetErrors();
 }
 function closeDialog() { document.getElementById("dialogBox").style.display = "none"; resetErrors(); }
