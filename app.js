@@ -353,7 +353,8 @@ app.get('/reset-password', (req, res) => {
     res.render('reset_password');
 });
 
-app.use("/masterpage",panel)
+// app.use("/masterpage",panel)
+app.use("/", panel)
 app.use("/",export_master)
 app.use('/', import_master);
 

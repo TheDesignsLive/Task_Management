@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Login</title>
+<link rel="icon" href="/images/tms.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ===== RESET ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===== BASE ===== */
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0f172a;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ===== BACKGROUND ===== */
+.bg-graphics {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.bg-mesh {
+  position: absolute; width: 100%; height: 100%;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(20,184,166,0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(2,132,199,0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(15,118,110,0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(3,105,161,0.12) 0px, transparent 50%);
+}
+.shape {
+  position: absolute;
+  filter: blur(90px);
+  border-radius: 50%;
+  opacity: 0.45;
+  animation: drift 20s infinite alternate ease-in-out;
+}
+.shape-1 { top: -10%; left: -10%; width: 45vw; height: 45vw; background: #2dd4bf; }
+.shape-2 { bottom: -20%; right: -10%; width: 55vw; height: 55vw; background: #0ea5e9; animation-delay: -5s; }
+.shape-3 { top: 30%; left: 50%; width: 35vw; height: 35vw; background: #10b981; opacity: 0.25; animation-delay: -10s; }
+@keyframes drift {
+  0%   { transform: scale(1) translate(0,0); }
+  50%  { transform: scale(1.2) translate(6vw,6vh); }
+  100% { transform: scale(0.9) translate(-6vw,-6vh); }
+}
+
+/* ===== CARD WRAPPER ===== */
+.auth-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  animation: cardIn 0.7s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== CARD ===== */
+.container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px 28px 26px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+  color: #333;
+}
+
+/* ===== LOGO ===== */
+.logo-container {
+  text-align: center;
+  margin-bottom: 18px;
+  user-select: none;
+}
+.logo-container img {
+  width: 72px; height: 72px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #14b8a6;
+}
+
+/* ===== PANEL TITLE ===== */
+.panel-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f766e;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+.panel-subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 22px;
+}
+
+/* ===== SECTION TITLE (used in sub-flows) ===== */
+.flow-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f766e;
+  margin-bottom: 6px;
+}
+.flow-sub {
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* ===== INPUT GROUP ===== */
+.input-group {
+  margin-bottom: 14px;
+  position: relative;
+}
+.input-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.input-group input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+.input-group input:focus {
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20,184,166,0.15);
+  background: #fff;
+}
+.input-group input.otp-field {
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: 10px;
+  font-weight: 700;
+  color: #0f766e;
+  padding: 12px;
+}
+.input-group input.error-input {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+  animation: shake 0.25s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(6px); }
+  75%      { transform: translateX(-6px); }
+}
+
+/* Eye toggle */
+.eye-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 15px;
+  transition: color 0.2s;
+}
+.eye-toggle:hover { color: #14b8a6; }
+
+/* ===== ERROR MSG ===== */
+.error-msg {
+  color: #ef4444;
+  font-size: 11px;
+  margin-top: 4px;
+  display: none;
+  line-height: 1.4;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #14b8a6;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+.btn-primary:hover {
+  background: #0f766e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(20,184,166,0.35);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== LINK BUTTONS ===== */
+.link-container {
+  text-align: center;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.link-btn {
+  color: #14b8a6;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  display: inline;
+}
+.link-btn:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+
+/* ===== BACK LINK ===== */
+.back-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  font-family: inherit;
+  width: 100%;
+}
+.back-link:hover { color: #14b8a6; }
+
+/* ===== DIVIDER ===== */
+.divider {
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 8px 0 14px;
+}
+
+/* ===== STEP INDICATOR ===== */
+.step-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  transition: background 0.3s, transform 0.3s;
+}
+.dot.active {
+  background: #14b8a6;
+  transform: scale(1.3);
+}
+.dot.done {
+  background: #0f766e;
+}
+
+/* ===== INLINE PAIR BUTTONS ===== */
+.btn-pair {
+  display: flex;
+  gap: 10px;
+}
+.btn-secondary {
+  flex: 1;
+  padding: 11px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: inherit;
+}
+.btn-secondary:hover { background: #e2e8f0; color: #1e293b; }
+
+/* ===== SUCCESS BADGE ===== */
+.success-icon {
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 44px;
+  color: #14b8a6;
+  animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ===== POPUP TOAST ===== */
+#popup {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  min-width: 300px;
+  max-width: 500px;
+  padding: 13px 22px;
+  border-radius: 10px;
+  background: #2ecc71;
+  color: white;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  display: none;
+  z-index: 99999;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+/* ===== SCREENS (each flow) ===== */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ===== RESEND ROW ===== */
+.resend-row {
+  text-align: center;
+  margin-top: 10px;
+}
+.resend-btn {
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+.resend-btn:hover { color: #14b8a6; }
+
+/* ===== PASSWORD STRENGTH ===== */
+.strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  margin-top: 6px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s, background 0.3s;
+}
+.strength-label {
+  font-size: 11px;
+  margin-top: 3px;
+  color: #94a3b8;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .container { padding: 24px 18px 20px; border-radius: 12px; }
+  .panel-title { font-size: 20px; }
+  .auth-wrapper { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-graphics">
+  <div class="bg-mesh"></div>
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+  <div class="shape shape-3"></div>
+</div>
+
+<div class="auth-wrapper">
+  <div class="container">
+
+    <!-- LOGO -->
+    <div class="logo-container">
+      <img src="/images/tms_logo.jpeg" alt="TMS Logo">
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 1: PASSWORD LOGIN
+    ══════════════════════════════════════ -->
+    <div class="screen active" id="screen-password">
+      <div class="panel-title">Master Panel</div>
+      <div class="panel-subtitle">Secure Administrator Access</div>
+
+      <div class="input-group" style="position:relative;">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+        <i class="fa-solid fa-eye-slash eye-toggle" id="toggleLoginPass" onclick="toggleEye('loginPassword','toggleLoginPass')"></i>
+        <div class="error-msg" id="loginErr"></div>
+      </div>
+
+      <button class="btn-primary" id="loginBtn" onclick="verifyPassword()">
+        <i class="fa-solid fa-lock-open" style="margin-right:6px;"></i>Login
+      </button>
+
+      <div class="link-container">
+        <button class="link-btn" onclick="showScreen('screen-forgot-step1')">
+          <i class="fa-solid fa-key" style="font-size:11px; margin-right:4px;"></i>Forgot Password?
+        </button>
+        <button class="link-btn" onclick="startChangeEmail()">
+          <i class="fa-solid fa-envelope" style="font-size:11px; margin-right:4px;"></i>Change Email
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 2: LOGIN OTP
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-login-otp">
+      <div class="flow-title">Verify It's You</div>
+      <div class="flow-sub" id="loginOtpSubtitle">A 6-digit OTP has been sent to your registered email.</div>
+
+      <div class="input-group">
+        <label>One-Time Password</label>
+        <input type="text" id="loginOtp" class="otp-field" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+        <div class="error-msg" id="loginOtpErr"></div>
+      </div>
+
+      <button class="btn-primary" onclick="verifyLoginOTP()">
+        <i class="fa-solid fa-shield-halved" style="margin-right:6px;"></i>Verify & Enter
+      </button>
+
+      <div class="resend-row">
+        <button class="resend-btn" onclick="resendOTP()">
+          <i class="fa-solid fa-rotate-right" style="margin-right:4px;"></i>Resend OTP
+        </button>
+      </div>
+
+      <button class="back-link" onclick="showScreen('screen-password')">
+        <i class="fa-solid fa-arrow-left"></i> Back to Login
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 3: FORGOT — SEND OTP
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-forgot-step1">
+      <div class="flow-title">Forgot Password</div>
+      <div class="flow-sub">We'll send a verification OTP to your registered master email.</div>
+
+      <div class="step-dots">
+        <div class="dot active" id="fdot1"></div>
+        <div class="dot" id="fdot2"></div>
+        <div class="dot" id="fdot3"></div>
+      </div>
+
+      <button class="btn-primary" id="forgotSendBtn" onclick="forgotSendOTP()">
+        <i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to My Email
+      </button>
+
+      <button class="back-link" onclick="showScreen('screen-password')">
+        <i class="fa-solid fa-arrow-left"></i> Back to Login
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 4: FORGOT — VERIFY OTP
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-forgot-step2">
+      <div class="flow-title">Enter OTP</div>
+      <div class="flow-sub">Check your registered email for the 6-digit code.</div>
+
+      <div class="step-dots">
+        <div class="dot done" id="fdot1b"></div>
+        <div class="dot active" id="fdot2b"></div>
+        <div class="dot" id="fdot3b"></div>
+      </div>
+
+      <div class="input-group">
+        <label>Verification Code</label>
+        <input type="text" id="forgotOtp" class="otp-field" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+        <div class="error-msg" id="forgotOtpErr"></div>
+      </div>
+
+      <button class="btn-primary" onclick="forgotVerifyOTP()">
+        <i class="fa-solid fa-check" style="margin-right:6px;"></i>Verify OTP
+      </button>
+
+      <div class="resend-row">
+        <button class="resend-btn" onclick="forgotSendOTP(true)">
+          <i class="fa-solid fa-rotate-right" style="margin-right:4px;"></i>Resend OTP
+        </button>
+      </div>
+
+      <button class="back-link" onclick="showScreen('screen-forgot-step1')">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 5: FORGOT — NEW PASSWORD
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-forgot-step3">
+      <div class="flow-title">Set New Password</div>
+      <div class="flow-sub">Create a strong new password for your master account.</div>
+
+      <div class="step-dots">
+        <div class="dot done"></div>
+        <div class="dot done"></div>
+        <div class="dot active"></div>
+      </div>
+
+      <div class="input-group" style="position:relative;">
+        <label>New Password</label>
+        <input type="password" id="newPassword" placeholder="Min 8 chars, A-z, 0-9, special" oninput="checkPasswordStrength(this.value)">
+        <i class="fa-solid fa-eye-slash eye-toggle" id="toggleNewPass" onclick="toggleEye('newPassword','toggleNewPass')"></i>
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+        <div class="strength-label" id="strengthLabel"></div>
+        <div class="error-msg" id="newPassErr"></div>
+      </div>
+
+      <div class="input-group" style="position:relative;">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPassword" placeholder="Re-enter password">
+        <i class="fa-solid fa-eye-slash eye-toggle" id="toggleConfPass" onclick="toggleEye('confirmPassword','toggleConfPass')"></i>
+        <div class="error-msg" id="confirmPassErr"></div>
+      </div>
+
+      <button class="btn-primary" onclick="resetPassword()">
+        <i class="fa-solid fa-lock" style="margin-right:6px;"></i>Reset Password
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 6: CHANGE EMAIL — VERIFY OLD
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-email-step1">
+      <div class="flow-title">Change Email</div>
+      <div class="flow-sub">First, verify your identity. An OTP will be sent to your <strong>current</strong> registered email.</div>
+
+      <div class="step-dots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+
+      <button class="btn-primary" id="emailSendBtn" onclick="emailSendOldOTP()">
+        <i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to Current Email
+      </button>
+
+      <button class="back-link" onclick="showScreen('screen-password')">
+        <i class="fa-solid fa-arrow-left"></i> Back to Login
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 7: CHANGE EMAIL — OTP OLD
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-email-step2">
+      <div class="flow-title">Verify Current Email</div>
+      <div class="flow-sub">Enter the OTP sent to your current registered email.</div>
+
+      <div class="step-dots">
+        <div class="dot done"></div>
+        <div class="dot active"></div>
+        <div class="dot"></div>
+      </div>
+
+      <div class="input-group">
+        <label>OTP from Current Email</label>
+        <input type="text" id="emailOldOtp" class="otp-field" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+        <div class="error-msg" id="emailOldOtpErr"></div>
+      </div>
+
+      <button class="btn-primary" onclick="emailVerifyOldOTP()">
+        <i class="fa-solid fa-check" style="margin-right:6px;"></i>Verify OTP
+      </button>
+
+      <div class="resend-row">
+        <button class="resend-btn" onclick="emailSendOldOTP(true)">
+          <i class="fa-solid fa-rotate-right" style="margin-right:4px;"></i>Resend OTP
+        </button>
+      </div>
+
+      <button class="back-link" onclick="showScreen('screen-email-step1')">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 8: CHANGE EMAIL — ENTER NEW
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-email-step3">
+      <div class="flow-title">Enter New Email</div>
+      <div class="flow-sub">An OTP will be sent to verify your new email address.</div>
+
+      <div class="step-dots">
+        <div class="dot done"></div>
+        <div class="dot done"></div>
+        <div class="dot active"></div>
+      </div>
+
+      <div class="input-group">
+        <label>New Email Address</label>
+        <input type="email" id="newEmailInput" placeholder="Enter new email">
+        <div class="error-msg" id="newEmailErr"></div>
+      </div>
+
+      <button class="btn-primary" onclick="emailSendNewOTP()">
+        <i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to New Email
+      </button>
+
+      <button class="back-link" onclick="showScreen('screen-email-step1')">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 9: CHANGE EMAIL — OTP NEW
+    ══════════════════════════════════════ -->
+    <div class="screen" id="screen-email-step4">
+      <div class="flow-title">Verify New Email</div>
+      <div class="flow-sub" id="newEmailOtpSubtitle">Enter the OTP sent to your new email address.</div>
+
+      <div class="step-dots">
+        <div class="dot done"></div>
+        <div class="dot done"></div>
+        <div class="dot active"></div>
+      </div>
+
+      <div class="input-group">
+        <label>OTP from New Email</label>
+        <input type="text" id="emailNewOtp" class="otp-field" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+        <div class="error-msg" id="emailNewOtpErr"></div>
+      </div>
+
+      <button class="btn-primary" onclick="emailVerifyNewOTP()">
+        <i class="fa-solid fa-check" style="margin-right:6px;"></i>Confirm & Change Email
+      </button>
+
+      <div class="resend-row">
+        <button class="resend-btn" onclick="emailSendNewOTP(true)">
+          <i class="fa-solid fa-rotate-right" style="margin-right:4px;"></i>Resend OTP
+        </button>
+      </div>
+
+      <button class="back-link" onclick="showScreen('screen-email-step3')">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </button>
+    </div>
+
+  </div><!-- /.container -->
+</div><!-- /.auth-wrapper -->
+
+<div id="popup"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // clear errors on show
+  document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+}
+
+function showPopup(msg, type = 'success') {
+  const p = document.getElementById('popup');
+  p.innerText = msg;
+  p.style.background = type === 'error' ? '#ef4444' : (type === 'warning' ? '#f59e0b' : '#14b8a6');
+  p.style.display = 'block';
+  setTimeout(() => { p.style.opacity = '1'; p.style.transform = 'translateX(-50%) translateY(0)'; }, 10);
+  setTimeout(() => {
+    p.style.opacity = '0';
+    p.style.transform = 'translateX(-50%) translateY(-20px)';
+    setTimeout(() => { p.style.display = 'none'; }, 300);
+  }, 2800);
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.innerText = msg;
+  el.style.display = 'block';
+}
+
+function hideErr(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+function shakeInput(id) {
+  const el = document.getElementById(id);
+  el.classList.add('error-input');
+  setTimeout(() => el.classList.remove('error-input'), 400);
+}
+
+function toggleEye(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon  = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('fa-eye-slash', 'fa-eye');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
+  }
+}
+
+function setLoading(btnId, loading, originalHTML) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Please wait...'
+    : originalHTML;
+}
+
+/* Password strength checker */
+function checkPasswordStrength(val) {
+  const fill  = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  let score = 0;
+  if (val.length >= 8)                     score++;
+  if (/[A-Z]/.test(val))                   score++;
+  if (/[0-9]/.test(val))                   score++;
+  if (/[^A-Za-z0-9]/.test(val))            score++;
+
+  const map = [
+    { w:'0%',   bg:'#e2e8f0', t:'' },
+    { w:'25%',  bg:'#ef4444', t:'Weak' },
+    { w:'50%',  bg:'#f59e0b', t:'Fair' },
+    { w:'75%',  bg:'#3b82f6', t:'Good' },
+    { w:'100%', bg:'#14b8a6', t:'Strong' },
+  ];
+  fill.style.width      = map[score].w;
+  fill.style.background = map[score].bg;
+  label.innerText       = map[score].t;
+  label.style.color     = map[score].bg;
+}
+
+function validatePassword(pass) {
+  // min 8, 1 uppercase, 1 lowercase, 1 digit, 1 special
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(pass);
+}
+
+/* Enter key support */
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.screen.active');
+  if (!active) return;
+  const id = active.id;
+  if (id === 'screen-password')      verifyPassword();
+  else if (id === 'screen-login-otp') verifyLoginOTP();
+  else if (id === 'screen-forgot-step2') forgotVerifyOTP();
+  else if (id === 'screen-forgot-step3') resetPassword();
+  else if (id === 'screen-email-step2') emailVerifyOldOTP();
+  else if (id === 'screen-email-step3') emailSendNewOTP();
+  else if (id === 'screen-email-step4') emailVerifyNewOTP();
+});
+
+/* ═══════════════════════════════════════════
+   FLOW 1: LOGIN
+═══════════════════════════════════════════ */
+async function verifyPassword() {
+  hideErr('loginErr');
+  const password = document.getElementById('loginPassword').value.trim();
+  if (!password) { showErr('loginErr', 'Please enter your password.'); shakeInput('loginPassword'); return; }
+
+  setLoading('loginBtn', true, '<i class="fa-solid fa-lock-open" style="margin-right:6px;"></i>Login');
+  try {
+    const res  = await fetch('/master/verify-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup('Login successful! Redirecting...');
+      setTimeout(() => window.location.href = '/masterpage', 1000);
+    } else {
+      showErr('loginErr', data.message || 'Incorrect password.');
+      shakeInput('loginPassword');
+    }
+  } catch { showErr('loginErr', 'Network error. Please try again.'); }
+  setLoading('loginBtn', false, '<i class="fa-solid fa-lock-open" style="margin-right:6px;"></i>Login');
+}
+
+async function verifyLoginOTP() {
+  hideErr('loginOtpErr');
+  const otp = document.getElementById('loginOtp').value.trim();
+  if (otp.length !== 6) { showErr('loginOtpErr', 'Enter a valid 6-digit OTP.'); shakeInput('loginOtp'); return; }
+
+  try {
+    const res  = await fetch('/master/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup('Login successful! Redirecting...');
+      setTimeout(() => window.location.href = '/masterpage', 1000);
+    } else {
+      showErr('loginOtpErr', data.message || 'Invalid OTP.');
+      shakeInput('loginOtp');
+      document.getElementById('loginOtp').value = '';
+    }
+  } catch { showErr('loginOtpErr', 'Network error.'); }
+}
+
+async function resendOTP() {
+  try {
+    const res  = await fetch('/master/resend-otp', { method: 'POST' });
+    const data = await res.json();
+    showPopup(data.success ? 'OTP resent ✓' : 'Failed to resend.', data.success ? 'success' : 'error');
+  } catch { showPopup('Network error.', 'error'); }
+}
+
+/* ═══════════════════════════════════════════
+   FLOW 2: FORGOT PASSWORD
+═══════════════════════════════════════════ */
+async function forgotSendOTP(isResend = false) {
+  if (!isResend) {
+    setLoading('forgotSendBtn', true, '<i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to My Email');
+  }
+  try {
+    const res  = await fetch('/master/forgot-send-otp', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showPopup(isResend ? 'OTP resent ✓' : 'OTP sent to your email ✓');
+      if (!isResend) showScreen('screen-forgot-step2');
+    } else {
+      showPopup(data.message || 'Failed to send OTP.', 'error');
+    }
+  } catch { showPopup('Network error.', 'error'); }
+  if (!isResend) {
+    setLoading('forgotSendBtn', false, '<i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to My Email');
+  }
+}
+
+async function forgotVerifyOTP() {
+  hideErr('forgotOtpErr');
+  const otp = document.getElementById('forgotOtp').value.trim();
+  if (otp.length !== 6) { showErr('forgotOtpErr', 'Enter a valid 6-digit OTP.'); shakeInput('forgotOtp'); return; }
+
+  try {
+    const res  = await fetch('/master/forgot-verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup('OTP verified ✓');
+      showScreen('screen-forgot-step3');
+    } else {
+      showErr('forgotOtpErr', data.message || 'Invalid OTP.');
+      shakeInput('forgotOtp');
+      document.getElementById('forgotOtp').value = '';
+    }
+  } catch { showErr('forgotOtpErr', 'Network error.'); }
+}
+
+async function resetPassword() {
+  hideErr('newPassErr');
+  hideErr('confirmPassErr');
+  const newPass  = document.getElementById('newPassword').value;
+  const confPass = document.getElementById('confirmPassword').value;
+
+  let ok = true;
+  if (!validatePassword(newPass)) {
+    showErr('newPassErr', 'Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.');
+    shakeInput('newPassword');
+    ok = false;
+  }
+  if (newPass !== confPass) {
+    showErr('confirmPassErr', 'Passwords do not match.');
+    shakeInput('confirmPassword');
+    ok = false;
+  }
+  if (!ok) return;
+
+  try {
+    const res  = await fetch('/master/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword: newPass })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup('Password reset! Redirecting to login...');
+      setTimeout(() => {
+        document.getElementById('newPassword').value  = '';
+        document.getElementById('confirmPassword').value = '';
+        showScreen('screen-password');
+      }, 1500);
+    } else {
+      showPopup(data.message || 'Reset failed.', 'error');
+    }
+  } catch { showPopup('Network error.', 'error'); }
+}
+
+/* ═══════════════════════════════════════════
+   FLOW 3: CHANGE EMAIL
+═══════════════════════════════════════════ */
+function startChangeEmail() {
+  showScreen('screen-email-step1');
+}
+
+async function emailSendOldOTP(isResend = false) {
+  if (!isResend) {
+    setLoading('emailSendBtn', true, '<i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to Current Email');
+  }
+  try {
+    const res  = await fetch('/master/change-email-send-otp', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showPopup(isResend ? 'OTP resent ✓' : 'OTP sent to current email ✓');
+      if (!isResend) showScreen('screen-email-step2');
+    } else {
+      showPopup(data.message || 'Failed to send OTP.', 'error');
+    }
+  } catch { showPopup('Network error.', 'error'); }
+  if (!isResend) {
+    setLoading('emailSendBtn', false, '<i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send OTP to Current Email');
+  }
+}
+
+async function emailVerifyOldOTP() {
+  hideErr('emailOldOtpErr');
+  const otp = document.getElementById('emailOldOtp').value.trim();
+  if (otp.length !== 6) { showErr('emailOldOtpErr', 'Enter a valid 6-digit OTP.'); shakeInput('emailOldOtp'); return; }
+
+  try {
+    const res  = await fetch('/master/change-email-verify-old-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup('Identity verified ✓');
+      showScreen('screen-email-step3');
+    } else {
+      showErr('emailOldOtpErr', data.message || 'Invalid OTP.');
+      shakeInput('emailOldOtp');
+      document.getElementById('emailOldOtp').value = '';
+    }
+  } catch { showErr('emailOldOtpErr', 'Network error.'); }
+}
+
+async function emailSendNewOTP(isResend = false) {
+  hideErr('newEmailErr');
+  const newEmail = document.getElementById('newEmailInput').value.trim();
+  const emailRx  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!isResend) {
+    if (!newEmail || !emailRx.test(newEmail)) {
+      showErr('newEmailErr', 'Enter a valid email address.');
+      shakeInput('newEmailInput');
+      return;
+    }
+  }
+
+  try {
+    const res  = await fetch('/master/change-email-send-new-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newEmail: isResend ? null : newEmail })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup(isResend ? 'OTP resent to new email ✓' : 'OTP sent to new email ✓');
+      if (!isResend) {
+        document.getElementById('newEmailOtpSubtitle').innerText = `Enter the OTP sent to ${newEmail}`;
+        showScreen('screen-email-step4');
+      }
+    } else {
+      showPopup(data.message || 'Failed to send OTP.', 'error');
+    }
+  } catch { showPopup('Network error.', 'error'); }
+}
+
+async function emailVerifyNewOTP() {
+  hideErr('emailNewOtpErr');
+  const otp = document.getElementById('emailNewOtp').value.trim();
+  if (otp.length !== 6) { showErr('emailNewOtpErr', 'Enter a valid 6-digit OTP.'); shakeInput('emailNewOtp'); return; }
+
+  try {
+    const res  = await fetch('/master/change-email-verify-new-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPopup('Email changed successfully! Please log in again.');
+      setTimeout(() => {
+        // Reset all inputs for email flow
+        document.getElementById('emailOldOtp').value  = '';
+        document.getElementById('newEmailInput').value = '';
+        document.getElementById('emailNewOtp').value  = '';
+        showScreen('screen-password');
+      }, 1800);
+    } else {
+      showErr('emailNewOtpErr', data.message || 'Invalid OTP.');
+      shakeInput('emailNewOtp');
+      document.getElementById('emailNewOtp').value = '';
+    }
+  } catch { showErr('emailNewOtpErr', 'Network error.'); }
+}
+</script>
+</body>
+</html>
