@@ -317,7 +317,7 @@
     <span class="close-btn" onclick="closeDialog()">✖</span>
     <% if (roles && roles.length > 0) { %>
       <h3>Add Member</h3>
-      <form id="addMemberForm">
+      <form id="addMemberForm" autocomplete="off">
         <label>Department</label>
         <select id="add_team_id" required onchange="filterAddRoles()" required>
           <option value="" disabled selected>Select Department</option>
@@ -520,15 +520,29 @@ document.getElementById('searchMember').addEventListener('input', function() {
 });
 
 function openDialog() { 
-  document.getElementById("dialogBox").style.display = "flex"; 
-  document.getElementById('add_team_id').value = ""; // Reset team dropdown
-  document.getElementById('add_role_id').innerHTML = '<option value="" disabled selected>Select Role</option>'; // Reset role dropdown
+    // 1. Pehle form ko poori tarah reset karo (saari fields empty ho jayengi)
+    const addForm = document.getElementById("addMemberForm");
+    if (addForm) {
+        addForm.reset(); 
+    }
+
+    // 2. Modal dikhao
+    document.getElementById("dialogBox").style.display = "flex"; 
+
+    // 3. Dropdowns ko default par set karo
+    document.getElementById('add_team_id').value = ""; 
+    document.getElementById('add_role_id').innerHTML = '<option value="" disabled selected>Select Role</option>'; 
+    
+    // 4. Purane error messages chhupao
+    resetErrors();
 }
 function closeDialog() { document.getElementById("dialogBox").style.display = "none"; resetErrors(); }
 
 let editTargetId = null;
 function openEditDialog(id, roleId, teamId, name, email, phone) {
   editTargetId = id;
+  document.getElementById("editPassword").value = "";
+  document.getElementById("editConfirmPassword").value = "";
   
   // Set Team and trigger role filtering
   document.getElementById("edit_team_id").value = teamId;
@@ -542,8 +556,11 @@ function openEditDialog(id, roleId, teamId, name, email, phone) {
   document.getElementById("edit_phone").value = phone;
   document.getElementById("editDialogBox").style.display = "flex";
 }
-function closeEditDialog() { document.getElementById("editDialogBox").style.display = "none"; resetErrors(); }
-function resetErrors() { document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none'); }
+function closeEditDialog() { 
+  document.getElementById("editDialogBox").style.display = "none"; 
+  document.getElementById("editMemberForm").reset(); // ✅ Form reset on close
+  resetErrors(); 
+}function resetErrors() { document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none'); }
 
 function togglePassword(inputId, iconId) {
   const input = document.getElementById(inputId);
@@ -603,8 +620,30 @@ if (addForm) {
 }
 
 // Edit Member POST
+// Edit Member POST
 document.getElementById("editMemberForm").addEventListener("submit", async function(e) {
     e.preventDefault();
+    resetErrors(); // Purane errors hatao
+    
+    const pass = document.getElementById("editPassword").value;
+    const confirm = document.getElementById("editConfirmPassword").value;
+    let hasError = false;
+
+    // ✅ NEW: Password validation logic (Sirf tab check karega agar user ne kuch likha ho)
+    if (pass.length > 0) {
+        const passRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/; // Added special char also
+        
+        if (!passRegex.test(pass)) {
+            showAlertDialog("Validation", "Password must be min 8 chars, 1 Upper, 1 Lower, 1 Number, and 1 Special Character.", false);
+            hasError = true;
+        } else if (pass !== confirm) {
+            showAlertDialog("Validation", "Passwords do not match.", false);
+            hasError = true;
+        }
+    }
+
+    if (hasError) return;
+
     isProcessingAjax = true;
     const formData = new FormData(this);
     try {
@@ -613,6 +652,7 @@ document.getElementById("editMemberForm").addEventListener("submit", async funct
         if (data.success) {
             closeEditDialog();
             showAlertDialog("Updated!", "Member updated successfully", true);
+            // Form reset already closeEditDialog mein ho raha hai
         } else {
             isProcessingAjax = false;
             showAlertDialog("Error", data.message, false);
