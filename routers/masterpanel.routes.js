@@ -62,13 +62,20 @@ function requireMasterAuth(req, res, next) {
 //  GET /master/login
 // ─────────────────────────────────────────────
 router.get('/master/login', (req, res) => {
-    if (req.session.masterAuthenticated) return res.redirect('/masterpage');
+    // Always clear master auth on login page visit — forces fresh login every time
+    req.session.masterAuthenticated = false;
+    req.session.role = null;
     res.render('master_login');
 });
 
-// ─────────────────────────────────────────────
-//  POST /master/verify-password
-// ─────────────────────────────────────────────
+router.get('/master/get-email', async (req, res) => {
+    try {
+        const email = await getMasterEmail();
+        return res.json({ success: true, email });
+    } catch (err) {
+        return res.status(500).json({ success: false });
+    }
+});
 // ─────────────────────────────────────────────
 //  POST /master/verify-password
 // ─────────────────────────────────────────────
@@ -149,8 +156,8 @@ router.post('/master/forgot-send-otp', async (req, res) => {
         req.session.masterOTP        = otp;
         req.session.masterOTPExpiry  = Date.now() + OTP_EXPIRY_MS;
         req.session.masterOTPPurpose = 'forgot';
-        await sendOTPEmail(masterEmail, otp, 'TMS Master Panel – Forgot Password OTP');
-        return res.json({ success: true });
+  await sendOTPEmail(masterEmail, otp, 'TMS Master Panel – Forgot Password OTP');
+        return res.json({ success: true, email: masterEmail });
     } catch (err) {
         console.error('[Master] forgot-send-otp error:', err);
         return res.status(500).json({ success: false, message: 'Failed to send OTP.' });
@@ -220,8 +227,8 @@ router.post('/master/change-email-send-otp', async (req, res) => {
         req.session.masterChangeEmailVerified = false;
         req.session.masterNewEmail          = null;
 
-        await sendOTPEmail(masterEmail, otp, 'TMS Master Panel – Change Email Verification');
-        return res.json({ success: true });
+       await sendOTPEmail(masterEmail, otp, 'TMS Master Panel – Change Email Verification');
+        return res.json({ success: true, email: masterEmail });
     } catch (err) {
         console.error('[Master] change-email-send-otp error:', err);
         return res.status(500).json({ success: false, message: 'Failed to send OTP.' });
@@ -351,6 +358,8 @@ router.get('/master/logout', (req, res) => {
 //  MASTER PANEL HOME (protected)
 // ─────────────────────────────────────────────
 router.get('/masterpage', requireMasterAuth, async (req, res) => {
+    // Clear auth immediately after loading — next visit requires login again
+    req.session.masterAuthenticated = false;
     try {
         const [companies] = await con.query(`
             SELECT 

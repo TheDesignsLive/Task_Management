@@ -1,3 +1,4 @@
+<!-- master_login.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -177,8 +178,7 @@ body {
 .eye-toggle {
   position: absolute;
   right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 11px;
   cursor: pointer;
   color: #94a3b8;
   font-size: 15px;
@@ -476,7 +476,7 @@ body {
     ══════════════════════════════════════ -->
     <div class="screen" id="screen-forgot-step1">
       <div class="flow-title">Forgot Password</div>
-      <div class="flow-sub">We'll send a verification OTP to your registered master email.</div>
+<div class="flow-sub">We'll send a verification OTP to your registered master email.<br><span id="forgotEmailDisplay" style="color:#0f766e; font-weight:700; font-size:14px;">Loading...</span></div>
 
       <div class="step-dots">
         <div class="dot active" id="fdot1"></div>
@@ -566,7 +566,7 @@ body {
     ══════════════════════════════════════ -->
     <div class="screen" id="screen-email-step1">
       <div class="flow-title">Change Email</div>
-      <div class="flow-sub">First, verify your identity. An OTP will be sent to your <strong>current</strong> registered email.</div>
+<div class="flow-sub">First, verify your identity. An OTP will be sent to your <strong>current</strong> registered email.<br><span id="changeEmailDisplay" style="color:#0f766e; font-weight:700; font-size:14px;">Loading...</span></div>
 
       <div class="step-dots">
         <div class="dot active"></div>
@@ -688,6 +688,19 @@ body {
 /* ═══════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════ */
+
+// Fetch master email on page load and pre-fill both displays
+(async function loadMasterEmail() {
+  try {
+    const res  = await fetch('/master/get-email');
+    const data = await res.json();
+    if (data.success && data.email) {
+      document.getElementById('forgotEmailDisplay').innerText  = data.email;
+      document.getElementById('changeEmailDisplay').innerText  = data.email;
+    }
+  } catch { /* silent fail */ }
+})();
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -857,9 +870,12 @@ async function forgotSendOTP(isResend = false) {
   try {
     const res  = await fetch('/master/forgot-send-otp', { method: 'POST' });
     const data = await res.json();
-    if (data.success) {
+if (data.success) {
       showPopup(isResend ? 'OTP resent ✓' : 'OTP sent to your email ✓');
-      if (!isResend) showScreen('screen-forgot-step2');
+      if (!isResend) {
+        if (data.email) document.getElementById('forgotEmailDisplay').innerText = data.email;
+        showScreen('screen-forgot-step2');
+      }
     } else {
       showPopup(data.message || 'Failed to send OTP.', 'error');
     }
@@ -945,9 +961,12 @@ async function emailSendOldOTP(isResend = false) {
   try {
     const res  = await fetch('/master/change-email-send-otp', { method: 'POST' });
     const data = await res.json();
-    if (data.success) {
+if (data.success) {
       showPopup(isResend ? 'OTP resent ✓' : 'OTP sent to current email ✓');
-      if (!isResend) showScreen('screen-email-step2');
+      if (!isResend) {
+        if (data.email) document.getElementById('changeEmailDisplay').innerText = data.email;
+        showScreen('screen-email-step2');
+      }
     } else {
       showPopup(data.message || 'Failed to send OTP.', 'error');
     }

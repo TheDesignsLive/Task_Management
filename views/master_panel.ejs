@@ -322,13 +322,14 @@
     <div class="main-content">
         <div class="header-card" style="display:flex; justify-content:space-between; align-items:center;">
     
-    <div>
+<div>
         <h1>Master Panel</h1>
         <p>Global overview of all registered companies and deep-dive analytics.</p>
     </div>
 
-    <!-- EXPORT / IMPORT BUTTONS -->
-    <div style="display:flex; gap:10px;">
+<!-- EXPORT / IMPORT BUTTONS -->
+    <div style="display:flex; gap:10px; align-items:center;">
+     
         
         <!-- EXPORT -->
     <button onclick="exportDB()" id="exportBtn" class="view-btn" style="background:#27ae60;">
@@ -341,6 +342,10 @@
         <button onclick="openImportModal()" class="view-btn" style="background:#e67e22;">
             <i class="fa-solid fa-upload"></i> Import DB
         </button>
+
+           <a href="/master/logout" class="view-btn" style="background:#e74c3c;">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </a>
 
     </div>
 
