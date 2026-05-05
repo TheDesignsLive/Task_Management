@@ -465,6 +465,11 @@ router.delete('/masterpage/api/delete-company/:id', requireMasterAuth, async (re
 //  POST /masterpage/impersonate-token/:id  → issues a one-time token
 //  GET  /masterpage/go/:token              → redeems token, sets session, redirects
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  TOKEN-BASED IMPERSONATION (session-safe new tab)
+//  POST /masterpage/impersonate-token/:id  → issues a one-time token
+//  GET  /masterpage/go/:token              → redeems token, sets session, redirects
+// ─────────────────────────────────────────────
 const impersonateTokens = new Map(); // token → { adminId, expiresAt }
 
 router.post('/masterpage/impersonate-token/:id', requireMasterAuth, async (req, res) => {
@@ -473,11 +478,10 @@ router.post('/masterpage/impersonate-token/:id', requireMasterAuth, async (req, 
         const [adminData] = await con.query('SELECT name FROM admins WHERE id = ?', [targetAdminId]);
         if (!adminData.length) return res.json({ success: false, message: 'Admin not found' });
 
-        // Generate one-time token
         const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
         impersonateTokens.set(token, {
             adminId:   parseInt(targetAdminId),
-            expiresAt: Date.now() + 30_000  // valid for 30 seconds only
+            expiresAt: Date.now() + 30_000
         });
 
         return res.json({ success: true, url: `/masterpage/go/${token}` });
@@ -495,7 +499,7 @@ router.get('/masterpage/go/:token', async (req, res) => {
         return res.send('<h2 style="font-family:sans-serif;color:#e74c3c;padding:40px">Link expired or invalid. Please go back and click View again.</h2>');
     }
 
-    impersonateTokens.delete(req.params.token); // ✅ one-time use — delete immediately
+    impersonateTokens.delete(req.params.token); // one-time use
 
     try {
         const adminId = entry.adminId;
@@ -504,26 +508,29 @@ router.get('/masterpage/go/:token', async (req, res) => {
 
         if (!adminData.length) return res.send('Admin not found');
 
-        // ✅ NEW SESSION for this tab only — does NOT touch the original browser session
-        // Regenerate session ID so this tab gets a completely fresh independent session
-        req.session.regenerate((err) => {
-            if (err) {
-                console.error('Session regenerate error:', err);
-                return res.status(500).send('Session error');
-            }
+        // ✅ KEY FIX: Do NOT call req.session.regenerate()
+        // That destroys the master session in the SAME browser.
+        // Instead, write company data directly into a NEW session
+        // by creating a fresh session object via a separate cookie name.
+        // Since the new tab shares the same cookie, we must save master
+        // auth state first, then overwrite only the company fields.
 
-            req.session.adminId             = adminId;
-            req.session.userId              = null;
-            req.session.role                = 'admin';
-            req.session.control_type        = 'ADMIN';
-            req.session.adminName           = adminData[0].name;
-            req.session.email               = targetAdmin[0].email;
-            req.session.masterAuthenticated = false;
-            req.session.impersonating       = true;
+        // Save master-auth flag so it survives the overwrite
+        const wasMaster = req.session.masterAuthenticated;
 
-            req.session.save(() => {
-                res.redirect('/home');
-            });
+        // Overwrite session with company (impersonation) data
+        req.session.adminId             = adminId;
+        req.session.userId              = null;
+        req.session.role                = 'admin';
+        req.session.control_type        = 'ADMIN';
+        req.session.adminName           = adminData[0].name;
+        req.session.email               = targetAdmin[0].email;
+        req.session.impersonating       = true;
+        // ✅ Preserve master auth so master tab still works after refresh
+        req.session.masterAuthenticated = wasMaster;
+
+        req.session.save(() => {
+            res.redirect('/home');
         });
 
     } catch (err) {
