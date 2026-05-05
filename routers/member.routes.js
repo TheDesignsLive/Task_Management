@@ -202,17 +202,18 @@ router.get('/suspend-member/:id', async (req, res) => {
         const [rows] = await con.query("SELECT status FROM users WHERE id = ?", [userId]);
         if (rows.length === 0) return res.json({ success: false, message: 'User not found' });
         
-        const newStatus = rows[0].status === "ACTIVE" ? "SUSPEND" : "ACTIVE";
+const newStatus = rows[0].status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
         await con.query("UPDATE users SET status = ? WHERE id = ?", [newStatus, userId]);
         debugLog(`Member status changed to ${newStatus}`, { targetMemberId: userId, changedByRole: req.session.role });
-        // Force logout if the status is changed to SUSPEND
-        if (newStatus === "SUSPEND") {
+        // Force logout if suspended
+        if (newStatus === "INACTIVE") {
             req.io.emit('force_logout', userId);
         }
         
         req.io.emit('update_members');
-          notifyMobile('members'); // ✅ PUSH TO MOBILE
-        res.json({ success: true, message: `Member ${newStatus.toLowerCase()}ed successfully` });
+        notifyMobile('members'); // ✅ PUSH TO MOBILE
+        const msg = newStatus === 'ACTIVE' ? 'Member activated successfully' : 'Member suspended successfully';
+        res.json({ success: true, message: msg, newStatus });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Database error' });
     }

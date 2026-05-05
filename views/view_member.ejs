@@ -279,16 +279,16 @@
                 <td class="member-name"><%= user.name %></td>
                 <td><%= user.email %></td>
                 <td><%= user.role_name %></td>
-           <td>
+     <td>
                   <span id="status-text-<%= user.id %>" style="color: <%= user.status === 'ACTIVE' ? '#2ecc71' : '#e74c3c' %>; font-weight: bold; font-size: 11px;">
-                    <%= user.status %>
+                    <%= user.status === 'ACTIVE' ? 'ACTIVE' : 'SUSPENDED' %>
                   </span>
                 </td>
                 <td>
                   <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="action-btn" 
+            <button class="action-btn" 
                       style="background-color: <%= user.status === 'ACTIVE' ? '#e74c3c' : '#2ecc71' %>; color: white; font-size: 11px;"
-                      onclick="openSuspendPopup(<%= user.id %>, '<%= user.name %>', '<%= user.status %>')">
+                      onclick="openSuspendPopup(<%= user.id %>, '<%= user.name %>', '<%= user.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE' %>')">
                       <%= user.status === 'ACTIVE' ? 'Suspend' : 'Activate' %>
                     </button>
 
@@ -641,20 +641,21 @@ document.getElementById("confirmSuspendBtn").addEventListener("click", async () 
             closeSuspendPopup();
             if (data.success) {
                 // ── Instantly update status text + suspend button in the row ──
+        const newStatus = data.newStatus; // 'ACTIVE' or 'INACTIVE'
+                const isNowActive = newStatus === 'ACTIVE';
+
                 const statusSpan = document.getElementById("status-text-" + selectedUserId);
                 const suspendBtn = document.querySelector(`button[onclick*="openSuspendPopup(${selectedUserId},"]`);
+
                 if (statusSpan) {
-                    const isNowActive = statusSpan.innerText.trim() === 'SUSPENDED';
                     statusSpan.innerText = isNowActive ? 'ACTIVE' : 'SUSPENDED';
                     statusSpan.style.color = isNowActive ? '#2ecc71' : '#e74c3c';
                 }
                 if (suspendBtn) {
-                    const isNowActive = suspendBtn.innerText.trim() === 'Activate';
                     suspendBtn.innerText = isNowActive ? 'Suspend' : 'Activate';
                     suspendBtn.style.backgroundColor = isNowActive ? '#e74c3c' : '#2ecc71';
-                    // Update onclick to reflect new status
-                    const newStatus = isNowActive ? 'ACTIVE' : 'SUSPENDED';
-                    suspendBtn.setAttribute('onclick', `openSuspendPopup(${selectedUserId}, '${suspendBtn.closest('tr').querySelector('.member-name').innerText}', '${newStatus}')`);
+                    const memberName = suspendBtn.closest('tr').querySelector('.member-name').innerText;
+                    suspendBtn.setAttribute('onclick', `openSuspendPopup(${selectedUserId}, '${memberName}', '${newStatus}')`);
                 }
                 showAlertDialog("Success!", data.message, true);
             } else {
