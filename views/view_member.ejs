@@ -279,8 +279,8 @@
                 <td class="member-name"><%= user.name %></td>
                 <td><%= user.email %></td>
                 <td><%= user.role_name %></td>
-                <td>
-                  <span style="color: <%= user.status === 'ACTIVE' ? '#2ecc71' : '#e74c3c' %>; font-weight: bold; font-size: 11px;">
+           <td>
+                  <span id="status-text-<%= user.id %>" style="color: <%= user.status === 'ACTIVE' ? '#2ecc71' : '#e74c3c' %>; font-weight: bold; font-size: 11px;">
                     <%= user.status %>
                   </span>
                 </td>
@@ -640,6 +640,22 @@ document.getElementById("confirmSuspendBtn").addEventListener("click", async () 
             const data = await response.json();
             closeSuspendPopup();
             if (data.success) {
+                // ── Instantly update status text + suspend button in the row ──
+                const statusSpan = document.getElementById("status-text-" + selectedUserId);
+                const suspendBtn = document.querySelector(`button[onclick*="openSuspendPopup(${selectedUserId},"]`);
+                if (statusSpan) {
+                    const isNowActive = statusSpan.innerText.trim() === 'SUSPENDED';
+                    statusSpan.innerText = isNowActive ? 'ACTIVE' : 'SUSPENDED';
+                    statusSpan.style.color = isNowActive ? '#2ecc71' : '#e74c3c';
+                }
+                if (suspendBtn) {
+                    const isNowActive = suspendBtn.innerText.trim() === 'Activate';
+                    suspendBtn.innerText = isNowActive ? 'Suspend' : 'Activate';
+                    suspendBtn.style.backgroundColor = isNowActive ? '#e74c3c' : '#2ecc71';
+                    // Update onclick to reflect new status
+                    const newStatus = isNowActive ? 'ACTIVE' : 'SUSPENDED';
+                    suspendBtn.setAttribute('onclick', `openSuspendPopup(${selectedUserId}, '${suspendBtn.closest('tr').querySelector('.member-name').innerText}', '${newStatus}')`);
+                }
                 showAlertDialog("Success!", data.message, true);
             } else {
                 isProcessingAjax = false;
