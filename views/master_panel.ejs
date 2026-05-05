@@ -50,8 +50,20 @@
         transition: 0.2s; 
     }
     .view-btn:hover { background: #0c7575; transform: translateY(-1px); }
-    .expand-btn { background: #555; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: bold; }
-    .expand-btn:hover { background: #777; }
+ .expand-btn { background: #555; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: bold; }
+.expand-btn:hover { background: #777; }
+.delete-btn { background: #c0392b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: bold; }
+.delete-btn:hover { background: #e74c3c; transform: translateY(-1px); }
+
+/* Delete Confirm Popup */
+#deleteConfirmModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); justify-content:center; align-items:center; z-index:99999; backdrop-filter:blur(4px); }
+.delete-modal-box { background:linear-gradient(145deg,#2E2D2D,#1f1f1f); padding:30px; border-radius:14px; width:90%; max-width:400px; color:white; box-shadow:0 10px 40px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); text-align:center; animation:pop 0.25s ease-in-out; }
+.delete-modal-box .warn-icon { font-size:52px; margin-bottom:12px; }
+.delete-modal-box h2 { margin:0 0 8px; color:#e74c3c; font-size:20px; }
+.delete-modal-box p { color:#aaa; font-size:13px; margin:0 0 6px; }
+.delete-modal-box .company-label { color:#fff; font-size:15px; font-weight:bold; margin:10px 0 20px; background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); border-radius:8px; padding:8px 14px; display:inline-block; }
+.delete-modal-box .warn-text { color:#f39c12; font-size:12px; background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.2); border-radius:6px; padding:8px 12px; margin-bottom:20px; }
+.delete-modal-actions { display:flex; gap:12px; justify-content:center; }
 
     /* ===== NESTED ACCORDION STYLES ===== */
     .expanded-row td { padding: 0 !important; border: none !important; }
@@ -343,9 +355,9 @@
             <i class="fa-solid fa-upload"></i> Import DB
         </button>
 
-           <a href="/master/logout" class="view-btn" style="background:#e74c3c;">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </a>
+     <button onclick="openLogoutModal()" class="view-btn" style="background:#e74c3c; border:none; cursor:pointer;">
+    <i class="fa-solid fa-right-from-bracket"></i> Logout
+</button>
 
     </div>
 
@@ -372,12 +384,15 @@
                                 <td><%= company.email %></td>
                                 <td>
                                     <div class="action-group">
-                                        <a href="/masterpage/impersonate/<%= company.id %>" target="_blank" class="view-btn">
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i> View
-                                        </a>
-                                        <button class="expand-btn" onclick="toggleCompanyDetails('<%= company.id %>')">
-                                            <i class="fa-solid fa-chevron-down" id="icon-<%= company.id %>"></i> Expand
-                                        </button>
+                                  <button class="view-btn" onclick="openImpersonate('<%= company.id %>')">
+    <i class="fa-solid fa-arrow-up-right-from-square"></i> View
+</button>
+                                    <button class="expand-btn" onclick="toggleCompanyDetails('<%= company.id %>')">
+                                <i class="fa-solid fa-chevron-down" id="icon-<%= company.id %>"></i> Expand
+                            </button>
+                            <button class="delete-btn" onclick="openDeleteModal('<%= company.id %>', '<%= company.company_name || 'Unnamed Company' %>')">
+                                <i class="fa-solid fa-trash"></i> &nbsp;Delete
+                            </button>
                                     </div>
                                 </td>
                             </tr>
@@ -448,8 +463,178 @@
   </div>
 </div>
 
+<!-- LOGOUT CONFIRM MODAL -->
+<div id="logoutModal" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.7);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    backdrop-filter:blur(4px);
+">
+    <div style="
+        background:linear-gradient(145deg,#2E2D2D,#1f1f1f);
+        padding:30px;
+        border-radius:14px;
+        width:90%;
+        max-width:380px;
+        color:white;
+        box-shadow:0 10px 40px rgba(0,0,0,0.6);
+        border:1px solid rgba(255,255,255,0.08);
+        text-align:center;
+        animation:pop 0.25s ease-in-out;
+    ">
+        <div style="font-size:48px; margin-bottom:15px;">🔐</div>
+        <h2 style="margin:0 0 10px; color:#e74c3c; font-size:20px;">Confirm Logout</h2>
+        <p style="color:#aaa; font-size:14px; margin:0 0 25px;">Are you sure you want to logout from Master Panel?</p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button onclick="closeLogoutModal()" style="
+                padding:10px 28px;
+                border:none;
+                border-radius:8px;
+                background:#555;
+                color:white;
+                font-size:14px;
+                font-weight:bold;
+                cursor:pointer;
+                transition:0.2s;
+            " onmouseover="this.style.background='#777'" onmouseout="this.style.background='#555'">
+                Cancel
+            </button>
+            <button onclick="window.location.href='/master/logout'" style="
+                padding:10px 28px;
+                border:none;
+                border-radius:8px;
+                background:#e74c3c;
+                color:white;
+                font-size:14px;
+                font-weight:bold;
+                cursor:pointer;
+                transition:0.2s;
+            " onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= DELETE COMPANY MODAL ================= -->
+<div id="deleteConfirmModal">
+    <div class="delete-modal-box">
+        <div class="warn-icon">⚠️</div>
+        <h2>Delete Company</h2>
+        <p>You are about to permanently delete:</p>
+        <div class="company-label" id="deleteCompanyName">—</div>
+        <div class="warn-text">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            This will delete ALL users, tasks, teams, roles, announcements and related data. This action cannot be undone.
+        </div>
+        <div class="delete-modal-actions">
+            <button onclick="closeDeleteModal()" style="padding:10px 28px;border:none;border-radius:8px;background:#555;color:white;font-size:14px;font-weight:bold;cursor:pointer;transition:0.2s;" onmouseover="this.style.background='#777'" onmouseout="this.style.background='#555'">
+                Cancel
+            </button>
+            <button id="confirmDeleteBtn" onclick="confirmDeleteCompany()" style="padding:10px 28px;border:none;border-radius:8px;background:#e74c3c;color:white;font-size:14px;font-weight:bold;cursor:pointer;transition:0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+                <i class="fa-solid fa-trash"></i> Delete Everything
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="popup"></div>
 <script>
+
+  // ===== DELETE COMPANY =====
+let _deleteTargetId = null;
+
+// ===== OPEN IMPERSONATE IN NEW TAB (session-safe) =====
+function openImpersonate(companyId) {
+    // Open blank tab immediately (must be in click handler to avoid popup blocker)
+    const newTab = window.open('', '_blank');
+
+    fetch(`/masterpage/impersonate-token/${companyId}`, {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.url) {
+            newTab.location.href = data.url;
+        } else {
+            newTab.close();
+            showPopup('Failed to open company ❌', 'error');
+        }
+    })
+    .catch(() => {
+        newTab.close();
+        showPopup('Network error ❌', 'error');
+    });
+}
+
+function openDeleteModal(companyId, companyName) {
+    _deleteTargetId = companyId;
+    document.getElementById('deleteCompanyName').textContent = companyName;
+    document.getElementById('deleteConfirmModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    _deleteTargetId = null;
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+}
+
+async function confirmDeleteCompany() {
+    if (!_deleteTargetId) return;
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/masterpage/api/delete-company/${_deleteTargetId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showPopup('Company deleted successfully ✅');
+            closeDeleteModal();
+
+            // Remove the two rows (main + expanded) from the table without reload
+            const mainRow = document.querySelector(`tr.main-row td a[href*="/impersonate/${_deleteTargetId}"]`)?.closest('tr');
+            const expandedRow = document.getElementById(`expanded-${_deleteTargetId}`);
+            if (mainRow) mainRow.remove();
+            if (expandedRow) expandedRow.remove();
+
+            // Clean cache
+            delete companyDataCache[_deleteTargetId];
+        } else {
+            showPopup(data.message || 'Delete failed ❌', 'error');
+            btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Everything';
+            btn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        showPopup('Network error ❌', 'error');
+        btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Everything';
+        btn.disabled = false;
+    }
+}
+
+// Close on outside double-click
+document.getElementById('deleteConfirmModal').addEventListener('dblclick', function(e) {
+    if (e.target.id === 'deleteConfirmModal') closeDeleteModal();
+});
+
+function openLogoutModal() {
+    document.getElementById("logoutModal").style.display = "flex";
+}
+
+function closeLogoutModal() {
+    document.getElementById("logoutModal").style.display = "none";
+}
     const companyDataCache = {};
 
     // 1. Toggle the entire company row

@@ -358,8 +358,7 @@ router.get('/master/logout', (req, res) => {
 //  MASTER PANEL HOME (protected)
 // ─────────────────────────────────────────────
 router.get('/masterpage', requireMasterAuth, async (req, res) => {
-    // Clear auth immediately after loading — next visit requires login again
-    req.session.masterAuthenticated = false;
+    // Do NOT clear auth here — impersonate routes also need it
     try {
         const [companies] = await con.query(`
             SELECT 
@@ -411,33 +410,125 @@ router.get('/masterpage/api/company-details/:id', requireMasterAuth, async (req,
     }
 });
 
+
+
 // ─────────────────────────────────────────────
-//  Impersonation (protected)
+//  DELETE COMPANY — cascade delete all data
+//  DELETE /masterpage/api/delete-company/:id
 // ─────────────────────────────────────────────
-router.get('/masterpage/impersonate/:id', requireMasterAuth, async (req, res) => {
+router.delete('/masterpage/api/delete-company/:id', requireMasterAuth, async (req, res) => {
+    const adminId = req.params.id;
+    if (!adminId || isNaN(adminId)) {
+        return res.status(400).json({ success: false, message: 'Invalid company ID.' });
+    }
+
+    try {
+        // Run all deletions in the correct FK-safe order
+        // 1. announcement_seen (references announcements + users)
+        await con.query(`DELETE FROM announcement_seen WHERE admin_id = ?`, [adminId]);
+
+        // 2. announcements
+        await con.query(`DELETE FROM announcements WHERE admin_id = ?`, [adminId]);
+
+        // 3. tasks
+        await con.query(`DELETE FROM tasks WHERE admin_id = ?`, [adminId]);
+
+        // 4. member_requests
+        await con.query(`DELETE FROM member_requests WHERE admin_id = ?`, [adminId]);
+
+        // 5. users (FK to roles/teams — delete before roles & teams)
+        await con.query(`DELETE FROM users WHERE admin_id = ?`, [adminId]);
+
+        // 6. roles (FK to teams — delete before teams)
+        await con.query(`DELETE FROM roles WHERE admin_id = ?`, [adminId]);
+
+        // 7. teams
+        await con.query(`DELETE FROM teams WHERE admin_id = ?`, [adminId]);
+
+        // 8. sessions that belong to this admin
+        await con.query(`DELETE FROM sessions WHERE data LIKE ?`, [`%"adminId":${adminId}%`]);
+
+        // 9. Finally delete the admin itself
+        await con.query(`DELETE FROM admins WHERE id = ?`, [adminId]);
+
+        console.log(`[Master] ✅ Company ${adminId} and all related data deleted.`);
+        return res.json({ success: true });
+
+    } catch (err) {
+        console.error('[Master] delete-company error:', err);
+        return res.status(500).json({ success: false, message: 'Server error during deletion.' });
+    }
+});
+
+// ─────────────────────────────────────────────
+//  TOKEN-BASED IMPERSONATION (session-safe new tab)
+//  POST /masterpage/impersonate-token/:id  → issues a one-time token
+//  GET  /masterpage/go/:token              → redeems token, sets session, redirects
+// ─────────────────────────────────────────────
+const impersonateTokens = new Map(); // token → { adminId, expiresAt }
+
+router.post('/masterpage/impersonate-token/:id', requireMasterAuth, async (req, res) => {
     try {
         const targetAdminId = req.params.id;
         const [adminData] = await con.query('SELECT name FROM admins WHERE id = ?', [targetAdminId]);
-        if (!adminData.length) return res.send('Admin not found');
+        if (!adminData.length) return res.json({ success: false, message: 'Admin not found' });
 
-        if (!req.session.originalEmail) {
-            req.session.originalEmail   = req.session.email;
-            req.session.originalAdminId = req.session.adminId;
-        }
+        // Generate one-time token
+        const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        impersonateTokens.set(token, {
+            adminId:   parseInt(targetAdminId),
+            expiresAt: Date.now() + 30_000  // valid for 30 seconds only
+        });
 
-        const [targetAdmin] = await con.query('SELECT email FROM admins WHERE id = ?', [targetAdminId]);
-
-        req.session.adminId      = parseInt(targetAdminId);
-        req.session.userId       = null;
-        req.session.role         = 'admin';
-        req.session.control_type = 'ADMIN';
-        req.session.adminName    = adminData[0].name;
-        req.session.email        = targetAdmin[0].email;
-
-        res.redirect('/home');
+        return res.json({ success: true, url: `/masterpage/go/${token}` });
     } catch (err) {
         console.error(err);
-        res.status(500).send('Impersonation Error');
+        return res.status(500).json({ success: false });
+    }
+});
+
+router.get('/masterpage/go/:token', async (req, res) => {
+    const entry = impersonateTokens.get(req.params.token);
+
+    if (!entry || Date.now() > entry.expiresAt) {
+        impersonateTokens.delete(req.params.token);
+        return res.send('<h2 style="font-family:sans-serif;color:#e74c3c;padding:40px">Link expired or invalid. Please go back and click View again.</h2>');
+    }
+
+    impersonateTokens.delete(req.params.token); // ✅ one-time use — delete immediately
+
+    try {
+        const adminId = entry.adminId;
+        const [adminData]   = await con.query('SELECT name FROM admins WHERE id = ?', [adminId]);
+        const [targetAdmin] = await con.query('SELECT email FROM admins WHERE id = ?', [adminId]);
+
+        if (!adminData.length) return res.send('Admin not found');
+
+        // ✅ NEW SESSION for this tab only — does NOT touch the original browser session
+        // Regenerate session ID so this tab gets a completely fresh independent session
+        req.session.regenerate((err) => {
+            if (err) {
+                console.error('Session regenerate error:', err);
+                return res.status(500).send('Session error');
+            }
+
+            req.session.adminId             = adminId;
+            req.session.userId              = null;
+            req.session.role                = 'admin';
+            req.session.control_type        = 'ADMIN';
+            req.session.adminName           = adminData[0].name;
+            req.session.email               = targetAdmin[0].email;
+            req.session.masterAuthenticated = false;
+            req.session.impersonating       = true;
+
+            req.session.save(() => {
+                res.redirect('/home');
+            });
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error opening company');
     }
 });
 
