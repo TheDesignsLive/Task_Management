@@ -50,17 +50,19 @@ body{
   height:34px;
   gap:10px; 
 }
-
 textarea{
   width:100%;
   border:none;
   resize:none;
   outline:none;
   background:transparent;
-  font-size:14px;
-  padding:6px 0;
+  font-size:13px;
+  font-family: Arial, sans-serif;
+  padding:0;
   height:22px;
+  line-height:22px;
   overflow:hidden;
+  letter-spacing:0.3px;
 }
 
 .icon-btn{
@@ -450,7 +452,7 @@ select::-ms-expand { display: none; }
   <img src="/images/tms_logo.jpeg" alt="TMS Logo" class="logo">
   
   <div class="input-box">
-    <textarea id="taskInput" placeholder="Add Task here (Press Shift+Enter for description)"></textarea>
+<textarea id="taskInput" placeholder="Add Task here (Press Shift+Enter for description)" style="color:#333; font-family:Arial,sans-serif; font-size:13px;"></textarea>
 
     <div class="calendar-wrapper">
       <span id="dateDisplay" class="date-display"></span>
