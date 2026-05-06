@@ -377,7 +377,7 @@
                 <tbody>
                     <% if (companies.length > 0) { %>
                         <% companies.forEach((company, index) => { %>
-                            <tr class="main-row">
+                       <tr class="main-row" data-company-id="<%= company.id %>">
                                <td style="color: #aaa;"><%= index + 1 %></td>
                                 <td><strong><%= company.admin_name %></strong></td>
                                 <td><%= company.company_name || 'Unnamed Company' %></td>
@@ -598,12 +598,12 @@ async function confirmDeleteCompany() {
         });
         const data = await res.json();
 
-        if (data.success) {
+if (data.success) {
             showPopup('Company deleted successfully ✅');
             closeDeleteModal();
 
-            // Remove the two rows (main + expanded) from the table without reload
-            const mainRow = document.querySelector(`tr.main-row td a[href*="/impersonate/${_deleteTargetId}"]`)?.closest('tr');
+// Remove the two rows (main + expanded) from the table without reload
+            const mainRow = document.querySelector(`tr.main-row[data-company-id="${_deleteTargetId}"]`);
             const expandedRow = document.getElementById(`expanded-${_deleteTargetId}`);
             if (mainRow) mainRow.remove();
             if (expandedRow) expandedRow.remove();
