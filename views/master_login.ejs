@@ -422,12 +422,15 @@ body {
       <div class="panel-title">Master Panel</div>
       <div class="panel-subtitle">Secure Administrator Access</div>
 
-      <div class="input-group" style="position:relative;">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
-        <i class="fa-solid fa-eye-slash eye-toggle" id="toggleLoginPass" onclick="toggleEye('loginPassword','toggleLoginPass')"></i>
-        <div class="error-msg" id="loginErr"></div>
-      </div>
+<!-- WITH THIS -->
+<div class="input-group">
+  <label>Password</label>
+  <div style="position:relative;">
+    <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+    <i class="fa-solid fa-eye-slash eye-toggle" id="toggleLoginPass" onclick="toggleEye('loginPassword','toggleLoginPass')"></i>
+  </div>
+  <div class="error-msg" id="loginErr"></div>
+</div>
 
       <button class="btn-primary" id="loginBtn" onclick="verifyPassword()">
         Login
@@ -540,21 +543,26 @@ body {
         <div class="dot active"></div>
       </div>
 
-      <div class="input-group" style="position:relative;">
-        <label>New Password</label>
-        <input type="password" id="newPassword" placeholder="Min 8 chars, A-z, 0-9, special" oninput="checkPasswordStrength(this.value)">
-        <i class="fa-solid fa-eye-slash eye-toggle" id="toggleNewPass" onclick="toggleEye('newPassword','toggleNewPass')"></i>
-        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-        <div class="strength-label" id="strengthLabel"></div>
-        <div class="error-msg" id="newPassErr"></div>
-      </div>
+<!-- WITH THIS -->
+<div class="input-group">
+  <label>New Password</label>
+  <div style="position:relative;">
+    <input type="password" id="newPassword" placeholder="Min 8 chars, A-z, 0-9, special">
+    <i class="fa-solid fa-eye-slash eye-toggle" id="toggleNewPass" onclick="toggleEye('newPassword','toggleNewPass')"></i>
+  </div>
 
-      <div class="input-group" style="position:relative;">
-        <label>Confirm Password</label>
-        <input type="password" id="confirmPassword" placeholder="Re-enter password">
-        <i class="fa-solid fa-eye-slash eye-toggle" id="toggleConfPass" onclick="toggleEye('confirmPassword','toggleConfPass')"></i>
-        <div class="error-msg" id="confirmPassErr"></div>
-      </div>
+  <div class="error-msg" id="newPassErr"></div>
+</div>
+
+<!-- WITH THIS -->
+<div class="input-group">
+  <label>Confirm Password</label>
+  <div style="position:relative;">
+    <input type="password" id="confirmPassword" placeholder="Re-enter password">
+    <i class="fa-solid fa-eye-slash eye-toggle" id="toggleConfPass" onclick="toggleEye('confirmPassword','toggleConfPass')"></i>
+  </div>
+  <div class="error-msg" id="confirmPassErr"></div>
+</div>
 
       <button class="btn-primary" onclick="resetPassword()">
         <i class="fa-solid fa-lock" style="margin-right:6px;"></i>Reset Password
