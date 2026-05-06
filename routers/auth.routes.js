@@ -71,11 +71,11 @@ router.post("/signup", (req, res) => {
             const [result] = await con.query(sql, [name, company_name, email, phone, hashedPassword, profilePic]);
 
          
-            req.session.adminId = result.insertId; // ✅ Save session
+   req.session.adminId = result.insertId; // ✅ Save session
             req.session.role = "admin";
             req.session.email = email;
             req.session.adminName = name;
-            debugLog('Admin successfully logged in:', { adminId: rows[0].id, email: rows[0].email });
+            debugLog('Admin successfully logged in:', { adminId: result.insertId, email: email });
             return res.redirect("/home");
 
         } catch (err) {
