@@ -601,6 +601,11 @@ async function confirmDeleteCompany() {
 if (data.success) {
             const deletedId = _deleteTargetId;
             showPopup('Company deleted successfully ✅');
+
+            // Reset button BEFORE closeDeleteModal clears _deleteTargetId
+            btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Everything';
+            btn.disabled = false;
+
             closeDeleteModal();
 
             // Remove the two rows (main + expanded) from the table without reload
@@ -611,7 +616,7 @@ if (data.success) {
 
             // Clean cache
             delete companyDataCache[deletedId];
-        }else {
+        } else {
             showPopup(data.message || 'Delete failed ❌', 'error');
             btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Everything';
             btn.disabled = false;
