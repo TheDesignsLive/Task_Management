@@ -599,18 +599,19 @@ async function confirmDeleteCompany() {
         const data = await res.json();
 
 if (data.success) {
+            const deletedId = _deleteTargetId;
             showPopup('Company deleted successfully ✅');
             closeDeleteModal();
 
-// Remove the two rows (main + expanded) from the table without reload
-            const mainRow = document.querySelector(`tr.main-row[data-company-id="${_deleteTargetId}"]`);
-            const expandedRow = document.getElementById(`expanded-${_deleteTargetId}`);
+            // Remove the two rows (main + expanded) from the table without reload
+            const mainRow = document.querySelector(`tr.main-row[data-company-id="${deletedId}"]`);
+            const expandedRow = document.getElementById(`expanded-${deletedId}`);
             if (mainRow) mainRow.remove();
             if (expandedRow) expandedRow.remove();
 
             // Clean cache
-            delete companyDataCache[_deleteTargetId];
-        } else {
+            delete companyDataCache[deletedId];
+        }else {
             showPopup(data.message || 'Delete failed ❌', 'error');
             btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Everything';
             btn.disabled = false;

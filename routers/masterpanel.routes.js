@@ -54,7 +54,7 @@ function generateOTP() {
 //  MIDDLEWARE: protect master panel pages
 // ─────────────────────────────────────────────
 function requireMasterAuth(req, res, next) {
-    if (req.session.masterAuthenticated) return next();
+    if (req.session.masterAuthenticated === true) return next();
     return res.redirect('/master/login');
 }
 
@@ -62,7 +62,9 @@ function requireMasterAuth(req, res, next) {
 //  GET /master/login
 // ─────────────────────────────────────────────
 router.get('/master/login', (req, res) => {
-    // Always clear master auth on login page visit — forces fresh login every time
+    if (req.session.masterAuthenticated === true) {
+        return res.redirect('/masterpage');
+    }
     req.session.masterAuthenticated = false;
     req.session.role = null;
     res.render('master_login');
@@ -516,22 +518,20 @@ router.get('/masterpage/go/:token', async (req, res) => {
         // auth state first, then overwrite only the company fields.
 
         // Save master-auth flag so it survives the overwrite
-        const wasMaster = req.session.masterAuthenticated;
+const wasMaster = req.session.masterAuthenticated;
 
-        // Overwrite session with company (impersonation) data
-        req.session.adminId             = adminId;
-        req.session.userId              = null;
-        req.session.role                = 'admin';
-        req.session.control_type        = 'ADMIN';
-        req.session.adminName           = adminData[0].name;
-        req.session.email               = targetAdmin[0].email;
-        req.session.impersonating       = true;
-        // ✅ Preserve master auth so master tab still works after refresh
-        req.session.masterAuthenticated = wasMaster;
+req.session.adminId             = adminId;
+req.session.userId              = null;
+req.session.role                = 'admin';
+req.session.control_type        = 'ADMIN';
+req.session.adminName           = adminData[0].name;
+req.session.email               = targetAdmin[0].email;
+req.session.impersonating       = true;
+req.session.masterAuthenticated = true;
 
-        req.session.save(() => {
-            res.redirect('/home');
-        });
+req.session.save(() => {
+    res.redirect('/home');
+});
 
     } catch (err) {
         console.error(err);
