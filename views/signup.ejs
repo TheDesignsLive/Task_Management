@@ -730,10 +730,10 @@ button[type="submit"]:hover, .next-btn:hover, .btn-primary:hover {
                 </div>
                 <div class="form-step step-3">
                     <div class="input-group">
-                        <input type="text" id="companyName" placeholder="Company Name" required>
+                     <input type="text" id="companyName" placeholder="Company Name" required onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('phone').focus();}">
                     </div>
                     <div class="input-group">
-                        <input type="text" id="phone" placeholder="Phone Number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+<input type="text" id="phone" placeholder="Phone Number" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('signupPassword').focus();}">
                         <div id="phoneError" class="error-msg">Please enter a valid 10-digit phone number.</div>
                     </div>
                     <div class="input-group" style="position:relative;">
