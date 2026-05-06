@@ -353,10 +353,12 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             WHERE a.id=?`, [result.insertId]);
 
         const ann = rows[0];
-        req.io.emit('new_announcement', ann);
-        notifyMobile('announcement_add', { id: ann.id });
+req.io.emit('new_announcement', ann);
 
-        res.json({ success: true, announcement: ann });
+// Notify mobile clients via mobile server bridge
+notifyMobile('announcement_add', { id: ann.id });
+
+res.json({ success: true, announcement: ann });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false });
