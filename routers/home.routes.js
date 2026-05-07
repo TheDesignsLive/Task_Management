@@ -116,7 +116,7 @@ router.get('/home', async (req, res) => {
 
                     // ✅ FIXED
         const [taskRows] = await con.query(
-            `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned
+            `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type
             FROM tasks 
             WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin'
             ORDER BY due_date ASC`,
@@ -176,8 +176,8 @@ AND (t.who_assigned='user' OR t.who_assigned='owner')
                 [adminId, req.session.userId]
             );
 
-            const [userOwnTasksRows] = await con.query(
-                `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned 
+          const [userOwnTasksRows] = await con.query(
+                `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type 
                  FROM tasks 
                  WHERE admin_id=? AND assigned_to=? AND (who_assigned='user' OR who_assigned='owner') AND assigned_by=? 
                  ORDER BY due_date ASC`,

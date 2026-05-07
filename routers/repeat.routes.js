@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
+const { notifyMobile } = require('../utils/notifyMobile');
 
 // Set repeat type on a task
 router.post('/set-repeat', async (req, res) => {
@@ -17,8 +18,9 @@ router.post('/set-repeat', async (req, res) => {
 
         if (repeat_type === 'none') {
             // Remove template if turning off
-            await con.query('DELETE FROM task_templates WHERE id=?', [task_id]);
+          await con.query('DELETE FROM task_templates WHERE id=?', [task_id]);
             req.io.emit('update_tasks');
+            notifyMobile();
             return res.json({ success: true });
         }
 
@@ -54,6 +56,7 @@ router.post('/set-repeat', async (req, res) => {
         );
 
         req.io.emit('update_tasks');
+        notifyMobile();
         return res.json({ success: true });
     } catch (err) {
         console.error('set-repeat error:', err);
