@@ -1,4 +1,4 @@
-// desktop code and use only for help
+// desktop code and use only for help (home.routes.js)
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');
@@ -17,13 +17,13 @@ router.get('/api/get-all-tasks', async (req, res) => {
         if (req.session.role === "admin") {
 
 const [taskRows] = await con.query(
-  "SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
+    "SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
   [adminId]
 );
 
 const [otherTaskRows] = await con.query(
-  `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-          t.assigned_by, t.assigned_to, t.who_assigned,
+ `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
+          t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type,
           u.name AS assigned_by_name
    FROM tasks t 
    JOIN users u ON t.assigned_by = u.id 
@@ -233,8 +233,73 @@ router.post('/update-task-status', async (req, res) => {
     const { id, status } = req.body;
     try {
         await con.query("UPDATE tasks SET status=? WHERE id=?", [status, id]);
+
+        // ── Repeat logic: spawn next task when completing a repeating task ──
+        if (status === 'COMPLETED') {
+            const [rows] = await con.query("SELECT * FROM tasks WHERE id=?", [id]);
+            if (rows.length > 0) {
+                const task = rows[0];
+                const repeatType = task.repeat_type;
+
+            
+                // NEW — replace with exact mobile logic:
+                if (repeatType && repeatType !== 'none') {
+                    // Calculate next due date — same logic as mobile
+                    let baseDate = task.due_date
+                        ? new Date(task.due_date)
+                        : new Date();
+
+                    // If base date is in the past, start from today
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (baseDate < today) baseDate = today;
+
+                    let nextDate = new Date(baseDate);
+
+                    if (repeatType === 'daily') {
+                        nextDate.setDate(nextDate.getDate() + 1);
+                    } else if (repeatType === 'weekly') {
+                        nextDate.setDate(nextDate.getDate() + 7);
+                    } else if (repeatType === 'monthly') {
+                        nextDate.setMonth(nextDate.getMonth() + 1);
+                    }
+
+                    const nextDateStr = nextDate.toISOString().split('T')[0];
+
+                    // Insert next task — no duplicate check, same as mobile
+                    await con.query(
+                        `INSERT INTO tasks 
+                        (admin_id, title, description, priority, due_date, status, section,
+                        assigned_by, assigned_to, who_assigned, repeat_type)
+                        VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?)`,
+                        [
+                            task.admin_id,
+                            task.title,
+                            task.description,
+                            task.priority,
+                            nextDateStr,
+                            task.section || 'TASK',
+                            task.assigned_by,
+                            task.assigned_to,
+                            task.who_assigned,
+                            repeatType,
+                        ]
+                    );
+
+                    // Update template last_spawned (non-critical)
+                    await con.query(
+                        "UPDATE task_templates SET last_spawned=? WHERE id=?",
+                        [nextDateStr, id]
+                    ).catch(() => {});
+
+                    // ✅ DO NOT clear repeat_type — mobile doesn't clear it either
+                }
+            }
+        }
+        // ── End repeat logic ──
+
         req.io.emit('update_tasks');
-        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
+        notifyMobile();
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });

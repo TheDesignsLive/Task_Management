@@ -262,8 +262,76 @@ function scheduleBackupCron() {
         }
     }, { timezone: 'Asia/Kolkata' });
 
-    console.log('[Backup] ✅ Daily cron scheduled (00:00 IST)');
+ console.log('[Backup] ✅ Daily cron scheduled (00:00 IST)');
 }
+
+
+// ── Repeat Task Spawner — runs every day at 00:05 IST ──
+cron.schedule('5 0 * * *', async () => {
+    debugLog('[Repeat] Checking templates to spawn...');
+    try {
+        const todayIST = new Date(
+            new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
+        );
+        const todayStr = todayIST.toISOString().split('T')[0];
+        const todayDay = todayIST.getDay();       // 0=Sun...6=Sat
+        const todayDate = todayIST.getDate();     // 1-31
+        const [templates] = await con.query(
+            `SELECT * FROM task_templates WHERE last_spawned IS NULL OR last_spawned < ?`,
+            [todayStr]
+        );
+        for (const t of templates) {
+            const origDate = new Date(t.original_date);
+            const origDay  = origDate.getDay();
+            const origDayOfMonth = origDate.getDate();
+            let shouldSpawn = false;
+            let taskDueDate = todayStr;
+            if (t.repeat_type === 'daily') {
+                shouldSpawn = true;
+                taskDueDate = todayStr;
+            } else if (t.repeat_type === 'weekly') {
+                if (todayDay === origDay) {
+                    shouldSpawn = true;
+                    taskDueDate = todayStr;
+                }
+            } else if (t.repeat_type === 'monthly') {
+                const spawnOnDay = origDayOfMonth - 2;
+                if (todayDate === (spawnOnDay < 1 ? 1 : spawnOnDay)) {
+                    shouldSpawn = true;
+                    const due = new Date(todayIST);
+                    due.setDate(origDayOfMonth);
+                    taskDueDate = due.toISOString().split('T')[0];
+                }
+            }
+            if (shouldSpawn) {
+                await con.query(
+                    `INSERT INTO tasks 
+                     (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status, repeat_type)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?)`,
+                    [
+                        t.admin_id,
+                        t.title,
+                        t.description,
+                        t.priority,
+                        taskDueDate,
+                        t.assigned_to,
+                        t.assigned_by,
+                        t.who_assigned,
+                        t.section,
+                        t.repeat_type
+                    ]
+                );
+                await con.query(
+                    'UPDATE task_templates SET last_spawned=? WHERE id=?',
+                    [todayStr, t.id]
+                );
+                debugLog(`[Repeat] ✅ Spawned "${t.title}" (${t.repeat_type})`);
+            }
+        }
+    } catch (err) {
+        console.error('[Repeat] ❌ Error:', err.message);
+    }
+}, { timezone: 'Asia/Kolkata' });
 
 
 // ================= ROUTES EXECUTION =================
@@ -306,6 +374,10 @@ app.use('/', notification);
 app.use('/profile', profile);
 app.use('/settings', settings);
 app.use('/',allMemberTask);
+
+// Repeat tasks
+const repeatRoutes = require('./routers/repeat.routes');
+app.use('/api/repeat', repeatRoutes);
 
 
 // Forgot Password Workflow

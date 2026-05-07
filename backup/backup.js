@@ -8,6 +8,7 @@ const fs = require('fs');
 const fsPromises = require('fs/promises');
 const path = require('path');
 const { google } = require('googleapis');
+// Load .env if running locally; on Hostinger, env vars are injected by the panel
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -84,6 +85,10 @@ function dumpDatabase(filePath) {
     });
 }
 
+
+function testjsrun(){
+    
+}
 // ─── Step 2: Validate local file ────────────────────────────
 
 async function validateFile(filePath) {

@@ -815,16 +815,31 @@ function createTaskElement(task) {
 </svg>
 ` : ''}
 
-      <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
-        ${formatDate(task.due_date)}
-      </div>
+      
+        <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
+          ${formatDate(task.due_date)}
+        </div>
 
-      <div class="dots-btn">
+
+      ${task.repeat_type && task.repeat_type !== 'none' ? `
+        <span class="repeat-badge" style="
+          font-size:9px; color:#a78bfa; cursor:pointer;
+          padding:2px 5px; border-radius:3px;
+          background:rgba(167,139,250,0.1);
+          border:1px solid rgba(167,139,250,0.35);
+          font-weight:700; letter-spacing:0.3px;
+          white-space:nowrap; flex-shrink:0;
+          line-height:1.4;
+        ">🔁 ${task.repeat_type}</span>
+      ` : ''}
+
+        <div class="dots-btn">
         <i class="fa-solid fa-ellipsis-vertical"></i>
       </div>
 
 <div class="${task.status === 'COMPLETED' ? 'completed-menu' : 'task-options-menu'}">
         <div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>
+        <div class="repeat-opt"><i class="fa-solid fa-rotate"></i> Repeat</div>
         <div class="delete-opt" style="color:red"><i class="fa-solid fa-trash"></i> Delete</div>
       </div>
     </div>
@@ -885,10 +900,99 @@ document.querySelectorAll('.task-options-menu, .completed-menu')
 menu.style.zIndex = 2000;
   });
 
-  div.querySelector('.edit-opt').addEventListener('click', () => {
+div.querySelector('.edit-opt').addEventListener('click', () => {
     div.dispatchEvent(new Event('dblclick'));
     menu.style.display = 'none';
   });
+
+  // ── Repeat option ──
+  const repeatOptEl = div.querySelector('.repeat-opt');
+  if (repeatOptEl) {
+    repeatOptEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.style.display = 'none';
+
+      // Build repeat modal
+      const existing = document.getElementById('repeat-modal-overlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'repeat-modal-overlay';
+      overlay.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.6);
+        z-index:99999; display:flex; align-items:center; justify-content:center;
+      `;
+
+      const currentRepeat = task.repeat_type || 'none';
+      const options = [
+        { value: 'none',    label: 'Off',          icon: '🚫', desc: 'Does not repeat' },
+        { value: 'daily',   label: 'Every day',    icon: '📆', desc: 'Repeats daily' },
+        { value: 'weekly',  label: 'Every week',   icon: '🗓️', desc: 'Same day each week' },
+        { value: 'monthly', label: 'Every month',  icon: '📅', desc: 'Same date each month' },
+      ];
+
+      overlay.innerHTML = `
+        <div style="
+          background:#2E2D2D; border-radius:16px; border-top:2px solid #0F8989;
+          width:320px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);
+          font-family:Arial,sans-serif;
+        ">
+          <div style="padding:14px 18px 10px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #3C3A3A;">
+            <span style="color:#CDF4F4; font-weight:700; font-size:15px;">🔁 Repeat Task</span>
+            <button id="repeat-modal-close" style="
+              background:#3C3A3A; border:1px solid #0F8989; color:#aaa;
+              width:28px; height:28px; border-radius:8px; cursor:pointer; font-size:12px;
+            ">✕</button>
+          </div>
+          <div>
+            ${options.map(opt => `
+              <button data-repeat-val="${opt.value}" style="
+                display:flex; align-items:center; gap:12px;
+                width:100%; border:none; border-bottom:1px solid #3C3A3A;
+                padding:14px 18px; cursor:pointer; text-align:left;
+                font-family:Arial,sans-serif;
+                background:${currentRepeat === opt.value ? 'rgba(15,137,137,0.12)' : '#2E2D2D'};
+              ">
+                <span style="font-size:20px;">${opt.icon}</span>
+                <span style="flex:1;">
+                  <span style="display:block; color:#eee; font-size:14px; font-weight:${currentRepeat === opt.value ? 700 : 400};">${opt.label}</span>
+                  <span style="display:block; color:#aaa; font-size:11px; margin-top:2px;">${opt.desc}</span>
+                </span>
+                ${currentRepeat === opt.value ? '<span style="color:#0F8989; font-size:18px;">✓</span>' : ''}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      document.getElementById('repeat-modal-close').addEventListener('click', () => overlay.remove());
+      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+
+ overlay.querySelectorAll('[data-repeat-val]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const newRepeat = btn.dataset.repeatVal;
+          overlay.remove();
+          await fetch('/api/repeat/set-repeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: task.id, repeat_type: newRepeat })
+          });
+          await refreshTasksUI();
+        });
+      });
+    });
+  }
+
+  // ── Repeat badge click → opens same repeat modal ──
+  const repeatBadge = div.querySelector('.repeat-badge');
+  if (repeatBadge) {
+    repeatBadge.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (repeatOptEl) repeatOptEl.dispatchEvent(new Event('click', { bubbles: false }));
+    });
+  }
 
   div.querySelector('.cancel-btn').addEventListener('click', (e) => {
     e.stopPropagation();
