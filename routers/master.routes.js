@@ -1,3 +1,4 @@
+// routers/master.routes.js
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');

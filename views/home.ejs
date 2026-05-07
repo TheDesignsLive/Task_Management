@@ -632,6 +632,144 @@ html, body {
   }
 }
 
+/* ===== MULTI SELECT ===== */
+.task-item.selected {
+  background-color: #1a4a4a !important;
+  border-left: 3px solid #0F8989;
+  outline: 1px solid #0F8989;
+}
+.task-item.selected:hover { background-color: #1e5555 !important; }
+
+#multi-select-bar {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0F8989;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 8000;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  gap: 12px;
+  align-items: center;
+  white-space: nowrap;
+}
+#multi-select-bar.visible { display: flex; }
+#multi-select-bar button {
+  background: rgba(255,255,255,0.15);
+  border: none; color: white;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; cursor: pointer; font-weight: 600;
+}
+#multi-select-bar button:hover { background: rgba(255,255,255,0.3); }
+
+/* CONTEXT MENU */
+#task-context-menu {
+  display: none;
+  position: fixed;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  z-index: 99999;
+  min-width: 190px;
+  overflow: hidden;
+  animation: menuPopDown 0.15s ease;
+}
+#task-context-menu .ctx-section {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+#task-context-menu .ctx-section:last-child { border-bottom: none; }
+#task-context-menu .ctx-label {
+  padding: 4px 14px; font-size: 10px;
+  color: #999; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+#task-context-menu .ctx-item {
+  padding: 8px 14px; font-size: 12px;
+  cursor: pointer; display: flex;
+  align-items: center; gap: 8px;
+  color: #333; transition: background 0.1s;
+}
+#task-context-menu .ctx-item:hover { background: #f0f9f9; color: #0F8989; }
+#task-context-menu .ctx-item.danger { color: #d32f2f; }
+#task-context-menu .ctx-item.danger:hover { background: #fff0f0; color: #b71c1c; }
+
+/* Icon row for date + priority */
+.ctx-icon-row {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 8px;
+  justify-content: space-between;
+}
+
+.ctx-icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 5px 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 36px;
+  transition: background 0.15s;
+  color: #555;
+}
+
+.ctx-icon-btn i {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.ctx-icon-btn span {
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #888;
+}
+
+.ctx-icon-btn:hover {
+  background: #f0f9f9;
+}
+
+.ctx-icon-btn:hover i { color: #0F8989; }
+.ctx-icon-btn:hover span { color: #0F8989; }
+
+/* Clear date - red tint */
+.ctx-icon-clear-date i { color: #bbb; }
+.ctx-icon-clear-date:hover { background: #fff0f0 !important; }
+.ctx-icon-clear-date:hover i { color: #e74c3c !important; }
+.ctx-icon-clear-date:hover span { color: #e74c3c !important; }
+
+/* Flag colors */
+.ctx-flag-high i { color: #e74c3c; }
+.ctx-flag-medium i { color: #f39c12; }
+.ctx-flag-low i { color: #3498db; }
+.ctx-flag-none i { color: #bbb; }
+
+.ctx-flag-high:hover { background: #fff0f0 !important; }
+.ctx-flag-medium:hover { background: #fffbf0 !important; }
+.ctx-flag-low:hover { background: #f0f4ff !important; }
+.ctx-flag-none:hover { background: #f5f5f5 !important; }
+
+/* Selected count info row */
+.ctx-item-selected-info {
+  color: #0F8989 !important;
+  font-size: 11px !important;
+  padding: 5px 14px !important;
+  cursor: default !important;
+  font-weight: 600;
+}
+.ctx-item-selected-info:hover { background: transparent !important; color: #0F8989 !important; }
+
+.ctx-delete-btn { font-weight: 700 !important; font-size: 12px !important; }
+
+body.no-select { user-select: none; -webkit-user-select: none; }
+
 
 
 
@@ -1025,11 +1163,16 @@ if(infoIcon){
   });
 }
 
-  div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
+div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
     await updateTaskStatus(task.id, status, section);
   });
+
+  // ── Multi-select attach ──
+  if (task.status !== 'COMPLETED') {
+    attachMultiSelectToTask(div, task.id);
+  }
 
   return div;
 }
@@ -1365,6 +1508,360 @@ document.getElementById("cancelSingleDelete").addEventListener("click", () => {
 });
 
 
+// =============================================
+// MULTI SELECT SYSTEM
+// =============================================
+
+let selectedTaskIds = new Set();
+let lastClickedTaskEl = null;
+
+function getAllVisibleTaskEls() {
+  return Array.from(document.querySelectorAll('.task-item:not(.completed-task)'));
+}
+
+function updateSelectionUI() {
+  const bar = document.getElementById('multi-select-bar');
+  const count = document.getElementById('multi-select-count');
+  getAllVisibleTaskEls().forEach(el => {
+    if (selectedTaskIds.has(el.dataset.id)) {
+      el.classList.add('selected');
+    } else {
+      el.classList.remove('selected');
+    }
+  });
+  if (selectedTaskIds.size > 0) {
+    bar.classList.add('visible');
+    count.textContent = selectedTaskIds.size + ' selected';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function clearSelection() {
+  selectedTaskIds.clear();
+  lastClickedTaskEl = null;
+  updateSelectionUI();
+  document.body.classList.remove('no-select');
+}
+
+function selectTask(el, taskId) {
+  selectedTaskIds.add(String(taskId));
+  lastClickedTaskEl = el;
+  updateSelectionUI();
+}
+
+function toggleTask(el, taskId) {
+  const id = String(taskId);
+  if (selectedTaskIds.has(id)) {
+    selectedTaskIds.delete(id);
+  } else {
+    selectedTaskIds.add(id);
+    lastClickedTaskEl = el;
+  }
+  updateSelectionUI();
+}
+
+function shiftSelectTo(el) {
+  const allEls = getAllVisibleTaskEls();
+  if (!lastClickedTaskEl || !allEls.includes(lastClickedTaskEl)) {
+    selectTask(el, el.dataset.id);
+    return;
+  }
+  const fromIdx = allEls.indexOf(lastClickedTaskEl);
+  const toIdx = allEls.indexOf(el);
+  const start = Math.min(fromIdx, toIdx);
+  const end = Math.max(fromIdx, toIdx);
+  for (let i = start; i <= end; i++) {
+    selectedTaskIds.add(String(allEls[i].dataset.id));
+  }
+  updateSelectionUI();
+}
+
+function attachMultiSelectToTask(div, taskId) {
+  // Long-press for mobile
+  let pressTimer = null;
+  div.addEventListener('touchstart', (e) => {
+    pressTimer = setTimeout(() => {
+      document.body.classList.add('no-select');
+      toggleTask(div, taskId);
+    }, 600);
+  }, { passive: true });
+  div.addEventListener('touchend', () => clearTimeout(pressTimer));
+  div.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+  // Left-click: first click selects, shift+click range-selects, click on selected unselects it, click anywhere else clears
+  div.addEventListener('click', (e) => {
+    if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .edit-box, .info-icon, .repeat-badge')) return;
+
+    if (e.shiftKey && lastClickedTaskEl) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.classList.add('no-select');
+      shiftSelectTo(div);
+      return;
+    }
+
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.classList.add('no-select');
+      toggleTask(div, taskId);
+      return;
+    }
+
+    // Plain left-click
+    if (selectedTaskIds.size > 0) {
+      e.stopPropagation();
+      if (selectedTaskIds.has(String(taskId))) {
+        // Unselect just this one
+        selectedTaskIds.delete(String(taskId));
+        updateSelectionUI();
+      } else {
+        // Click on unselected task while others selected → clear all
+        clearSelection();
+      }
+      return;
+    }
+
+    // No selection active — plain left-click selects this task
+    e.stopPropagation();
+    selectTask(div, taskId);
+  });
+
+  // Right-click drag to select/deselect tasks
+  div.addEventListener('mouseenter', (e) => {
+    if (e.buttons !== 2) return;
+    document.body.classList.add('no-select');
+    const id = String(taskId);
+    if (selectedTaskIds.has(id)) {
+      selectedTaskIds.delete(id);
+    } else {
+      selectedTaskIds.add(id);
+      lastClickedTaskEl = div;
+    }
+    updateSelectionUI();
+  });
+
+// Right-click → select task + show context menu
+  div.addEventListener('contextmenu', (e) => {
+    if (div.classList.contains('completed-task')) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selectedTaskIds.has(String(taskId))) {
+      if (!e.shiftKey) selectedTaskIds.clear();
+      selectedTaskIds.add(String(taskId));
+      lastClickedTaskEl = div;
+      updateSelectionUI();
+    }
+
+    // Only show menu if at least one task is selected
+    if (selectedTaskIds.size > 0) {
+      showContextMenu(e.clientX, e.clientY);
+    }
+  });
+}
+
+// ── Context Menu ──
+const ctxMenu = document.getElementById('task-context-menu');
+
+function showContextMenu(x, y) {
+  // Update selected count label
+  const count = selectedTaskIds.size;
+  const label = document.getElementById('ctx-selected-label');
+  if (label) label.textContent = count + ' task' + (count !== 1 ? 's' : '') + ' selected';
+
+  const selectedEls = getAllVisibleTaskEls().filter(el => selectedTaskIds.has(el.dataset.id));
+  const sections = new Set(selectedEls.map(el => {
+    const parentId = el.closest('[id$="-section"]')?.id;
+    if (parentId === 'task-section') return 'TASK';
+    if (parentId === 'other-section') return 'OTHERS';
+    if (parentId === 'change-section') return 'CHANGES';
+    if (parentId === 'update-section') return 'UPDATE';
+    return null;
+  }));
+
+  const sectionSection = document.getElementById('ctx-section-section');
+  const canChangeSection = [...sections].every(s => s === 'TASK' || s === 'OTHERS');
+  sectionSection.style.display = canChangeSection ? 'block' : 'none';
+
+  sectionSection.querySelectorAll('.ctx-item').forEach(item => {
+    const targetSec = item.dataset.action.replace('section-', '');
+    item.style.display = [...sections].includes(targetSec) ? 'none' : 'flex';
+  });
+
+  ctxMenu.style.display = 'block';
+
+  const menuW = 220, menuH = 260;
+  let left = x + 4;
+  let top = y + 4;
+  if (left + menuW > window.innerWidth) left = x - menuW - 4;
+  if (top + menuH > window.innerHeight) top = y - menuH - 4;
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top = top + 'px';
+}
+
+function hideContextMenu() {
+  ctxMenu.style.display = 'none';
+}
+
+document.addEventListener('click', (e) => {
+  if (!ctxMenu.contains(e.target)) hideContextMenu();
+});
+
+// Escape clears selection
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { hideContextMenu(); clearSelection(); }
+});
+
+// Click on empty board area clears selection
+document.querySelector('.board-scroll').addEventListener('click', (e) => {
+  if (!e.target.closest('.task-item') && !e.target.closest('#task-context-menu')) {
+    clearSelection();
+  }
+});
+
+// Shift+Arrow key extends selection
+document.addEventListener('keydown', (e) => {
+  if (selectedTaskIds.size === 0) return;
+  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  if (!e.shiftKey) return;
+  e.preventDefault();
+  const allEls = getAllVisibleTaskEls();
+  if (!lastClickedTaskEl) return;
+  const idx = allEls.indexOf(lastClickedTaskEl);
+  const nextIdx = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
+  if (nextIdx < 0 || nextIdx >= allEls.length) return;
+  const nextEl = allEls[nextIdx];
+  selectedTaskIds.add(String(nextEl.dataset.id));
+  lastClickedTaskEl = nextEl;
+  nextEl.scrollIntoView({ block: 'nearest' });
+  updateSelectionUI();
+});
+
+// ── Context menu action handlers ──
+function getTargetDate(action) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  if (action === 'date-today')    return d.toISOString().split('T')[0];
+  if (action === 'date-tomorrow') { d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; }
+  if (action === 'date-7')        { d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; }
+  if (action === 'date-30')       { d.setMonth(d.getMonth()+1); return d.toISOString().split('T')[0]; }
+  return null;
+}
+
+document.querySelectorAll('.ctx-icon-btn').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const action = btn.dataset.action;
+    const ids = [...selectedTaskIds];
+    if (!ids.length) return;
+
+    // ── DATE ACTIONS ──
+    if (action === 'date-custom') {
+      hideContextMenu();
+      const input = document.getElementById('ctx-custom-date-input');
+      if (input._flatpickr) input._flatpickr.destroy();
+      flatpickr(input, {
+        dateFormat: 'Y-m-d', minDate: 'today', appendTo: document.body,
+        onOpen: (s, d, i) => i.calendarContainer.classList.add('center-calendar'),
+        onChange: async (selectedDates, dateStr) => {
+          if (!dateStr) return;
+          await Promise.all(ids.map(id => fetch('/update-task-date', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, due_date: dateStr })
+          })));
+          clearSelection();
+          await refreshTasksUI();
+        }
+      });
+      input._flatpickr.open();
+      return;
+    }
+
+    if (action === 'date-clear') {
+      hideContextMenu();
+      await Promise.all(ids.map(id => fetch('/update-task-date', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, due_date: null })
+      })));
+      clearSelection();
+      await refreshTasksUI();
+      return;
+    }
+
+    if (action.startsWith('date-')) {
+      hideContextMenu();
+      const due_date = getTargetDate(action);
+      await Promise.all(ids.map(id => fetch('/update-task-date', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, due_date })
+      })));
+      clearSelection();
+      await refreshTasksUI();
+      return;
+    }
+
+    // ── PRIORITY ACTIONS ──
+    if (action.startsWith('priority-')) {
+      hideContextMenu();
+      const priority = action.replace('priority-', '');
+      await Promise.all(ids.map(id => fetch('/edit-task-details', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id, priority,
+          title: currentTasks.find(t => String(t.id) === id)?.title || '',
+          description: currentTasks.find(t => String(t.id) === id)?.description || '',
+          due_date: currentTasks.find(t => String(t.id) === id)?.due_date || null,
+          assigned_to: currentTasks.find(t => String(t.id) === id)?.assigned_to ?? 0
+        })
+      })));
+      clearSelection();
+      await refreshTasksUI();
+      return;
+    }
+  });
+});
+
+ctxMenu.querySelectorAll('.ctx-item[data-action^="section-"]').forEach(item => {
+  item.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    const section = item.dataset.action.replace('section-', '');
+    const ids = [...selectedTaskIds];
+    if (!ids.length) return;
+    await Promise.all(ids.map(id => fetch('/update-task-section', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, section })
+    })));
+    clearSelection();
+    await refreshTasksUI();
+  });
+});
+
+document.querySelector('.ctx-delete-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  hideContextMenu();
+  const ids = [...selectedTaskIds];
+  if (!ids.length) return;
+  document.getElementById('ctx-delete-count').textContent = `${ids.length} task${ids.length > 1 ? 's' : ''} will be permanently removed.`;
+  document.getElementById('ctx-delete-confirm').style.display = 'flex';
+});
+
+document.getElementById('ctx-delete-cancel').addEventListener('click', () => {
+  document.getElementById('ctx-delete-confirm').style.display = 'none';
+});
+
+document.getElementById('ctx-delete-ok').addEventListener('click', async () => {
+  document.getElementById('ctx-delete-confirm').style.display = 'none';
+  const ids = [...selectedTaskIds];
+  await Promise.all(ids.map(id => fetch(`/delete-task/${id}`, { method: 'POST' })));
+  clearSelection();
+  await refreshTasksUI();
+});
+
+document.getElementById('ms-clear-btn').addEventListener('click', clearSelection);
+
 // ✅ ONLY APPLY HORIZONTAL SCROLL ON BOARD (NOT INSIDE TASK COLUMNS)
 const board = document.querySelector('.board-scroll');
 
@@ -1383,6 +1880,102 @@ board.addEventListener('wheel', function(e) {
 
 }, { passive: false });
 </script>
+<!-- Multi-select bar -->
+<div id="multi-select-bar">
+  <span id="multi-select-count">0 selected</span>
+  <button id="ms-clear-btn">✕ Clear</button>
+</div>
+
+<!-- Right-click context menu -->
+<div id="task-context-menu">
+
+  <div class="ctx-section" id="ctx-date-section">
+    <div class="ctx-label">Date</div>
+    <div class="ctx-icon-row">
+      <div class="ctx-icon-btn" data-action="date-today" title="Today">
+        <i class="fa-solid fa-sun"></i>
+        <span>Today</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-tomorrow" title="Tomorrow">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <span>Tom</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-7" title="+7 Days">
+        <i class="fa-solid fa-calendar-week"></i>
+        <span>7d</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-30" title="Next Month">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>Month</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-custom" title="Pick Date">
+        <i class="fa-solid fa-calendar-plus"></i>
+        <span>Pick</span>
+      </div>
+      <div class="ctx-icon-btn ctx-icon-clear-date" data-action="date-clear" title="Clear Date">
+        <i class="fa-solid fa-xmark"></i>
+        <span>Clear</span>
+      </div>
+    </div>
+    <input type="text" id="ctx-custom-date-input" style="display:none;">
+  </div>
+
+  <div class="ctx-section" id="ctx-priority-section">
+    <div class="ctx-label">Priority</div>
+    <div class="ctx-icon-row">
+      <div class="ctx-icon-btn ctx-flag-high" data-action="priority-HIGH" title="High">
+        <i class="fa-solid fa-flag"></i>
+        <span>High</span>
+      </div>
+      <div class="ctx-icon-btn ctx-flag-medium" data-action="priority-MEDIUM" title="Medium">
+        <i class="fa-solid fa-flag"></i>
+        <span>Med</span>
+      </div>
+      <div class="ctx-icon-btn ctx-flag-low" data-action="priority-LOW" title="Low">
+        <i class="fa-solid fa-flag"></i>
+        <span>Low</span>
+      </div>
+      <div class="ctx-icon-btn ctx-flag-none" data-action="priority-NONE" title="No Priority">
+        <i class="fa-regular fa-flag"></i>
+        <span>None</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctx-section" id="ctx-section-section" style="display:none;">
+    <div class="ctx-label">Move to</div>
+    <div class="ctx-item" data-action="section-CHANGES"><i class="fa-solid fa-right-left" style="width:14px;"></i> Change</div>
+    <div class="ctx-item" data-action="section-UPDATE"><i class="fa-solid fa-right-left" style="width:14px;"></i> Update</div>
+    <div class="ctx-item" data-action="section-OTHERS"><i class="fa-solid fa-right-left" style="width:14px;"></i> Others</div>
+    <div class="ctx-item" data-action="section-TASK"><i class="fa-solid fa-right-left" style="width:14px;"></i> Task</div>
+  </div>
+
+  <div class="ctx-section">
+    <div class="ctx-item ctx-item-selected-info">
+      <i class="fa-solid fa-check-square" style="width:14px; color:#0F8989;"></i>
+      <span id="ctx-selected-label">1 task selected</span>
+    </div>
+  </div>
+
+  <div class="ctx-section">
+    <div class="ctx-item danger ctx-delete-btn"><i class="fa-solid fa-trash" style="width:14px;"></i> Delete</div>
+  </div>
+
+</div>
+
+<!-- Delete confirmation popup -->
+<div id="ctx-delete-confirm" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:999999; align-items:center; justify-content:center;">
+  <div style="background:#2E2D2D; border-radius:14px; border-top:2px solid #e74c3c; width:290px; padding:22px 20px; font-family:Arial,sans-serif; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+    <div style="color:#e74c3c; font-size:28px; margin-bottom:8px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div style="color:#fff; font-weight:700; font-size:15px; margin-bottom:6px;">Delete Selected Tasks?</div>
+    <div id="ctx-delete-count" style="color:#aaa; font-size:12px; margin-bottom:18px;">This cannot be undone.</div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button id="ctx-delete-ok" style="background:#e74c3c; color:white; border:none; padding:8px 22px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">Delete</button>
+      <button id="ctx-delete-cancel" style="background:#444; color:white; border:none; padding:8px 22px; border-radius:8px; font-size:13px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
