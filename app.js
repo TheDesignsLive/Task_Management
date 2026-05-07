@@ -243,59 +243,26 @@ cron.schedule('0 0 * * *', () => {
 
 
 
-function getISTTime() {
-    return new Date().toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata"
-    });
-}
+// ── Backup cron (replaces old scheduleBackup) ──
+let isBackupRunning = false;
 
-function scheduleBackup(hour, minute, period) {
+function scheduleBackupCron() {
+    cron.schedule('0 0 * * *', async () => {
+        if (isBackupRunning) {
+            console.log('[Backup] ⛔ Already running — skipped');
+            return;
+        }
+        isBackupRunning = true;
+        try {
+            await backupDatabase();
+        } catch (err) {
+            console.error('[Backup] ❌ Cron error:', err.message);
+        } finally {
+            isBackupRunning = false;
+        }
+    }, { timezone: 'Asia/Kolkata' });
 
-    let cronHour;
-
-    if (period === "AM") {
-        cronHour = (hour === 12) ? 0 : hour;
-    } else {
-        cronHour = (hour === 12) ? 12 : hour + 12;
-    }
-
-    const cronTime = `${minute} ${cronHour} * * *`;
-
-    debugLog("==================================");
-    debugLog("🕒 Current Server Time (UTC):", new Date().toString());
-    debugLog("🕒 Current IST Time:", getISTTime());
-    debugLog("⏰ Backup Time(IST):", `${hour}:${minute} ${period}`);
-  
-    debugLog("==================================");
-
-
-
-
-let isBackupRunning = false; // 🔥 LOCK
-
-cron.schedule(cronTime, async () => {
-    if (isBackupRunning) {
-        debugLog("⛔ Backup already running, skipping...");
-        return;
-    }
-
-    isBackupRunning = true;
-
-    try {
-        debugLog("\n🚀 CRON TRIGGERED");
-
-        await backupDatabase();  
-       
-
-    } catch (err) {
-        console.error("❌ Cron Error:", err.message);
-    } finally {
-        isBackupRunning = false; // 🔓 UNLOCK
-    }
-
-}, {
-    timezone: "Asia/Kolkata"
-});
+    console.log('[Backup] ✅ Daily cron scheduled (00:00 IST)');
 }
 
 
@@ -555,15 +522,9 @@ app.post('/api/notify-roles-update', (req, res) => {
 
 
 // ================= START SERVER =================
-let backupSchedulerStarted = false;
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     debugLog("server running on port " + PORT);
-
-    if (!backupSchedulerStarted) {
-        scheduleBackup(12,0,"AM");
-        backupSchedulerStarted = true;
-        debugLog("✅ Backup cron scheduled ONLY ONCE");
-    }
+    scheduleBackupCron();
+    debugLog("✅ Backup cron scheduled");
 });
