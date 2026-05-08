@@ -1200,7 +1200,7 @@ div.querySelector('.edit-opt').addEventListener('click', () => {
     if (task.status !== 'COMPLETED') div.draggable = true; // ✅ RE-ENABLE DRAG
   });
 
-  div.querySelector('.save-btn').addEventListener('click', async (e) => {
+div.querySelector('.save-btn').addEventListener('click', async (e) => {
     e.stopPropagation();
     const title = div.querySelector('.edit-title').value;
     const description = div.querySelector('.edit-desc').value;
@@ -1214,6 +1214,9 @@ div.querySelector('.edit-opt').addEventListener('click', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date, assigned_to })
     });
+    div.querySelector('.edit-box').style.display = 'none';
+    if (task.status !== 'COMPLETED') div.draggable = true;
+    await refreshTasksUI();
   });
 
 const infoIcon = div.querySelector('.info-icon');
