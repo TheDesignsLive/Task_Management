@@ -671,39 +671,59 @@ html, body {
 #task-context-menu {
   display: none;
   position: fixed;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.10);
   z-index: 99999;
-  min-width: 190px;
-  overflow: hidden;
-  animation: menuPopDown 0.15s ease;
-}
-#task-context-menu .ctx-section {
+  min-width: 210px;
+  overflow: visible;
+  animation: ctxMenuPop 0.18s cubic-bezier(.34,1.56,.64,1);
+  border: 1px solid rgba(0,0,0,0.07);
   padding: 6px 0;
-  border-bottom: 1px solid #eee;
+}
+
+@keyframes ctxMenuPop {
+  from { opacity: 0; transform: scale(0.88) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+#task-context-menu .ctx-section {
+  padding: 2px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 #task-context-menu .ctx-section:last-child { border-bottom: none; }
+
 #task-context-menu .ctx-label {
-  padding: 4px 14px; font-size: 10px;
-  color: #999; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 6px 16px 3px;
+  font-size: 10px;
+  color: #aaa;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
 }
+
 #task-context-menu .ctx-item {
-  padding: 8px 14px; font-size: 12px;
-  cursor: pointer; display: flex;
-  align-items: center; gap: 8px;
-  color: #333; transition: background 0.1s;
+  padding: 9px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #222;
+  transition: background 0.1s, color 0.1s;
+  border-radius: 0;
+  position: relative;
 }
-#task-context-menu .ctx-item:hover { background: #f0f9f9; color: #0F8989; }
+#task-context-menu .ctx-item:hover { background: #f0fafa; color: #0F8989; }
 #task-context-menu .ctx-item.danger { color: #d32f2f; }
 #task-context-menu .ctx-item.danger:hover { background: #fff0f0; color: #b71c1c; }
+#task-context-menu .ctx-item i { width: 16px; text-align: center; font-size: 13px; }
 
-/* Icon row for date + priority */
+/* Icon row for date */
 .ctx-icon-row {
   display: flex;
   gap: 2px;
-  padding: 4px 8px 8px;
+  padding: 4px 8px 6px;
   justify-content: space-between;
 }
 
@@ -712,63 +732,100 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 6px 5px 5px;
+  padding: 6px 4px 5px;
   border-radius: 8px;
   cursor: pointer;
-  min-width: 36px;
+  min-width: 32px;
   transition: background 0.15s;
   color: #555;
 }
-
-.ctx-icon-btn i {
-  font-size: 15px;
-  line-height: 1;
-}
-
-.ctx-icon-btn span {
-  font-size: 9px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: #888;
-}
-
-.ctx-icon-btn:hover {
-  background: #f0f9f9;
-}
-
+.ctx-icon-btn i { font-size: 14px; line-height: 1; }
+.ctx-icon-btn span { font-size: 9px; font-weight: 600; white-space: nowrap; color: #888; }
+.ctx-icon-btn:hover { background: #f0fafa; }
 .ctx-icon-btn:hover i { color: #0F8989; }
 .ctx-icon-btn:hover span { color: #0F8989; }
 
-/* Clear date - red tint */
-.ctx-icon-clear-date i { color: #bbb; }
+/* Clear date red */
+.ctx-icon-clear-date i { color: #ccc; }
 .ctx-icon-clear-date:hover { background: #fff0f0 !important; }
 .ctx-icon-clear-date:hover i { color: #e74c3c !important; }
 .ctx-icon-clear-date:hover span { color: #e74c3c !important; }
 
-/* Flag colors */
-.ctx-flag-high i { color: #e74c3c; }
-.ctx-flag-medium i { color: #f39c12; }
-.ctx-flag-low i { color: #3498db; }
-.ctx-flag-none i { color: #bbb; }
+/* Priority flags */
+.ctx-flag-high i  { color: #e74c3c; }
+.ctx-flag-medium i{ color: #f39c12; }
+.ctx-flag-low i   { color: #3498db; }
+.ctx-flag-none i  { color: #ccc; }
+.ctx-flag-high:hover  { background: #fff0f0 !important; }
+.ctx-flag-medium:hover{ background: #fffbf0 !important; }
+.ctx-flag-low:hover   { background: #f0f4ff !important; }
+.ctx-flag-none:hover  { background: #f5f5f5 !important; }
 
-.ctx-flag-high:hover { background: #fff0f0 !important; }
-.ctx-flag-medium:hover { background: #fffbf0 !important; }
-.ctx-flag-low:hover { background: #f0f4ff !important; }
-.ctx-flag-none:hover { background: #f5f5f5 !important; }
-
-/* Selected count info row */
+/* Selected info */
 .ctx-item-selected-info {
   color: #0F8989 !important;
   font-size: 11px !important;
-  padding: 5px 14px !important;
+  padding: 6px 16px !important;
   cursor: default !important;
-  font-weight: 600;
+  font-weight: 700;
+  background: #f0fafa;
 }
-.ctx-item-selected-info:hover { background: transparent !important; color: #0F8989 !important; }
+.ctx-item-selected-info:hover { background: #f0fafa !important; color: #0F8989 !important; }
 
-.ctx-delete-btn { font-weight: 700 !important; font-size: 12px !important; }
+/* Submenu arrow */
+.ctx-item .ctx-arrow {
+  margin-left: auto;
+  font-size: 11px;
+  color: #bbb;
+}
+
+/* Priority inline icon row */
+.ctx-priority-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px 10px 8px;
+  justify-content: flex-start;
+}
+.ctx-priority-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 10px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex: 1;
+}
+.ctx-priority-btn span { font-size: 9px; font-weight: 700; color: #888; }
+.ctx-priority-btn i { font-size: 16px; }
+.ctx-priority-btn:hover span { color: inherit; }
+.ctx-priority-btn.p-high i  { color: #e74c3c; }
+.ctx-priority-btn.p-medium i{ color: #f39c12; }
+.ctx-priority-btn.p-low i   { color: #3498db; }
+.ctx-priority-btn.p-high:hover  { background:#fff0f0; }
+.ctx-priority-btn.p-medium:hover{ background:#fffbf0; }
+.ctx-priority-btn.p-low:hover   { background:#f0f4ff; }
+
+.ctx-delete-btn { font-weight: 700 !important; }
 
 body.no-select { user-select: none; -webkit-user-select: none; }
+
+/* Bulk delete modal */
+#ctx-delete-confirm {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 999999;
+  align-items: center;
+  justify-content: center;
+  animation: ctxFadeIn 0.18s ease;
+}
+@keyframes ctxFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
 
 
@@ -1014,7 +1071,10 @@ function createTaskElement(task) {
     textarea.style.height = textarea.scrollHeight + 'px';
   };
 
-  div.addEventListener('dblclick', () => {
+div.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .repeat-badge')) return;
+    // If tasks are selected, double-click should not open edit
+    if (selectedTaskIds.size > 0) return;
     div.draggable = false; // 🚫 DISABLE DRAG WHEN EDITING
     const editBox = div.querySelector('.edit-box');
     editBox.style.display = 'flex';
@@ -1562,19 +1622,35 @@ function toggleTask(el, taskId) {
 }
 
 function shiftSelectTo(el) {
-  const allEls = getAllVisibleTaskEls();
-  if (!lastClickedTaskEl || !allEls.includes(lastClickedTaskEl)) {
+  // Always use same-section elements for range select
+  const sectionEls = getTaskElsInSameSection(el);
+  if (!lastClickedTaskEl || !sectionEls.includes(lastClickedTaskEl)) {
     selectTask(el, el.dataset.id);
     return;
   }
-  const fromIdx = allEls.indexOf(lastClickedTaskEl);
-  const toIdx = allEls.indexOf(el);
+  const fromIdx = sectionEls.indexOf(lastClickedTaskEl);
+  const toIdx = sectionEls.indexOf(el);
   const start = Math.min(fromIdx, toIdx);
   const end = Math.max(fromIdx, toIdx);
   for (let i = start; i <= end; i++) {
-    selectedTaskIds.add(String(allEls[i].dataset.id));
+    selectedTaskIds.add(String(sectionEls[i].dataset.id));
   }
   updateSelectionUI();
+}
+
+// ── Helper: get the section container id for a task element ──
+function getSectionIdForEl(el) {
+  const section = el.closest('[id$="-section"]');
+  return section ? section.id : null;
+}
+
+// ── Helper: get all visible task els inside the SAME section as the anchor ──
+function getTaskElsInSameSection(anchorEl) {
+  const sectionId = getSectionIdForEl(anchorEl);
+  if (!sectionId) return [];
+  const container = document.getElementById(sectionId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('.task-item:not(.completed-task)'));
 }
 
 function attachMultiSelectToTask(div, taskId) {
@@ -1583,13 +1659,16 @@ function attachMultiSelectToTask(div, taskId) {
   div.addEventListener('touchstart', (e) => {
     pressTimer = setTimeout(() => {
       document.body.classList.add('no-select');
+      if (lastClickedTaskEl && getSectionIdForEl(lastClickedTaskEl) !== getSectionIdForEl(div)) {
+        clearSelection();
+      }
       toggleTask(div, taskId);
     }, 600);
   }, { passive: true });
   div.addEventListener('touchend', () => clearTimeout(pressTimer));
   div.addEventListener('touchmove', () => clearTimeout(pressTimer));
 
-  // Left-click: first click selects, shift+click range-selects, click on selected unselects it, click anywhere else clears
+  // Left-click: select / shift-range / ctrl-toggle
   div.addEventListener('click', (e) => {
     if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .edit-box, .info-icon, .repeat-badge')) return;
 
@@ -1597,7 +1676,12 @@ function attachMultiSelectToTask(div, taskId) {
       e.preventDefault();
       e.stopPropagation();
       document.body.classList.add('no-select');
-      shiftSelectTo(div);
+      if (getSectionIdForEl(lastClickedTaskEl) !== getSectionIdForEl(div)) {
+        clearSelection();
+        selectTask(div, taskId);
+      } else {
+        shiftSelectTo(div);
+      }
       return;
     }
 
@@ -1605,7 +1689,12 @@ function attachMultiSelectToTask(div, taskId) {
       e.preventDefault();
       e.stopPropagation();
       document.body.classList.add('no-select');
-      toggleTask(div, taskId);
+      if (lastClickedTaskEl && getSectionIdForEl(lastClickedTaskEl) !== getSectionIdForEl(div)) {
+        clearSelection();
+        selectTask(div, taskId);
+      } else {
+        toggleTask(div, taskId);
+      }
       return;
     }
 
@@ -1613,60 +1702,38 @@ function attachMultiSelectToTask(div, taskId) {
     if (selectedTaskIds.size > 0) {
       e.stopPropagation();
       if (selectedTaskIds.has(String(taskId))) {
-        // Unselect just this one
         selectedTaskIds.delete(String(taskId));
         updateSelectionUI();
       } else {
-        // Click on unselected task while others selected → clear all
-        clearSelection();
+        if (lastClickedTaskEl && getSectionIdForEl(lastClickedTaskEl) !== getSectionIdForEl(div)) {
+          clearSelection();
+          selectTask(div, taskId);
+        } else {
+          clearSelection();
+        }
       }
       return;
     }
 
-    // No selection active — plain left-click selects this task
     e.stopPropagation();
     selectTask(div, taskId);
+    return;
   });
 
-  // Right-click drag to select/deselect tasks
-  div.addEventListener('mouseenter', (e) => {
-    if (e.buttons !== 2) return;
-    document.body.classList.add('no-select');
-    const id = String(taskId);
-    if (selectedTaskIds.has(id)) {
-      selectedTaskIds.delete(id);
-    } else {
-      selectedTaskIds.add(id);
-      lastClickedTaskEl = div;
-    }
-    updateSelectionUI();
-  });
+  // Right-click drag to select/deselect (REMOVED — right-click now only opens menu)
 
-// Right-click → select task + show context menu
+// Right-click → handled by global contextmenu listener
   div.addEventListener('contextmenu', (e) => {
-    if (div.classList.contains('completed-task')) return;
     e.preventDefault();
-    e.stopPropagation();
-
-    if (!selectedTaskIds.has(String(taskId))) {
-      if (!e.shiftKey) selectedTaskIds.clear();
-      selectedTaskIds.add(String(taskId));
-      lastClickedTaskEl = div;
-      updateSelectionUI();
-    }
-
-    // Only show menu if at least one task is selected
-    if (selectedTaskIds.size > 0) {
-      showContextMenu(e.clientX, e.clientY);
-    }
+    // ✅ DO NOT stopPropagation — let global handler catch it
   });
 }
 
 // ── Context Menu ──
 const ctxMenu = document.getElementById('task-context-menu');
+let _ctxMenuOpen = false;
 
 function showContextMenu(x, y) {
-  // Update selected count label
   const count = selectedTaskIds.size;
   const label = document.getElementById('ctx-selected-label');
   if (label) label.textContent = count + ' task' + (count !== 1 ? 's' : '') + ' selected';
@@ -1690,23 +1757,28 @@ function showContextMenu(x, y) {
     item.style.display = [...sections].includes(targetSec) ? 'none' : 'flex';
   });
 
-  ctxMenu.style.display = 'block';
-
-  const menuW = 220, menuH = 260;
+  const menuW = 220, menuH = 320;
   let left = x + 4;
   let top = y + 4;
   if (left + menuW > window.innerWidth) left = x - menuW - 4;
   if (top + menuH > window.innerHeight) top = y - menuH - 4;
   ctxMenu.style.left = left + 'px';
   ctxMenu.style.top = top + 'px';
+  ctxMenu.style.display = 'block';
+  _ctxMenuOpen = true;
 }
 
 function hideContextMenu() {
   ctxMenu.style.display = 'none';
+  _ctxMenuOpen = false;
 }
 
-document.addEventListener('click', (e) => {
-  if (!ctxMenu.contains(e.target)) hideContextMenu();
+// Close menu only on genuine left-click outside
+document.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return; // only left mouse button
+  if (!_ctxMenuOpen) return;
+  if (ctxMenu.contains(e.target)) return;
+  hideContextMenu();
 });
 
 // Escape clears selection
@@ -1716,9 +1788,17 @@ document.addEventListener('keydown', (e) => {
 
 // Click on empty board area clears selection
 document.querySelector('.board-scroll').addEventListener('click', (e) => {
+  if (e.target.closest('#multi-select-bar')) return;
   if (!e.target.closest('.task-item') && !e.target.closest('#task-context-menu')) {
     clearSelection();
   }
+});
+
+// Block default context menu on board; show custom menu if tasks selected
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (selectedTaskIds.size === 0) return;
+  showContextMenu(e.clientX, e.clientY);
 });
 
 // Shift+Arrow key extends selection
@@ -1750,79 +1830,81 @@ function getTargetDate(action) {
   return null;
 }
 
+// ── Unified action handler for date + priority icon btns ──
+function handleCtxAction(action) {
+  const ids = [...selectedTaskIds];
+  if (!ids.length) return;
+
+  // DATE ACTIONS
+  if (action === 'date-custom') {
+    hideContextMenu();
+    const input = document.getElementById('ctx-custom-date-input');
+    if (input._flatpickr) input._flatpickr.destroy();
+    flatpickr(input, {
+      dateFormat: 'Y-m-d', minDate: 'today', appendTo: document.body,
+      onOpen: (s, d, i) => i.calendarContainer.classList.add('center-calendar'),
+      onChange: async (selectedDates, dateStr) => {
+        if (!dateStr) return;
+        await fetch('/api/bulk-update-date', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids, due_date: dateStr })
+        });
+        clearSelection();
+        await refreshTasksUI();
+      }
+    });
+    input._flatpickr.open();
+    return;
+  }
+
+  if (action === 'date-clear') {
+    hideContextMenu();
+    fetch('/api/bulk-update-date', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, due_date: null })
+    }).then(() => { clearSelection(); refreshTasksUI(); });
+    return;
+  }
+
+  if (action.startsWith('date-')) {
+    hideContextMenu();
+    const due_date = getTargetDate(action);
+    fetch('/api/bulk-update-date', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, due_date })
+    }).then(() => { clearSelection(); refreshTasksUI(); });
+    return;
+  }
+
+  // PRIORITY ACTIONS
+  if (action.startsWith('priority-')) {
+    hideContextMenu();
+    const priority = action.replace('priority-', '');
+    fetch('/api/bulk-update-priority', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, priority })
+    }).then(() => { clearSelection(); refreshTasksUI(); });
+    return;
+  }
+}
+
+// Date icon buttons
 document.querySelectorAll('.ctx-icon-btn').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
+  btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const action = btn.dataset.action;
-    const ids = [...selectedTaskIds];
-    if (!ids.length) return;
-
-    // ── DATE ACTIONS ──
-    if (action === 'date-custom') {
-      hideContextMenu();
-      const input = document.getElementById('ctx-custom-date-input');
-      if (input._flatpickr) input._flatpickr.destroy();
-      flatpickr(input, {
-        dateFormat: 'Y-m-d', minDate: 'today', appendTo: document.body,
-        onOpen: (s, d, i) => i.calendarContainer.classList.add('center-calendar'),
-        onChange: async (selectedDates, dateStr) => {
-          if (!dateStr) return;
-          await Promise.all(ids.map(id => fetch('/update-task-date', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, due_date: dateStr })
-          })));
-          clearSelection();
-          await refreshTasksUI();
-        }
-      });
-      input._flatpickr.open();
-      return;
-    }
-
-    if (action === 'date-clear') {
-      hideContextMenu();
-      await Promise.all(ids.map(id => fetch('/update-task-date', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, due_date: null })
-      })));
-      clearSelection();
-      await refreshTasksUI();
-      return;
-    }
-
-    if (action.startsWith('date-')) {
-      hideContextMenu();
-      const due_date = getTargetDate(action);
-      await Promise.all(ids.map(id => fetch('/update-task-date', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, due_date })
-      })));
-      clearSelection();
-      await refreshTasksUI();
-      return;
-    }
-
-    // ── PRIORITY ACTIONS ──
-    if (action.startsWith('priority-')) {
-      hideContextMenu();
-      const priority = action.replace('priority-', '');
-      await Promise.all(ids.map(id => fetch('/edit-task-details', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id, priority,
-          title: currentTasks.find(t => String(t.id) === id)?.title || '',
-          description: currentTasks.find(t => String(t.id) === id)?.description || '',
-          due_date: currentTasks.find(t => String(t.id) === id)?.due_date || null,
-          assigned_to: currentTasks.find(t => String(t.id) === id)?.assigned_to ?? 0
-        })
-      })));
-      clearSelection();
-      await refreshTasksUI();
-      return;
-    }
+    handleCtxAction(btn.dataset.action);
   });
 });
 
+// Priority buttons (new design)
+document.querySelectorAll('.ctx-priority-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleCtxAction(btn.dataset.action);
+  });
+});
+
+// Section move
 ctxMenu.querySelectorAll('.ctx-item[data-action^="section-"]').forEach(item => {
   item.addEventListener('click', async (e) => {
     e.stopPropagation();
@@ -1830,21 +1912,24 @@ ctxMenu.querySelectorAll('.ctx-item[data-action^="section-"]').forEach(item => {
     const section = item.dataset.action.replace('section-', '');
     const ids = [...selectedTaskIds];
     if (!ids.length) return;
-    await Promise.all(ids.map(id => fetch('/update-task-section', {
+    await fetch('/api/bulk-update-section', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, section })
-    })));
+      body: JSON.stringify({ ids, section })
+    });
     clearSelection();
     await refreshTasksUI();
   });
 });
 
+// Delete btn → show modal
 document.querySelector('.ctx-delete-btn').addEventListener('click', (e) => {
   e.stopPropagation();
   hideContextMenu();
   const ids = [...selectedTaskIds];
   if (!ids.length) return;
-  document.getElementById('ctx-delete-count').textContent = `${ids.length} task${ids.length > 1 ? 's' : ''} will be permanently removed.`;
+  const count = ids.length;
+  document.getElementById('ctx-delete-count').textContent =
+    `${count} task${count > 1 ? 's' : ''} will be permanently removed.`;
   document.getElementById('ctx-delete-confirm').style.display = 'flex';
 });
 
@@ -1855,12 +1940,23 @@ document.getElementById('ctx-delete-cancel').addEventListener('click', () => {
 document.getElementById('ctx-delete-ok').addEventListener('click', async () => {
   document.getElementById('ctx-delete-confirm').style.display = 'none';
   const ids = [...selectedTaskIds];
-  await Promise.all(ids.map(id => fetch(`/delete-task/${id}`, { method: 'POST' })));
+  await fetch('/api/bulk-delete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids })
+  });
   clearSelection();
   await refreshTasksUI();
 });
 
-document.getElementById('ms-clear-btn').addEventListener('click', clearSelection);
+document.getElementById('ms-clear-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  selectedTaskIds.clear();
+  lastClickedTaskEl = null;
+  document.body.classList.remove('no-select');
+  getAllVisibleTaskEls().forEach(el => el.classList.remove('selected'));
+  document.getElementById('multi-select-bar').classList.remove('visible');
+});
 
 // ✅ ONLY APPLY HORIZONTAL SCROLL ON BOARD (NOT INSIDE TASK COLUMNS)
 const board = document.querySelector('.board-scroll');
@@ -1883,14 +1979,23 @@ board.addEventListener('wheel', function(e) {
 <!-- Multi-select bar -->
 <div id="multi-select-bar">
   <span id="multi-select-count">0 selected</span>
-  <button id="ms-clear-btn">✕ Clear</button>
+  <!-- <button id="ms-clear-btn">✕ Clear</button> -->
 </div>
 
 <!-- Right-click context menu -->
 <div id="task-context-menu">
 
+  <!-- Selected count badge -->
+  <div class="ctx-section">
+    <div class="ctx-item ctx-item-selected-info" style="pointer-events:none;">
+      <i class="fa-solid fa-check-double" style="color:#0F8989;"></i>
+      <span id="ctx-selected-label">1 task selected</span>
+    </div>
+  </div>
+
+  <!-- Date section -->
   <div class="ctx-section" id="ctx-date-section">
-    <div class="ctx-label">Date</div>
+    <div class="ctx-label">Change Date</div>
     <div class="ctx-icon-row">
       <div class="ctx-icon-btn" data-action="date-today" title="Today">
         <i class="fa-solid fa-sun"></i>
@@ -1920,58 +2025,54 @@ board.addEventListener('wheel', function(e) {
     <input type="text" id="ctx-custom-date-input" style="display:none;">
   </div>
 
+  <!-- Priority section -->
   <div class="ctx-section" id="ctx-priority-section">
-    <div class="ctx-label">Priority</div>
-    <div class="ctx-icon-row">
-      <div class="ctx-icon-btn ctx-flag-high" data-action="priority-HIGH" title="High">
+    <div class="ctx-label">Change Priority</div>
+    <div class="ctx-priority-row">
+      <div class="ctx-priority-btn p-high" data-action="priority-HIGH" title="High">
         <i class="fa-solid fa-flag"></i>
         <span>High</span>
       </div>
-      <div class="ctx-icon-btn ctx-flag-medium" data-action="priority-MEDIUM" title="Medium">
+      <div class="ctx-priority-btn p-medium" data-action="priority-MEDIUM" title="Medium">
         <i class="fa-solid fa-flag"></i>
-        <span>Med</span>
+        <span>Medium</span>
       </div>
-      <div class="ctx-icon-btn ctx-flag-low" data-action="priority-LOW" title="Low">
+      <div class="ctx-priority-btn p-low" data-action="priority-LOW" title="Low">
         <i class="fa-solid fa-flag"></i>
         <span>Low</span>
       </div>
-      <div class="ctx-icon-btn ctx-flag-none" data-action="priority-NONE" title="No Priority">
-        <i class="fa-regular fa-flag"></i>
-        <span>None</span>
-      </div>
     </div>
   </div>
 
+  <!-- Move to section -->
   <div class="ctx-section" id="ctx-section-section" style="display:none;">
     <div class="ctx-label">Move to</div>
-    <div class="ctx-item" data-action="section-CHANGES"><i class="fa-solid fa-right-left" style="width:14px;"></i> Change</div>
-    <div class="ctx-item" data-action="section-UPDATE"><i class="fa-solid fa-right-left" style="width:14px;"></i> Update</div>
-    <div class="ctx-item" data-action="section-OTHERS"><i class="fa-solid fa-right-left" style="width:14px;"></i> Others</div>
-    <div class="ctx-item" data-action="section-TASK"><i class="fa-solid fa-right-left" style="width:14px;"></i> Task</div>
+    <div class="ctx-item" data-action="section-CHANGES"><i class="fa-solid fa-right-left"></i> Change</div>
+    <div class="ctx-item" data-action="section-UPDATE"><i class="fa-solid fa-right-left"></i> Update</div>
+    <div class="ctx-item" data-action="section-OTHERS"><i class="fa-solid fa-right-left"></i> Others</div>
+    <div class="ctx-item" data-action="section-TASK"><i class="fa-solid fa-right-left"></i> Task</div>
   </div>
 
+  <!-- Delete -->
   <div class="ctx-section">
-    <div class="ctx-item ctx-item-selected-info">
-      <i class="fa-solid fa-check-square" style="width:14px; color:#0F8989;"></i>
-      <span id="ctx-selected-label">1 task selected</span>
+    <div class="ctx-item danger ctx-delete-btn">
+      <i class="fa-solid fa-trash"></i> Delete Selected
     </div>
-  </div>
-
-  <div class="ctx-section">
-    <div class="ctx-item danger ctx-delete-btn"><i class="fa-solid fa-trash" style="width:14px;"></i> Delete</div>
   </div>
 
 </div>
 
-<!-- Delete confirmation popup -->
-<div id="ctx-delete-confirm" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:999999; align-items:center; justify-content:center;">
-  <div style="background:#2E2D2D; border-radius:14px; border-top:2px solid #e74c3c; width:290px; padding:22px 20px; font-family:Arial,sans-serif; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.6);">
-    <div style="color:#e74c3c; font-size:28px; margin-bottom:8px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
-    <div style="color:#fff; font-weight:700; font-size:15px; margin-bottom:6px;">Delete Selected Tasks?</div>
-    <div id="ctx-delete-count" style="color:#aaa; font-size:12px; margin-bottom:18px;">This cannot be undone.</div>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button id="ctx-delete-ok" style="background:#e74c3c; color:white; border:none; padding:8px 22px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">Delete</button>
-      <button id="ctx-delete-cancel" style="background:#444; color:white; border:none; padding:8px 22px; border-radius:8px; font-size:13px; cursor:pointer;">Cancel</button>
+<!-- Bulk delete confirmation modal -->
+<div id="ctx-delete-confirm">
+  <div style="background:#fff; border-radius:16px; border-top:3px solid #e74c3c; width:300px; padding:28px 24px; font-family:Arial,sans-serif; text-align:center; box-shadow:0 16px 48px rgba(0,0,0,0.22); animation:ctxMenuPop 0.2s cubic-bezier(.34,1.56,.64,1);">
+    <div style="width:52px;height:52px;background:#fff0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#e74c3c;font-size:24px;"></i>
+    </div>
+    <div style="color:#1a1a1a;font-weight:700;font-size:16px;margin-bottom:6px;">Delete Selected Tasks?</div>
+    <div id="ctx-delete-count" style="color:#888;font-size:13px;margin-bottom:22px;">This cannot be undone.</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="ctx-delete-cancel" style="background:#f0f0f0;color:#444;border:none;padding:10px 24px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;transition:background 0.15s;" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">Cancel</button>
+      <button id="ctx-delete-ok" style="background:#e74c3c;color:white;border:none;padding:10px 24px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Delete</button>
     </div>
   </div>
 </div>

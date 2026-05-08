@@ -412,4 +412,60 @@ router.post('/delete-completed-tasks', async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
+/* ===============================
+   BULK ACTIONS (for right-click menu)
+================================ */
+
+router.post('/api/bulk-update-date', async (req, res) => {
+  const { ids, due_date } = req.body;
+  if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
+  try {
+    await Promise.all(ids.map(id =>
+      con.query("UPDATE tasks SET due_date=? WHERE id=?", [due_date, id])
+    ));
+    req.io.emit('update_tasks');
+    notifyMobile();
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+router.post('/api/bulk-update-priority', async (req, res) => {
+  const { ids, priority } = req.body;
+  if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
+  try {
+    await Promise.all(ids.map(id =>
+      con.query("UPDATE tasks SET priority=? WHERE id=?", [priority.toUpperCase(), id])
+    ));
+    req.io.emit('update_tasks');
+    notifyMobile();
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+router.post('/api/bulk-update-section', async (req, res) => {
+  const { ids, section } = req.body;
+  if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
+  try {
+    await Promise.all(ids.map(id =>
+      con.query("UPDATE tasks SET section=? WHERE id=?", [section, id])
+    ));
+    req.io.emit('update_tasks');
+    notifyMobile();
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+router.post('/api/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
+  try {
+    await Promise.all(ids.map(id =>
+      con.query("DELETE FROM tasks WHERE id=?", [id])
+    ));
+    req.io.emit('update_tasks');
+    notifyMobile();
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
 module.exports = router;
