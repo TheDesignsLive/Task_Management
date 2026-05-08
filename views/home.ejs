@@ -857,15 +857,15 @@ body.no-select { user-select: none; -webkit-user-select: none; }
   <div class="right-section">
     <div class="top-columns">
 
-      <div class="column-wrapper">
-        <div class="column-header">Change</div>
+<div class="column-wrapper">
+        <div class="column-header" id="header-changes">Change</div>
         <div class="task-change" id="change-section"></div>
       </div>
 
       <div class="vertical-line"></div>
 
       <div class="column-wrapper">
-        <div class="column-header">Update</div>
+        <div class="column-header" id="header-update">Update</div>
         <div class="task-update" id="update-section"></div>
       </div>
 
@@ -1744,10 +1744,16 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(r => r.json())
     .then(data => {
       if (data.success) {
+        // context menu labels
         const elC = document.getElementById('ctx-label-changes');
         const elU = document.getElementById('ctx-label-update');
         if (elC) elC.textContent = data.labelChanges;
         if (elU) elU.textContent = data.labelUpdate;
+        // column headers
+        const hC = document.getElementById('header-changes');
+        const hU = document.getElementById('header-update');
+        if (hC) hC.textContent = data.labelChanges;
+        if (hU) hU.textContent = data.labelUpdate;
       }
     })
     .catch(() => {}); // silently fail, defaults already set in HTML
