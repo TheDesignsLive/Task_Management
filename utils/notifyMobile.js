@@ -3,6 +3,9 @@
 const MOBILE_BASE_URL = 'https://m-tms.thedesigns.live';
 const MOBILE_SECRET   = 'tms_mobile_bridge_2026';
 
+// ✅ Use node-fetch if native fetch not available (Node < 18)
+const _fetch = typeof fetch !== 'undefined' ? fetch : (...args) => import('node-fetch').then(m => m.default(...args));
+
 function notifyMobile(type = 'tasks', extraData = {}) {
     const endpoints = {
         tasks:                `${MOBILE_BASE_URL}/api/notify-task-update`,
@@ -16,14 +19,14 @@ function notifyMobile(type = 'tasks', extraData = {}) {
     };
     const endpoint = endpoints[type] || endpoints.tasks;
 
-    fetch(endpoint, {
+_fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'x-mobile-secret': MOBILE_SECRET,
             'x-source': 'desktop',
         },
-        body: JSON.stringify({ event: type, ...extraData }),  // extraData carries { id } for announcements
+        body: JSON.stringify({ event: type, ...extraData }),
     })
     .then(r => r.json())
     .then(d => { if (!d.success) console.warn('[notifyMobile] failed:', type, d); })
