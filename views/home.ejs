@@ -976,9 +976,10 @@ function createTaskElement(task) {
   div.dataset.id = task.id;
   div.dataset.date = task.due_date ? task.due_date.split('T')[0] : '';
 
-  div.dataset.assignedBy = task.assigned_by ?? "";
+div.dataset.assignedBy = task.assigned_by ?? "";
   div.dataset.assignedTo = task.assigned_to ?? "";
   div.dataset.whoAssigned = task.who_assigned ?? "";
+  div.dataset.adminId = task.admin_id ?? "";
 
   if (task.status === 'COMPLETED') div.classList.add('completed-task');
 
@@ -1737,41 +1738,154 @@ let _ctxMenuOpen = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   ctxMenu = document.getElementById('task-context-menu');
+
+  // ── Load dynamic section labels (Change / Update) ──
+  fetch('/api/section-labels')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const elC = document.getElementById('ctx-label-changes');
+        const elU = document.getElementById('ctx-label-update');
+        if (elC) elC.textContent = data.labelChanges;
+        if (elU) elU.textContent = data.labelUpdate;
+      }
+    })
+    .catch(() => {}); // silently fail, defaults already set in HTML
 });
 
 function showContextMenu(x, y) {
   if (!ctxMenu) ctxMenu = document.getElementById('task-context-menu');
   if (!ctxMenu) return;
+
   const count = selectedTaskIds.size;
   const label = document.getElementById('ctx-selected-label');
   if (label) label.textContent = count + ' task' + (count !== 1 ? 's' : '') + ' selected';
 
   const selectedEls = getAllVisibleTaskEls().filter(el => selectedTaskIds.has(el.dataset.id));
-  const sections = new Set(selectedEls.map(el => {
+
+  // ── Gather section for each selected task ──
+  const sectionsSet = new Set(selectedEls.map(el => {
     const parentId = el.closest('[id$="-section"]')?.id;
-    if (parentId === 'task-section') return 'TASK';
-    if (parentId === 'other-section') return 'OTHERS';
-    if (parentId === 'change-section') return 'CHANGES';
-    if (parentId === 'update-section') return 'UPDATE';
+    if (parentId === 'task-section')    return 'TASK';
+    if (parentId === 'other-section')   return 'OTHERS';
+    if (parentId === 'change-section')  return 'CHANGES';
+    if (parentId === 'update-section')  return 'UPDATE';
     return null;
   }));
 
   const sectionSection = document.getElementById('ctx-section-section');
-  const canChangeSection = [...sections].every(s => s === 'TASK' || s === 'OTHERS');
-  sectionSection.style.display = canChangeSection ? 'block' : 'none';
 
-  sectionSection.querySelectorAll('.ctx-item').forEach(item => {
-    const targetSec = item.dataset.action.replace('section-', '');
-    item.style.display = [...sections].includes(targetSec) ? 'none' : 'flex';
+  // ── All 4 move buttons ──
+  const btnTask    = sectionSection.querySelector('.ctx-item[data-action="section-TASK"]');
+  const btnOthers  = sectionSection.querySelector('.ctx-item[data-action="section-OTHERS"]');
+  const btnChanges = sectionSection.querySelector('.ctx-item[data-action="section-CHANGES"]');
+  const btnUpdate  = sectionSection.querySelector('.ctx-item[data-action="section-UPDATE"]');
+
+  // Hide all first
+  [btnTask, btnOthers, btnChanges, btnUpdate].forEach(b => { if (b) b.style.display = 'none'; });
+
+  // ── Only one section type selected ──
+  const sections = [...sectionsSet].filter(Boolean);
+  const allSame  = sections.length === 1;
+  const theSection = allSame ? sections[0] : null;
+
+// ── Check assigned conditions across ALL selected tasks ──
+  // For admin: own task = assigned_to is "0" AND who_assigned is "admin"
+  // For user: own task = assigned_by === assigned_to
+  const allOwnTasks = selectedEls.every(el => {
+    const assignedTo  = String(el.dataset.assignedTo);
+    const whoAssigned = String(el.dataset.whoAssigned);
+    if (whoAssigned === 'admin') {
+      // Admin's own task: assigned_to=0, who_assigned=admin
+      return assignedTo === '0';
+    }
+    // User's own task: assigned_by === assigned_to
+    return String(el.dataset.assignedBy) === String(el.dataset.assignedTo);
   });
 
-  const menuW = 220, menuH = 320;
+  const allOthersTasks = selectedEls.every(el => {
+    const assignedTo  = String(el.dataset.assignedTo);
+    const whoAssigned = String(el.dataset.whoAssigned);
+    if (whoAssigned === 'admin') {
+      // Admin's "others" task: assigned_to != 0 (assigned to a user)
+      return assignedTo !== '0';
+    }
+    // User's "others" task: assigned_by !== assigned_to
+    return String(el.dataset.assignedBy) !== String(el.dataset.assignedTo);
+  });
+
+  // ── Check all same admin_id ──
+  const adminIds = new Set(selectedEls.map(el => el.dataset.adminId));
+  const sameAdmin = adminIds.size === 1;
+
+  let showSection = false;
+
+  if (allSame && sameAdmin) {
+
+    if (theSection === 'TASK') {
+      // FROM TASK → can go to CHANGE or UPDATE only
+      if (btnChanges) btnChanges.style.display = 'flex';
+      if (btnUpdate)  btnUpdate.style.display  = 'flex';
+      showSection = true;
+    }
+
+    else if (theSection === 'OTHERS') {
+      // FROM OTHERS → can go to CHANGE or UPDATE only
+      if (btnChanges) btnChanges.style.display = 'flex';
+      if (btnUpdate)  btnUpdate.style.display  = 'flex';
+      showSection = true;
+    }
+
+else if (theSection === 'CHANGES') {
+      // FROM CHANGE:
+      // all own tasks (assignedBy==assignedTo) → TASK + UPDATE
+      // all others tasks (assignedBy!=assignedTo) → OTHERS + UPDATE
+      // mixed → UPDATE only
+      if (allOwnTasks) {
+        if (btnTask)   btnTask.style.display   = 'flex';
+        if (btnUpdate) btnUpdate.style.display = 'flex';
+        showSection = true;
+      } else if (allOthersTasks) {
+        if (btnOthers) btnOthers.style.display = 'flex';
+        if (btnUpdate) btnUpdate.style.display = 'flex';
+        showSection = true;
+      } else {
+        // mixed assigned → show UPDATE only
+        if (btnUpdate) btnUpdate.style.display = 'flex';
+        showSection = true;
+      }
+    }
+
+    else if (theSection === 'UPDATE') {
+      // FROM UPDATE:
+      // all own tasks → TASK + CHANGE
+      // all others tasks → OTHERS + CHANGE
+      // mixed → CHANGE only
+      if (allOwnTasks) {
+        if (btnTask)    btnTask.style.display    = 'flex';
+        if (btnChanges) btnChanges.style.display = 'flex';
+        showSection = true;
+      } else if (allOthersTasks) {
+        if (btnOthers)  btnOthers.style.display  = 'flex';
+        if (btnChanges) btnChanges.style.display = 'flex';
+        showSection = true;
+      } else {
+        // mixed assigned → show CHANGE only
+        if (btnChanges) btnChanges.style.display = 'flex';
+        showSection = true;
+      }
+    }
+  }
+
+  sectionSection.style.display = showSection ? 'block' : 'none';
+
+  const menuW = 220, menuH = 340;
   let left = x + 4;
-  let top = y + 4;
-  if (left + menuW > window.innerWidth) left = x - menuW - 4;
-  if (top + menuH > window.innerHeight) top = y - menuH - 4;
+  let top  = y + 4;
+  if (left + menuW > window.innerWidth)  left = x - menuW - 4;
+  if (top  + menuH > window.innerHeight) top  = y - menuH - 4;
   ctxMenu.style.left = left + 'px';
-  ctxMenu.style.top = top + 'px';
+  ctxMenu.style.top  = top  + 'px';
   ctxMenu.style.display = 'block';
   _ctxMenuOpen = true;
 }
@@ -1805,8 +1919,16 @@ document.querySelector('.board-scroll').addEventListener('click', (e) => {
 
 // Block default context menu on board; show custom menu if tasks selected
 document.addEventListener('contextmenu', (e) => {
+
+  // ✅ allow normal clicks inside menu
+  if (e.target.closest('#task-context-menu')) {
+    return;
+  }
+
   e.preventDefault();
+
   if (selectedTaskIds.size === 0) return;
+
   showContextMenu(e.clientX, e.clientY);
 });
 
@@ -1959,10 +2081,22 @@ function handleCtxAction(action) {
 }
 
 // Date icon buttons
-document.querySelectorAll('.ctx-icon-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    handleCtxAction(btn.dataset.action);
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.ctx-icon-btn').forEach(btn => {
+
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log('DATE CLICK:', btn.dataset.action);
+
+      handleCtxAction(btn.dataset.action);
+    });
   });
 });
 
@@ -1999,65 +2133,76 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Priority buttons (new design)
-document.querySelectorAll('.ctx-priority-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    handleCtxAction(btn.dataset.action);
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.ctx-priority-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleCtxAction(btn.dataset.action);
+    });
   });
 });
 
 // Section move
-document.querySelectorAll('#task-context-menu .ctx-item[data-action^="section-"]').forEach(item => {
-  item.addEventListener('click', async (e) => {
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#task-context-menu .ctx-item[data-action^="section-"]').forEach(item => {
+    item.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      hideContextMenu();
+      const section = item.dataset.action.replace('section-', '');
+      const ids = [...selectedTaskIds];
+      if (!ids.length) return;
+      await fetch('/api/bulk-update-section', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, section })
+      });
+      clearSelection();
+      await refreshTasksUI();
+    });
+  });
+});
+
+// Delete btn → show modal
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.ctx-delete-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     hideContextMenu();
-    const section = item.dataset.action.replace('section-', '');
     const ids = [...selectedTaskIds];
     if (!ids.length) return;
-    await fetch('/api/bulk-update-section', {
+    const count = ids.length;
+    document.getElementById('ctx-delete-count').textContent =
+      `${count} task${count > 1 ? 's' : ''} will be permanently removed.`;
+    document.getElementById('ctx-delete-confirm').style.display = 'flex';
+  });
+
+  document.getElementById('ctx-delete-cancel').addEventListener('click', () => {
+    document.getElementById('ctx-delete-confirm').style.display = 'none';
+  });
+
+  document.getElementById('ctx-delete-ok').addEventListener('click', async () => {
+    document.getElementById('ctx-delete-confirm').style.display = 'none';
+    const ids = [...selectedTaskIds];
+    await fetch('/api/bulk-delete', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids, section })
+      body: JSON.stringify({ ids })
     });
     clearSelection();
     await refreshTasksUI();
   });
 });
 
-// Delete btn → show modal
-document.querySelector('.ctx-delete-btn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  hideContextMenu();
-  const ids = [...selectedTaskIds];
-  if (!ids.length) return;
-  const count = ids.length;
-  document.getElementById('ctx-delete-count').textContent =
-    `${count} task${count > 1 ? 's' : ''} will be permanently removed.`;
-  document.getElementById('ctx-delete-confirm').style.display = 'flex';
-});
-
-document.getElementById('ctx-delete-cancel').addEventListener('click', () => {
-  document.getElementById('ctx-delete-confirm').style.display = 'none';
-});
-
-document.getElementById('ctx-delete-ok').addEventListener('click', async () => {
-  document.getElementById('ctx-delete-confirm').style.display = 'none';
-  const ids = [...selectedTaskIds];
-  await fetch('/api/bulk-delete', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids })
-  });
-  clearSelection();
-  await refreshTasksUI();
-});
-
-document.getElementById('ms-clear-btn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  e.preventDefault();
-  selectedTaskIds.clear();
-  lastClickedTaskEl = null;
-  document.body.classList.remove('no-select');
-  getAllVisibleTaskEls().forEach(el => el.classList.remove('selected'));
-  document.getElementById('multi-select-bar').classList.remove('visible');
+document.addEventListener('DOMContentLoaded', () => {
+  const msClearBtn = document.getElementById('ms-clear-btn');
+  if (msClearBtn) {
+    msClearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      selectedTaskIds.clear();
+      lastClickedTaskEl = null;
+      document.body.classList.remove('no-select');
+      getAllVisibleTaskEls().forEach(el => el.classList.remove('selected'));
+      document.getElementById('multi-select-bar').classList.remove('visible');
+    });
+  }
 });
 
 // ✅ ONLY APPLY HORIZONTAL SCROLL ON BOARD (NOT INSIDE TASK COLUMNS)
@@ -2107,7 +2252,7 @@ board.addEventListener('wheel', function(e) {
         <i class="fa-solid fa-cloud-sun"></i>
         <span>Tom</span>
       </div>
-      <div class="ctx-icon-btn" data-action="date-7" title="+7 Days">
+      <div class="ctx-icon-btn" data-action="date-7" title="Next Week">
         <i class="fa-solid fa-calendar-week"></i>
         <span>7d</span>
       </div>
@@ -2142,13 +2287,13 @@ board.addEventListener('wheel', function(e) {
     </div>
   </div>
 
-  <!-- Move to section -->
+<!-- Move to section -->
   <div class="ctx-section" id="ctx-section-section" style="display:none;">
     <div class="ctx-label">Move to</div>
-    <div class="ctx-item" data-action="section-CHANGES"><i class="fa-solid fa-right-left"></i> Change</div>
-    <div class="ctx-item" data-action="section-UPDATE"><i class="fa-solid fa-right-left"></i> Update</div>
-    <div class="ctx-item" data-action="section-OTHERS"><i class="fa-solid fa-right-left"></i> Others</div>
     <div class="ctx-item" data-action="section-TASK"><i class="fa-solid fa-right-left"></i> Task</div>
+    <div class="ctx-item" data-action="section-OTHERS"><i class="fa-solid fa-right-left"></i> Others</div>
+    <div class="ctx-item" data-action="section-CHANGES" id="ctx-move-changes"><i class="fa-solid fa-right-left"></i> <span id="ctx-label-changes">Change</span></div>
+    <div class="ctx-item" data-action="section-UPDATE" id="ctx-move-update"><i class="fa-solid fa-right-left"></i> <span id="ctx-label-update">Update</span></div>
   </div>
 
   <!-- Delete -->

@@ -17,13 +17,13 @@ router.get('/api/get-all-tasks', async (req, res) => {
         if (req.session.role === "admin") {
 
 const [taskRows] = await con.query(
-    "SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
+    "SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type, admin_id FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
   [adminId]
 );
 
 const [otherTaskRows] = await con.query(
  `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-          t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type,
+          t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type, t.admin_id,
           u.name AS assigned_by_name
    FROM tasks t 
    JOIN users u ON t.assigned_by = u.id 
@@ -40,7 +40,7 @@ tasks = [...taskRows, ...otherTaskRows];
             // ✅ FIXED (removed 'OTHERS' hardcode)
 const [adminTasksRows] = await con.query(
     `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-            t.assigned_by, t.assigned_to, t.who_assigned,
+            t.assigned_by, t.assigned_to, t.who_assigned, t.admin_id,
             a.name AS assigned_by_name 
      FROM tasks t 
      JOIN admins a ON t.assigned_by = a.id 
@@ -51,17 +51,16 @@ const [adminTasksRows] = await con.query(
 
 const [userOwnTasksRows] = await con.query(
     `SELECT id, title, description, priority, due_date, status, section,
-            assigned_by, assigned_to, who_assigned
+            assigned_by, assigned_to, who_assigned, admin_id
      FROM tasks 
      WHERE admin_id=? AND assigned_to=? AND (who_assigned='user' OR who_assigned='owner') AND assigned_by=? 
      ORDER BY due_date ASC`,
     [adminId, req.session.userId, req.session.userId]
 );
 
-            // ✅ FIXED (removed 'OTHERS' hardcode)
 const [userToOthersTasksRows] = await con.query(
     `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-            t.assigned_by, t.assigned_to, t.who_assigned,
+            t.assigned_by, t.assigned_to, t.who_assigned, t.admin_id,
             u.name AS assigned_by_name 
      FROM tasks t 
      JOIN users u ON t.assigned_by = u.id 
@@ -420,8 +419,10 @@ router.post('/api/bulk-update-date', async (req, res) => {
   const { ids, due_date } = req.body;
   if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
   try {
+    // Format as "YYYY-MM-DD 00:00:00" for MySQL datetime column
+    const formattedDate = due_date ? due_date.split('T')[0] + ' 00:00:00' : null;
     await Promise.all(ids.map(id =>
-      con.query("UPDATE tasks SET due_date=? WHERE id=?", [due_date, id])
+      con.query("UPDATE tasks SET due_date=? WHERE id=?", [formattedDate, id])
     ));
     req.io.emit('update_tasks');
     notifyMobile();
@@ -466,6 +467,23 @@ router.post('/api/bulk-delete', async (req, res) => {
     notifyMobile();
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false }); }
+});
+
+// ── Dynamic section labels for context menu ──
+router.get('/api/section-labels', async (req, res) => {
+  if (!req.session.role) return res.status(401).json({ success: false });
+  const adminId = req.session.adminId;
+  try {
+    const [rows] = await con.query(
+      "SELECT label_changes, label_update FROM admins WHERE id=? LIMIT 1",
+      [adminId]
+    );
+    const labelChanges = (rows.length > 0 && rows[0].label_changes) ? rows[0].label_changes : 'Change';
+    const labelUpdate  = (rows.length > 0 && rows[0].label_update)  ? rows[0].label_update  : 'Update';
+    res.json({ success: true, labelChanges, labelUpdate });
+  } catch (err) {
+    res.json({ success: true, labelChanges: 'Change', labelUpdate: 'Update' });
+  }
 });
 
 module.exports = router;
