@@ -714,7 +714,8 @@ html, body {
   border-radius: 0;
   position: relative;
 }
-#task-context-menu .ctx-item:hover { background: #f0fafa; color: #0F8989; }
+#task-context-menu .ctx-item:hover { background: #f0fafa; color: #0F8989 !important; font-weight: 700; }
+#task-context-menu .ctx-item:hover span { color: #0F8989 !important; }
 #task-context-menu .ctx-item.danger { color: #d32f2f; }
 #task-context-menu .ctx-item.danger:hover { background: #fff0f0; color: #b71c1c; }
 #task-context-menu .ctx-item i { width: 16px; text-align: center; font-size: 13px; }
@@ -2117,8 +2118,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('#task-context-menu .ctx-label').forEach(el => {
     el.style.color = '#0F8989';
   });
-  document.querySelectorAll('#task-context-menu .ctx-item').forEach(el => {
+document.querySelectorAll('#task-context-menu .ctx-item').forEach(el => {
     el.style.color = '#eee';
+  });
+  // ── Fix: ensure label spans inside ctx-items inherit parent color on hover ──
+  document.querySelectorAll('#task-context-menu .ctx-item span').forEach(el => {
+    el.style.color = 'inherit';
+    el.style.pointerEvents = 'none';
+  });
+  // ── Fix: ensure label spans inside ctx-items inherit parent color on hover ──
+  document.querySelectorAll('#task-context-menu .ctx-item span').forEach(el => {
+    el.style.color = 'inherit';
+    el.style.pointerEvents = 'none';
   });
   document.querySelectorAll('#task-context-menu .ctx-item.danger').forEach(el => {
     el.style.color = '#e74c3c';

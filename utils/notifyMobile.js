@@ -21,7 +21,7 @@ function notifyMobile(type = 'tasks', extraData = {}) {
         headers: {
             'Content-Type': 'application/json',
             'x-mobile-secret': MOBILE_SECRET,
-            'x-source': 'desktop',
+           'x-source': 'mobile',
         },
         body: JSON.stringify({ event: type, ...extraData }),  // extraData carries { id } for announcements
     })
