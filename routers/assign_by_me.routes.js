@@ -13,8 +13,10 @@ router.get('/', async (req, res) => {
     const sessionUserId = req.session.userId;
 
     try {
-        const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
-        if (aRows.length > 0) adminName = aRows[0].name;
+        const [aRows] = await con.query("SELECT name, label_changes, label_update FROM admins WHERE id=?", [adminId]);
+if (aRows.length > 0) adminName = aRows[0].name;
+const label_changes = aRows[0]?.label_changes || 'Change';
+const label_update = aRows[0]?.label_update || 'Update';
 
         // ✅ Fetch Teams
         const [tRows] = await con.query("SELECT id, name FROM teams WHERE admin_id=? ORDER BY name ASC", [adminId]);
@@ -88,7 +90,7 @@ const queryParams = (sessionRole === "admin")
             return res.json({ success: true, openTasks, completedTasks, members, teams });
         }
 
-        res.render('assign_by_me', { teams, members, adminName, openTasks, completedTasks, session: req.session, activePage: "assign_by_me" });
+        res.render('assign_by_me', { teams, members, adminName, openTasks, completedTasks, session: req.session, activePage: "assign_by_me", label_changes, label_update });
     } catch (err) {
         console.error(err);
         res.status(500).send("Error loading Assign By Me");

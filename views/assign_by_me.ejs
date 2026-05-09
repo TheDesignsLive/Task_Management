@@ -410,6 +410,8 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 <script>
 let members = <%- JSON.stringify(typeof members !== 'undefined' ? members : []) %>;
 let teams = <%- JSON.stringify(typeof teams !== 'undefined' ? teams : []) %>;
+const LABEL_CHANGES = "<%= label_changes %>";
+const LABEL_UPDATE = "<%= label_update %>";
 const adminName = "<%= adminName %>";
 const userRole = "<%= session.role %>";
 let isProcessingAjax = false;
@@ -527,7 +529,7 @@ function renderTasks(openTasks, completedTasks) {
             <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleCheckboxStatus('${task.id}', this)">
             <div class="task-title">${task.title}</div>
             <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
-            <div class="task-sec-val">${task.section || 'TASK'}</div>
+            <div class="task-sec-val">${task.section === 'CHANGES' ? LABEL_CHANGES : task.section === 'UPDATE' ? LABEL_UPDATE : (task.section || 'TASK')}</div>
             <div class="task-assign">
                 ${buildCustomDropdown(task.id, task.assignee_id, task.assigned_to)}
             </div>
@@ -586,7 +588,7 @@ function renderTasks(openTasks, completedTasks) {
                         <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
                         <div class="task-title">${task.title}</div>
                         <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
-                        <div class="task-sec-val">${task.section || 'TASK'}</div>
+                        <div class="task-sec-val">${task.section === 'CHANGES' ? LABEL_CHANGES : task.section === 'UPDATE' ? LABEL_UPDATE : (task.section || 'TASK')}</div>
                         <div class="task-assign"><span style="font-size: 11px;">${task.assigned_to}</span></div>
                         <div class="task-date">${formatDate(task.due_date)}</div>
                         <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
