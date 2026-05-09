@@ -352,10 +352,42 @@ async function confirmRemovePic(){
 }
 
 
-// ✅ Live profile update from mobile
+// ✅ Live profile update from mobile — no reload, no white flash
 const profileSocket = io();
-profileSocket.on('update_profile', () => {
-    window.location.reload();
+profileSocket.on('update_profile', async () => {
+    try {
+        const res = await fetch('/profile/get-profile-data', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success) return;
+
+        // Update name
+        const nameEl = document.querySelector('.profile-name-left');
+        if (nameEl) nameEl.textContent = data.name;
+
+        // Update welcome text in navbar
+        const welcomeDiv = document.getElementById('navWelcomeText');
+        if (welcomeDiv) welcomeDiv.innerText = 'Welcome ' + data.name;
+
+        // Update phone
+        const phoneEl = document.getElementById('displayPhone');
+        if (phoneEl) phoneEl.textContent = data.phone && data.phone.trim() !== '' ? data.phone : '-----';
+
+        // Update company
+        const companyEl = document.getElementById('displayCompany');
+        if (companyEl && data.company) companyEl.textContent = data.company;
+
+        // Update profile picture
+        const imgArea = document.getElementById('profileImageArea');
+        if (imgArea) {
+            if (data.profilePic) {
+                imgArea.innerHTML = `<img src="/images/${data.profilePic}?t=${Date.now()}" class="profile-img">`;
+            } else {
+                imgArea.innerHTML = `<div class="profile-letter-avatar">${data.name.charAt(0)}</div>`;
+            }
+        }
+    } catch (err) {
+        console.error('[profile] live update error:', err);
+    }
 });
 </script>
 

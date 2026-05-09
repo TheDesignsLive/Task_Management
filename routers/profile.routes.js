@@ -227,4 +227,41 @@ router.post('/delete-image', (req, res) => {
     }
 });
 
+// ================= GET PROFILE DATA (for live update) =================
+router.get('/get-profile-data', async (req, res) => {
+    if (!req.session.role) return res.status(403).json({ success: false });
+    try {
+        const sessionRole = req.session.role;
+        let name = '', phone = '', company = '', profilePic = null;
+
+        if (sessionRole === 'admin') {
+            const [rows] = await con.query(
+                'SELECT name, phone, company_name, profile_pic FROM admins WHERE id=?',
+                [req.session.adminId]
+            );
+            if (rows.length) {
+                name = rows[0].name;
+                phone = rows[0].phone;
+                company = rows[0].company_name;
+                profilePic = rows[0].profile_pic;
+            }
+        } else {
+            const [rows] = await con.query(
+                'SELECT u.name, u.phone, u.profile_pic, a.company_name FROM users u LEFT JOIN admins a ON u.admin_id=a.id WHERE u.id=?',
+                [req.session.userId]
+            );
+            if (rows.length) {
+                name = rows[0].name;
+                phone = rows[0].phone;
+                company = rows[0].company_name;
+                profilePic = rows[0].profile_pic;
+            }
+        }
+        return res.json({ success: true, name, phone, company, profilePic });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false });
+    }
+});
+
 module.exports = router;
