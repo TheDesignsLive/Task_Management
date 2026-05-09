@@ -15,8 +15,10 @@ router.get('/', async (req, res) => {
 
     try {
         // Fetch Admin Name (Exactly like notification router)
-        const [aRows] = await con.query("SELECT name FROM admins WHERE id=?", [adminId]);
-        if (aRows.length > 0) adminName = aRows[0].name;
+        const [aRows] = await con.query("SELECT name, label_changes, label_update FROM admins WHERE id=?", [adminId]);
+if (aRows.length > 0) adminName = aRows[0].name;
+const label_changes = aRows[0]?.label_changes || 'Change';
+const label_update = aRows[0]?.label_update || 'Update';
 
         // ================= NAVBAR DROPDOWN (MEMBERS) LOGIC =================
         // Exactly like notification router logic
@@ -34,12 +36,14 @@ router.get('/', async (req, res) => {
             members = mRows;
         }
 
-        res.render('settings', {
-            members,
-            adminName,
-            session: req.session,
-            activePage:"settings"
-        });
+       res.render('settings', {
+    members,
+    adminName,
+    session: req.session,
+    activePage:"settings",
+    label_changes,
+    label_update,
+});
 
     } catch (err) {
         console.log(err);
@@ -107,6 +111,24 @@ router.get('/delete-profile', async (req, res) => {
     } catch (err) {
         console.log(err);
         res.json({ success: false, message: 'Failed to delete profile due to a server error.' });
+    }
+});
+
+/* ================= UPDATE SECTION LABELS ================= */
+router.post('/update-labels', async (req, res) => {
+    if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
+    if (req.session.role !== 'admin' && req.session.role !== 'owner') {
+        return res.json({ success: false, message: 'Not allowed' });
+    }
+    const { label_changes, label_update } = req.body;
+    try {
+        await con.query(
+            "UPDATE admins SET label_changes=?, label_update=? WHERE id=?",
+            [label_changes || 'Change', label_update || 'Update', req.session.adminId]
+        );
+        res.json({ success: true, message: 'Labels updated successfully!' });
+    } catch (err) {
+        res.json({ success: false, message: 'Server error' });
     }
 });
 
