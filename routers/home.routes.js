@@ -277,7 +277,7 @@ router.post('/update-task-status', async (req, res) => {
                             task.description,
                             task.priority,
                             nextDateStr,
-                            task.section || 'TASK',
+                           'TASK',
                             task.assigned_by,
                             task.assigned_to,
                             task.who_assigned,
