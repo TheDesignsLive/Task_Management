@@ -104,6 +104,9 @@ button:hover{background:#0b7373;}
     <div class="settings-menu">
         <div class="settings-item" onclick="openPasswordDialog()">Change Password</div>
         <div class="settings-item" onclick="openEmailDialog()">Change Gmail</div>
+<% if (session.role === 'admin' || session.role === 'owner') { %>
+<div class="settings-item" onclick="openLabelsDialog()">Section Labels <span style="font-size:11px;color:#aaa;margin-left:6px;">(<%= label_changes %> & <%= label_update %>)</span></div>
+<% } %>
         <div class="settings-item danger" onclick="openDeleteDialog()">Delete Profile</div>
         <div class="settings-item danger" onclick="openLogoutModal()">Logout</div>
     </div>
@@ -171,6 +174,23 @@ button:hover{background:#0b7373;}
             </form>
         </div>
     </div>
+</div>
+
+<div id="labelsDialog" class="dialog-overlay">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeLabelsDialog()">✖</span>
+    <h3 style="margin-top:0;">Section Labels</h3>
+    <p style="font-size:13px;color:#555;">Customize display names for the Change and Update sections.</p>
+    <div class="input-group">
+      <label>Change Section Name</label>
+      <input type="text" id="labelChanges" value="<%= label_changes %>" placeholder="e.g. Change">
+    </div>
+    <div class="input-group">
+      <label>Update Section Name</label>
+      <input type="text" id="labelUpdate" value="<%= label_update %>" placeholder="e.g. Update">
+    </div>
+    <button type="button" onclick="saveLabels()">Save Labels</button>
+  </div>
 </div>
 
 <div id="logoutModal" class="modal">
@@ -282,7 +302,33 @@ function closeDeleteDialogs() {
     document.getElementById('adminDeleteModal').style.display = 'none'; 
     document.getElementById('userCannotDeleteModal').style.display = 'none'; 
 }
+function openLabelsDialog() { document.getElementById('labelsDialog').style.display = 'flex'; }
+function closeLabelsDialog() { document.getElementById('labelsDialog').style.display = 'none'; }
 
+async function saveLabels() {
+    const label_changes = document.getElementById('labelChanges').value.trim();
+    const label_update = document.getElementById('labelUpdate').value.trim();
+    if (!label_changes || !label_update) {
+        showAlertDialog("Error", "Both label names are required.", false);
+        return;
+    }
+    try {
+        const res = await fetch('/settings/update-labels', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ label_changes, label_update })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeLabelsDialog();
+            showAlertDialog("Success!", data.message, true);
+        } else {
+            showAlertDialog("Error", data.message, false);
+        }
+    } catch(err) {
+        showAlertDialog("Error", "Server connection failed.", false);
+    }
+}
 function togglePwd(id, icon) {
     const input = document.getElementById(id);
     if (input.type === "password") {
