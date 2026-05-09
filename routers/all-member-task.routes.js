@@ -23,10 +23,12 @@ router.get('/all-member-task', async (req, res) => {
 
         // ================= ADMIN NAME =================
         const [adminRows] = await con.query(
-            "SELECT name FROM admins WHERE id=?", 
-            [adminId]
-        );
-        if (adminRows.length > 0) adminName = adminRows[0].name;
+    "SELECT name, label_changes, label_update FROM admins WHERE id=?", 
+    [adminId]
+);
+if (adminRows.length > 0) adminName = adminRows[0].name;
+const label_changes = adminRows[0]?.label_changes || 'Change';
+const label_update = adminRows[0]?.label_update || 'Update';
 
         // ================= ROLE & TEAM FETCH =================
         if (sessionRole === "admin") {
@@ -216,13 +218,15 @@ let taskQuery = `
         }
 
         const renderData = {
-            session: req.session,
-            users,
-            adminName,
-            tasks,
-            selected_user: selectedUser,
-            activePage: "allmembers"
-        };
+    session: req.session,
+    users,
+    adminName,
+    tasks,
+    selected_user: selectedUser,
+    activePage: "allmembers",
+    label_changes,
+    label_update,
+};
 
         if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
             res.render('all-member-task', { ...renderData, layout: false });
