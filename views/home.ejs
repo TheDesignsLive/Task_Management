@@ -2198,6 +2198,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ctx-delete-confirm').style.display = 'none';
   });
 
+  //
+// ── Mark as Done ──
+  document.querySelector('.ctx-done-btn').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    hideContextMenu();
+    const ids = [...selectedTaskIds];
+    if (!ids.length) return;
+    await Promise.all(ids.map(id =>
+      fetch('/update-task-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: 'COMPLETED', section: 'COMPLETED' })
+      })
+    ));
+    clearSelection();
+    await refreshTasksUI();
+    showToast('Tasks marked as done');
+  });
+  //
+
   document.getElementById('ctx-delete-ok').addEventListener('click', async () => {
     document.getElementById('ctx-delete-confirm').style.display = 'none';
     const ids = [...selectedTaskIds];
@@ -2314,6 +2334,13 @@ board.addEventListener('wheel', function(e) {
     <div class="ctx-item" data-action="section-OTHERS"><i class="fa-solid fa-right-left"></i> Others</div>
     <div class="ctx-item" data-action="section-CHANGES" id="ctx-move-changes"><i class="fa-solid fa-right-left"></i> <span id="ctx-label-changes">Change</span></div>
     <div class="ctx-item" data-action="section-UPDATE" id="ctx-move-update"><i class="fa-solid fa-right-left"></i> <span id="ctx-label-update">Update</span></div>
+  </div>
+
+<!-- Done -->
+  <div class="ctx-section">
+    <div class="ctx-item ctx-done-btn" style="color:#0F8989;">
+      <i class="fa-solid fa-circle-check"></i> Mark as Done
+    </div>
   </div>
 
   <!-- Delete -->
