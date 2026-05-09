@@ -1014,12 +1014,6 @@ div.dataset.assignedBy = task.assigned_by ?? "";
 </svg>
 ` : ''}
 
-      
-        <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
-          ${formatDate(task.due_date)}
-        </div>
-
-
       ${task.repeat_type && task.repeat_type !== 'none' ? `
         <span class="repeat-badge" style="
           font-size:9px; color:#a78bfa; cursor:pointer;
@@ -1031,6 +1025,14 @@ div.dataset.assignedBy = task.assigned_by ?? "";
           line-height:1.4;
         ">🔁 ${task.repeat_type}</span>
       ` : ''}
+
+      
+        <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
+          ${formatDate(task.due_date)}
+        </div>
+
+
+
 
         <div class="dots-btn">
         <i class="fa-solid fa-ellipsis-vertical"></i>
