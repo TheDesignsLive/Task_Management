@@ -970,37 +970,126 @@ priorityMenu.addEventListener("click", (e) => {
 
 <!-- ── Pusher Beams Push Notification Setup ── -->
 <script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+
+<!-- Notification permission banner -->
+<div id="notif-banner" style="
+    display:none;
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#1a3a3a;
+    color:#fff;
+    padding:14px 20px;
+    border-radius:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    z-index:99999;
+    display:none;
+    align-items:center;
+    gap:14px;
+    font-size:13px;
+    max-width:420px;
+    border:1px solid #0f9d9a;
+">
+  <i class="fa-solid fa-bell" style="color:#0f9d9a;font-size:20px;flex-shrink:0;"></i>
+  <span style="flex:1;">Enable notifications to get task alerts even when the app is closed.</span>
+  <button onclick="requestBeamsPermission()" style="
+    background:#0f9d9a;color:#fff;border:none;
+    padding:7px 14px;border-radius:8px;cursor:pointer;
+    font-size:12px;font-weight:700;white-space:nowrap;
+  ">Allow</button>
+  <button onclick="dismissNotifBanner()" style="
+    background:transparent;color:#aaa;border:none;
+    cursor:pointer;font-size:16px;padding:0 4px;
+  ">✕</button>
+</div>
+
 <script>
-(function initBeams() {
-    // Only run if browser supports service workers
+const BEAMS_INSTANCE_ID = '423440a8-1fc5-4373-8e6b-0085dccafc58';
+const BEAMS_USER_ID = '<%= session.role === "admin" ? "admin_" + session.adminId : String(session.userId) %>';
+
+let _beamsClient = null;
+
+async function initBeams() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('[Beams] Push not supported in this browser');
+        console.warn('[Beams] Push not supported');
         return;
     }
+    const PPN = window.PusherPushNotifications;
+    if (!PPN) return;
 
-    const PusherPushNotifications = window.PusherPushNotifications;
-    if (!PusherPushNotifications) return;
+    try {
+        const reg = await navigator.serviceWorker.register('/service-worker.js');
+        _beamsClient = new PPN.Client({ instanceId: BEAMS_INSTANCE_ID });
 
-navigator.serviceWorker.register('/service-worker.js').then(registration => {
-        const beamsClient = new PusherPushNotifications.Client({
-            instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+        const permission = Notification.permission;
+
+        if (permission === 'granted') {
+            // Already allowed — subscribe silently
+            await subscribeBeams();
+        } else if (permission === 'default') {
+            // Never asked — show banner
+            const dismissed = localStorage.getItem('notif_banner_dismissed');
+            if (!dismissed) {
+                showNotifBanner();
+            }
+        }
+        // If 'denied' — do nothing, show manual guide if user tries
+    } catch (err) {
+        console.warn('[Beams] Init error:', err.message);
+    }
+}
+
+async function subscribeBeams() {
+    if (!_beamsClient) return;
+    try {
+        await _beamsClient.start();
+        await _beamsClient.setUserId(BEAMS_USER_ID, {
+            fetchToken: async () => {
+                const res = await fetch('/beams-auth', { credentials: 'include' });
+                if (!res.ok) throw new Error('Beams auth failed');
+                return res.json();
+            }
         });
+        console.log('[Beams] ✅ Subscribed:', BEAMS_USER_ID);
+        hideNotifBanner();
+    } catch (err) {
+        console.warn('[Beams] Subscribe error:', err.message);
+    }
+}
 
-        beamsClient.start()
-            .then(() => beamsClient.setUserId(
-                '<%= session.role === "admin" ? "admin_" + session.adminId : String(session.userId) %>',
-                {
-                    // Fetch token from your /beams-auth endpoint
-                    fetchToken: async () => {
-                        const res = await fetch('/beams-auth', { credentials: 'include' });
-                        if (!res.ok) throw new Error('Beams auth failed');
-                        return res.json();
-                    }
-                }
-            ))
-            .then(() => console.log('[Beams] ✅ Subscribed successfully'))
-            .catch(err => console.warn('[Beams] Subscription error:', err.message));
+async function requestBeamsPermission() {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+        await subscribeBeams();
+    } else if (permission === 'denied') {
+        hideNotifBanner();
+        showDeniedGuide();
+    }
+}
 
-    }).catch(err => console.error('[Beams] SW register error:', err));
-})();
+function showNotifBanner() {
+    const banner = document.getElementById('notif-banner');
+    if (banner) banner.style.display = 'flex';
+}
+
+function hideNotifBanner() {
+    const banner = document.getElementById('notif-banner');
+    if (banner) banner.style.display = 'none';
+}
+
+function dismissNotifBanner() {
+    hideNotifBanner();
+    // Remember dismissal so we don't keep showing it
+    localStorage.setItem('notif_banner_dismissed', '1');
+}
+
+function showDeniedGuide() {
+    // Show how to re-enable from browser settings
+    const msg = `Notifications blocked.\n\nTo enable:\n1. Click the 🔒 lock icon in address bar\n2. Click "Site settings"\n3. Set Notifications → Allow\n4. Reload the page`;
+    alert(msg);
+}
+
+// Start Beams after page loads
+window.addEventListener('load', initBeams);
 </script>

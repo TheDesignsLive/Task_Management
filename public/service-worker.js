@@ -1,3 +1,4 @@
+//service-worker.js inside the public folder
 importScripts('https://js.pusher.com/beams/service-worker.js');
 
 self.addEventListener('notificationclick', (event) => {

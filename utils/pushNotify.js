@@ -1,4 +1,3 @@
-// utils/pushNotify.js
 const PusherPushNotifications = require('@pusher/push-notifications-server');
 
 const BeamsClient = PusherPushNotifications.default || PusherPushNotifications.Client || PusherPushNotifications;
