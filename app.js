@@ -336,6 +336,31 @@ cron.schedule('5 0 * * *', async () => {
 
 // ================ ROUTES EXECUTION ================
 
+// ── Pusher Beams Auth Endpoint ──
+const PusherPushNotifications = require('@pusher/push-notifications-server');
+const BeamsClient = PusherPushNotifications.default || PusherPushNotifications.Client || PusherPushNotifications;
+const beamsClient = new BeamsClient({
+    instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+    secretKey:  '75EBE2088425312400AD5D15B2476EA23E3CEA61B7DE841FCA0A62E822C3135F',
+});
+
+app.get('/beams-auth', (req, res) => {
+    if (!req.session.adminId && !req.session.userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Build a unique user interest string
+    let beamsUserId;
+    if (req.session.role === 'admin') {
+        beamsUserId = `admin_${req.session.adminId}`;
+    } else {
+        beamsUserId = String(req.session.userId);
+    }
+
+    const beamsToken = beamsClient.generateToken(beamsUserId);
+    return res.json(beamsToken);
+});
+
 // Base & Auth
 app.get('/', (req, res) => {
     // ✅ If session exists, redirect to home without login

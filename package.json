@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/jaykatakiyajadav69-blip/Task-Management#readme",
   "dependencies": {
+    "@pusher/push-notifications-server": "^1.2.7",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -40,6 +41,7 @@
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.13",
+    "pusher": "^5.3.3",
     "readline": "^1.3.0",
     "socket.io": "^4.8.3"
   },

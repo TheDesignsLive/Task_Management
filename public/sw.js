@@ -1,9 +1,19 @@
-// Service Worker (Basic version)
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installed');
-});
+// public/sw.js
+importScripts('https://js.pusher.com/beams/service-worker.js');
 
-self.addEventListener('fetch', (event) => {
-  // Filhal ye sirf requests ko pass hone dega
-  event.respondWith(fetch(event.request));
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const url = event.notification.data?.url || 'https://tms.thedesigns.live/home';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (const client of windowClients) {
+                if (client.url.includes('tms.thedesigns.live') && 'focus' in client) {
+                    client.focus();
+                    client.navigate(url);
+                    return;
+                }
+            }
+            if (clients.openWindow) return clients.openWindow(url);
+        })
+    );
 });

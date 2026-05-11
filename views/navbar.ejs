@@ -962,4 +962,45 @@ priorityMenu.addEventListener("click", (e) => {
             }
         }
     });
+
+
+
+    
+</script>
+
+<!-- ── Pusher Beams Push Notification Setup ── -->
+<script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+<script>
+(function initBeams() {
+    // Only run if browser supports service workers
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('[Beams] Push not supported in this browser');
+        return;
+    }
+
+    const PusherPushNotifications = window.PusherPushNotifications;
+    if (!PusherPushNotifications) return;
+
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+        const beamsClient = new PusherPushNotifications.Client({
+            instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+        });
+
+        beamsClient.start()
+            .then(() => beamsClient.setUserId(
+                '<%= session.role === "admin" ? "admin_" + session.adminId : String(session.userId) %>',
+                {
+                    // Fetch token from your /beams-auth endpoint
+                    fetchToken: async () => {
+                        const res = await fetch('/beams-auth', { credentials: 'include' });
+                        if (!res.ok) throw new Error('Beams auth failed');
+                        return res.json();
+                    }
+                }
+            ))
+            .then(() => console.log('[Beams] ✅ Subscribed successfully'))
+            .catch(err => console.warn('[Beams] Subscription error:', err.message));
+
+    }).catch(err => console.error('[Beams] SW register error:', err));
+})();
 </script>
