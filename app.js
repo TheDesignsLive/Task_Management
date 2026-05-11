@@ -356,9 +356,9 @@ app.get('/beams-auth', (req, res) => {
         beamsUserId = String(req.session.userId);
     }
 
-    // ✅ This is the correct method for authenticated users
-    const beamsToken = beamsClient.generateToken(beamsUserId);
-    return res.json(beamsToken); // send the whole object, not { token: ... }
+const beamsToken = beamsClient.generateToken(beamsUserId);
+    // TokenProvider expects exactly { token: "..." }
+    return res.json({ token: beamsToken.token });
 });
 
 // Base & Auth
