@@ -1,3 +1,4 @@
+//pushNotify.js in utils
 const PusherPushNotifications = require('@pusher/push-notifications-server');
 
 const BeamsClient = PusherPushNotifications.default || PusherPushNotifications.Client || PusherPushNotifications;
@@ -10,37 +11,39 @@ const beamsClient = new BeamsClient({
 async function sendPushToUsers(userIds, title, body, url = '/') {
     if (!userIds || userIds.length === 0) return;
 
-    const interests = userIds.map(id => `user-${id}`);
+    // ✅ Match the format used in beams-auth:
+    // Regular users → String(id), Admins → "admin_" + id
+    // For regular user notifications, just use the userId directly:
     const chunks = [];
-    for (let i = 0; i < interests.length; i += 100) {
-        chunks.push(interests.slice(i, i + 100));
+    for (let i = 0; i < userIds.length; i += 100) {
+        chunks.push(userIds.slice(i, i + 100));
     }
 
     for (const chunk of chunks) {
         try {
-            await beamsClient.publishToInterests(chunk, {
-                web: {
-                    notification: {
-                        title,
-                        body,
-                        icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                        deep_link: `https://tms.thedesigns.live${url}`,
+            // publishToUsers uses the authenticated user IDs (not interests)
+            await beamsClient.publishToUsers(
+                chunk.map(id => String(id)), // must match setUserId value
+                {
+                    web: {
+                        notification: {
+                            title,
+                            body,
+                            icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                            deep_link: `https://tms.thedesigns.live${url}`,
+                        },
                     },
-                },
-                fcm: {
-                    notification: {
-                        title,
-                        body,
-                        icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                    fcm: {
+                        notification: { title, body },
+                        data: { url: `https://tms.thedesigns.live${url}` },
                     },
-                    data: { url: `https://tms.thedesigns.live${url}` },
-                },
-                apns: {
-                    aps: { alert: { title, body }, sound: 'default' },
-                    data: { url: `https://tms.thedesigns.live${url}` },
-                },
-            });
-            console.log('[Beams] ✅ Push sent to interests:', chunk);
+                    apns: {
+                        aps: { alert: { title, body }, sound: 'default' },
+                        data: { url: `https://tms.thedesigns.live${url}` },
+                    },
+                }
+            );
+            console.log('[Beams] ✅ Push sent to users:', chunk);
         } catch (err) {
             console.error('[Beams] ❌ Push error:', err.message);
         }

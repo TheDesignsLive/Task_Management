@@ -349,17 +349,16 @@ app.get('/beams-auth', (req, res) => {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Build a unique user interest string
     let beamsUserId;
-    if (req.session.role === 'admin') {
+    if (req.session.role === 'admin' || req.session.role === 'owner') {
         beamsUserId = `admin_${req.session.adminId}`;
     } else {
         beamsUserId = String(req.session.userId);
     }
 
-const beamsToken = beamsClient.generateToken(beamsUserId);
-// generateToken returns { token: '...' } — Beams SDK expects this exact format
-return res.json({ token: beamsToken });;
+    // ✅ This is the correct method for authenticated users
+    const beamsToken = beamsClient.generateToken(beamsUserId);
+    return res.json(beamsToken); // send the whole object, not { token: ... }
 });
 
 // Base & Auth

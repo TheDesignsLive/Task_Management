@@ -971,6 +971,42 @@ priorityMenu.addEventListener("click", (e) => {
 <!-- ── Pusher Beams Push Notification Setup ── -->
 <script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
 
+<!-- Pusher Beams SDK -->
+<script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+<script>
+  (async function initBeams() {
+    // Only run in browsers that support it
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.log('[Beams] Push not supported on this browser.');
+      return;
+    }
+
+    try {
+      const beamsClient = new PusherPushNotifications.Client({
+        instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+      });
+
+      // This registers the service worker AND requests notification permission
+      await beamsClient.start();
+
+      // ✅ Use Beams authenticated users (ties device to your session user)
+      await beamsClient.setUserId(
+        '<%= session.role === "admin" ? "admin_" + session.adminId : String(session.userId) %>',
+        {
+          // This calls your /beams-auth endpoint automatically
+          authEndpoint: '/beams-auth',
+          // Pass your session cookie along
+          requestHeaders: {},
+        }
+      );
+
+      console.log('[Beams] ✅ Push notifications registered.');
+    } catch (err) {
+      console.warn('[Beams] Setup error:', err);
+    }
+  })();
+</script>
+
 <!-- Notification permission banner -->
 <div id="notif-banner" style="
     display:none;
