@@ -78,11 +78,11 @@ textarea{
 }
 
 .notify-btn{
-  width:40px;
-  height:40px;
+  width:36px;
+  height:36px;
 
-  min-width:40px;
-  min-height:40px;
+  min-width:36px;
+  min-height:36px;
 
   flex-shrink:0;
 
@@ -107,52 +107,48 @@ textarea{
   box-sizing:border-box;
 
   overflow:hidden;
+  position:relative;
 }
 
 /* 🔔 Bell icon */
 .notify-btn i{
-  font-size:13px;
-  line-height:13px;
-
-  margin-bottom:3px;   /* 🔥 SPACE between bell and text */
+  font-size:15px;
+  line-height:15px;
+  transition: color 0.2s;
 }
 
-/* OFF / ON text */
+/* OFF / ON text — hidden now */
 .notify-text{
-  font-size:7px;
-
-  font-weight:600;
-
-  letter-spacing:0.5px;
-
-  line-height:7px;
-
-  text-transform:uppercase;
-
-  margin-top:1px;      /* 🔥 extra spacing */
+  display:none;
 }
 
-/* ACTIVE */
+/* Slash line overlay — shown when OFF */
+.notify-btn::after{
+  content:'';
+  position:absolute;
+  width:2px;
+  height:70%;
+  background:#9ca3af;
+  border-radius:2px;
+  transform:rotate(45deg);
+  transition:opacity 0.2s;
+  opacity:1;
+}
+
+/* ACTIVE — remove slash, go teal */
+.notify-btn.active::after{
+  opacity:0;
+}
+
 .notify-btn.active{
   color:#14b8a6;
   border-color:#14b8a6;
   background:#e6f7f5;
-
-  box-shadow:0 0 10px rgba(20,184,166,0.12);
+  box-shadow:0 0 10px rgba(20,184,166,0.15);
 }
 
 .notify-btn:hover{
   transform:scale(1.04);
-}
-
-
-
-.notify-btn.active{
-  color:#14b8a6;
-  border-color:#14b8a6;
-  background:#e6f7f5;
-
-  box-shadow:0 0 10px rgba(20,184,166,0.15);
 }
 
 
