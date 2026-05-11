@@ -77,6 +77,86 @@ textarea{
   margin-right:8px;
 }
 
+.notify-btn{
+  width:40px;
+  height:40px;
+
+  min-width:40px;
+  min-height:40px;
+
+  flex-shrink:0;
+
+  border:1px solid var(--border);
+  border-radius:50%;
+
+  background:#fff;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+
+  transition:all 0.2s ease;
+
+  color:#9ca3af;
+
+  padding:0;
+  box-sizing:border-box;
+
+  overflow:hidden;
+}
+
+/* 🔔 Bell icon */
+.notify-btn i{
+  font-size:13px;
+  line-height:13px;
+
+  margin-bottom:3px;   /* 🔥 SPACE between bell and text */
+}
+
+/* OFF / ON text */
+.notify-text{
+  font-size:7px;
+
+  font-weight:600;
+
+  letter-spacing:0.5px;
+
+  line-height:7px;
+
+  text-transform:uppercase;
+
+  margin-top:1px;      /* 🔥 extra spacing */
+}
+
+/* ACTIVE */
+.notify-btn.active{
+  color:#14b8a6;
+  border-color:#14b8a6;
+  background:#e6f7f5;
+
+  box-shadow:0 0 10px rgba(20,184,166,0.12);
+}
+
+.notify-btn:hover{
+  transform:scale(1.04);
+}
+
+
+
+.notify-btn.active{
+  color:#14b8a6;
+  border-color:#14b8a6;
+  background:#e6f7f5;
+
+  box-shadow:0 0 10px rgba(20,184,166,0.15);
+}
+
+
+
 select {
   background-color: var(--white);
   border: 1px solid var(--border);
@@ -459,6 +539,17 @@ select::-ms-expand { display: none; }
       <input type="text" id="datePicker">
       <i class="fa-regular fa-calendar" onclick="openDate()" style="cursor:pointer; color:#14b8a6; font-size:16px; margin-left:-5px;"></i>
     </div>
+      <!-- Notify user icon -->
+            <button
+            type="button"
+            class="notify-btn"
+            id="notifyBtn"
+            title="Notify User"
+          >
+            <i class="fa-regular fa-bell"></i>
+            <span class="notify-text">OFF</span>
+          </button>
+          <!-- Notify user icon over -->
 
 <div class="priority-wrapper" id="priorityBox">
 <div class="priority-selected" id="prioritySelected">
@@ -543,6 +634,22 @@ const selected = document.getElementById("selectedValue");
 const menu = document.getElementById("dropdownMenu");
 
 window.assignedTo = "self";
+
+  //Notify user
+    window.notifyUser = false;
+
+  const notifyBtn = document.getElementById("notifyBtn");
+
+  notifyBtn.addEventListener("click", () => {
+    window.notifyUser = !window.notifyUser;
+
+    notifyBtn.classList.toggle("active", window.notifyUser);
+
+notifyBtn.innerHTML = window.notifyUser
+  ? '<i class="fa-solid fa-bell"></i><span class="notify-text">ON</span>'
+  : '<i class="fa-regular fa-bell"></i><span class="notify-text">OFF</span>';
+});
+  //over
 
 // ✅ Toggle dropdown
 selected.addEventListener("click", () => {
@@ -645,7 +752,14 @@ if (assignedTo === "admin") {
 fetch('/add-task', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ title, description, date, priority, assignedTo })
+body: JSON.stringify({
+  title,
+  description,
+  date,
+  priority,
+  assignedTo,
+  notifyUser: window.notifyUser
+})
 })
 .then(res => res.json())
 .then(data => {
@@ -666,6 +780,14 @@ prioritySelected.innerHTML = 'Priority <i class="fa fa-chevron-down"></i>';
 // RESET ASSIGN DROPDOWN
 window.assignedTo = "self";
 selected.innerHTML = 'My Self <i class="fa fa-chevron-down"></i>';
+
+// RESET NOTIFY BUTTON
+window.notifyUser = false;
+
+notifyBtn.classList.remove("active");
+
+notifyBtn.innerHTML =
+  '<i class="fa-regular fa-bell"></i><span class="notify-text">OFF</span>';
 
 // OPTIONAL: visually reset selected highlight (safe fix)
 document.querySelectorAll(".priority-item").forEach(i => {
