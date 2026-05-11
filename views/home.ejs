@@ -748,6 +748,12 @@ html, body {
 .ctx-icon-btn:hover i { color: #0F8989; }
 .ctx-icon-btn:hover span { color: #0F8989; }
 
+/* Calendar icon with number (7d / 1 Month) */
+.ctx-cal-icon { color: #555; }
+.ctx-cal-num { color: #555; }
+.ctx-icon-btn:hover .ctx-cal-icon { color: #0F8989; }
+.ctx-icon-btn:hover .ctx-cal-num { color: #0F8989; }
+
 /* Clear date red */
 .ctx-icon-clear-date i { color: #ccc; }
 .ctx-icon-clear-date:hover { background: #fff0f0 !important; }
@@ -2141,9 +2147,12 @@ document.querySelectorAll('#task-context-menu .ctx-item').forEach(el => {
   document.querySelectorAll('#task-context-menu .ctx-item.danger').forEach(el => {
     el.style.color = '#e74c3c';
   });
-  document.querySelectorAll('#task-context-menu .ctx-icon-btn span').forEach(el => {
-    el.style.color = '#aaa';
-  });
+document.querySelectorAll('#task-context-menu .ctx-icon-btn span').forEach(el => {
+  el.style.color = '#aaa';
+});
+document.querySelectorAll('#task-context-menu .ctx-cal-num').forEach(el => {
+  el.style.color = '#555';
+});
   document.querySelectorAll('#task-context-menu .ctx-priority-btn span').forEach(el => {
     el.style.color = '#aaa';
   });
@@ -2287,26 +2296,32 @@ board.addEventListener('wheel', function(e) {
 <!-- Date section -->
   <div class="ctx-section" id="ctx-date-section">
     <div class="ctx-label">Change Date</div>
-    <div class="ctx-icon-row">
+<div class="ctx-icon-row">
       <div class="ctx-icon-btn" data-action="date-today" title="Today">
-        <i class="fa-solid fa-sun"></i>
+        <i class="fa-solid fa-sun" style="font-size:16px; display:block; text-align:center;"></i>
         <span>Today</span>
       </div>
       <div class="ctx-icon-btn" data-action="date-tomorrow" title="Tomorrow">
-        <i class="fa-solid fa-cloud-sun"></i>
+        <i class="fa-solid fa-cloud-sun" style="font-size:16px; display:block; text-align:center;"></i>
         <span>Tom</span>
       </div>
-      <div class="ctx-icon-btn" data-action="date-7" title="Next Week">
-        <i class="fa-solid fa-calendar-week"></i>
-        <span>7d</span>
-      </div>
-      <div class="ctx-icon-btn" data-action="date-30" title="Next Month">
-        <i class="fa-solid fa-calendar-days"></i>
-        <span>Month</span>
-      </div>
+<div class="ctx-icon-btn" data-action="date-7" title="Next Week">
+  <span style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;">
+    <i class="fa-regular fa-calendar ctx-cal-icon" style="font-size:16px; position:absolute;"></i>
+    <span class="ctx-cal-num" style="position:relative; font-size:7px; font-weight:800; margin-top:5px; z-index:1; line-height:1;">7</span>
+  </span>
+  <span>7d</span>
+</div>
+<div class="ctx-icon-btn" data-action="date-30" title="Next Month">
+  <span style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;">
+    <i class="fa-regular fa-calendar ctx-cal-icon" style="font-size:16px; position:absolute;"></i>
+    <span class="ctx-cal-num" style="position:relative; font-size:7px; font-weight:800; margin-top:5px; z-index:1; line-height:1;">1</span>
+  </span>
+  <span>1 Month</span>
+</div>
       <div class="ctx-icon-btn" data-action="date-custom" title="Pick Date">
-        <i class="fa-solid fa-calendar-plus"></i>
-        <span>Pick</span>
+        <i class="fa-solid fa-calendar-plus" style="font-size:16px; display:block; text-align:center;"></i>
+        <span>Custom</span>
       </div>
     </div>
     <input type="text" id="ctx-custom-date-input" style="display:none;">

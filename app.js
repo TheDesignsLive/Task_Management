@@ -334,7 +334,7 @@ cron.schedule('5 0 * * *', async () => {
 }, { timezone: 'Asia/Kolkata' });
 
 
-// ================= ROUTES EXECUTION =================
+// ================ ROUTES EXECUTION ================
 
 // Base & Auth
 app.get('/', (req, res) => {

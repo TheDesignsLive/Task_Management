@@ -1,5 +1,5 @@
 // utils/notifyMobile.js — Desktop utility
-// ─── REPLACE the entire notifyMobile.js ─────────────────────────────────────
+// ─── REPLACE the entire notifyMobile.js ─────────────────-───────────────────
 const MOBILE_BASE_URL = 'https://m-tms.thedesigns.live';
 const MOBILE_SECRET   = 'tms_mobile_bridge_2026';
 
