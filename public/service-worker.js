@@ -1,4 +1,3 @@
-// public/sw.js
 importScripts('https://js.pusher.com/beams/service-worker.js');
 
 self.addEventListener('notificationclick', (event) => {

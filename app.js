@@ -357,8 +357,9 @@ app.get('/beams-auth', (req, res) => {
         beamsUserId = String(req.session.userId);
     }
 
-    const beamsToken = beamsClient.generateToken(beamsUserId);
-    return res.json(beamsToken);
+const beamsToken = beamsClient.generateToken(beamsUserId);
+// generateToken returns { token: '...' } — Beams SDK expects this exact format
+return res.json({ token: beamsToken });;
 });
 
 // Base & Auth

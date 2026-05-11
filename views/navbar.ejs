@@ -981,7 +981,7 @@ priorityMenu.addEventListener("click", (e) => {
     const PusherPushNotifications = window.PusherPushNotifications;
     if (!PusherPushNotifications) return;
 
-    navigator.serviceWorker.register('/sw.js').then(registration => {
+navigator.serviceWorker.register('/service-worker.js').then(registration => {
         const beamsClient = new PusherPushNotifications.Client({
             instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
         });
