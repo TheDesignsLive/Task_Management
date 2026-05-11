@@ -326,6 +326,37 @@
     width: 220px;     /* same as input */
     text-align: center;
 }
+
+
+/* ===== STATS BAR ===== */
+.stat-card {
+    flex: 1 1 140px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+}
+.stat-label {
+    font-size: 11px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.stat-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: #00d1b2;
+    line-height: 1;
+}
+@media (max-width: 600px) {
+    .stat-num { font-size: 22px; }
+    #statsBar { gap: 8px; padding: 12px; }
+}
+
 </style>
 </head>
 <body>
@@ -364,6 +395,28 @@
 </div>
 
         <div class="table-container">
+
+            <!-- STATS BAR — paste before <table class="main-table"> -->
+<div id="statsBar" style="
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    flex-wrap: wrap;
+">
+    <div class="stat-card">
+        <span class="stat-label">Total Companies</span>
+        <span class="stat-num" id="statCompanies">—</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Total Members</span>
+        <span class="stat-num" id="statMembers">—</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Total Tasks</span>
+        <span class="stat-num" id="statTasks">—</span>
+    </div>
+</div>
+
             <table class="main-table">
                 <thead>
                     <tr>
@@ -1057,6 +1110,20 @@ document.getElementById("importModal").addEventListener("dblclick", function(e) 
         closeImportModal();
     }
 });
+
+
+// ===== LOAD GLOBAL STATS =====
+(async function loadStats() {
+    try {
+        const res = await fetch('/masterpage/api/global-stats');
+        const d = await res.json();
+        if (d.success) {
+            document.getElementById('statCompanies').textContent = d.companies;
+            document.getElementById('statMembers').textContent   = d.members;
+            document.getElementById('statTasks').textContent     = d.tasks;
+        }
+    } catch (e) { console.error('Stats load failed', e); }
+})();
 
 
 

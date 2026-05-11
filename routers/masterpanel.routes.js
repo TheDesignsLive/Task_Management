@@ -539,4 +539,27 @@ req.session.save(() => {
     }
 });
 
+
+// ─────────────────────────────────────────────
+//  API: global stats (companies, members, tasks)
+//  GET /masterpage/api/global-stats
+// ─────────────────────────────────────────────
+router.get('/masterpage/api/global-stats', requireMasterAuth, async (req, res) => {
+    try {
+        const [[{ companies }]] = await con.query(`SELECT COUNT(*) AS companies FROM admins`);
+        const [[{ admins }]]    = await con.query(`SELECT COUNT(*) AS admins    FROM admins`);
+        const [[{ users }]]     = await con.query(`SELECT COUNT(*) AS users     FROM users`);
+        const [[{ tasks }]]     = await con.query(`SELECT COUNT(*) AS tasks     FROM tasks`);
+        return res.json({
+            success:   true,
+            companies: companies,
+            members:   admins + users,   // total admins + total users
+            tasks:     tasks
+        });
+    } catch (err) {
+        console.error('[Master] global-stats error:', err);
+        return res.status(500).json({ success: false });
+    }
+});
+
 module.exports = router;
