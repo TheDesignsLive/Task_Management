@@ -41,14 +41,17 @@ body{
 .input-box{
   flex:1;
   background:#fff;
-  border-radius:10px;
-  padding:6px 14px;
+  border-radius:25px;
+  padding:0 14px;
   border:1px solid var(--border);
   display:flex;
   align-items:center;
   max-width:900px;
-  height:34px;
-  gap:10px; 
+  min-height:40px;
+  height:40px;
+  gap:8px;
+  box-sizing:border-box;
+  overflow:visible;
 }
 textarea{
   width:100%;
@@ -78,42 +81,36 @@ textarea{
 }
 
 .notify-btn{
-  width:36px;
-  height:36px;
-
-  min-width:36px;
-  min-height:36px;
-
+  width:28px;
+  height:28px;
+  min-width:28px;
+  min-height:28px;
   flex-shrink:0;
-
   border:1px solid var(--border);
   border-radius:50%;
-
   background:#fff;
-
-  display:flex;
-  flex-direction:column;
-
+  display:inline-flex;
   align-items:center;
   justify-content:center;
-
   cursor:pointer;
-
   transition:all 0.2s ease;
-
   color:#9ca3af;
-
   padding:0;
   box-sizing:border-box;
-
-  overflow:hidden;
+  overflow:visible;
   position:relative;
+  align-self:center;
+  vertical-align:middle;
+  flex-direction:row;
+  margin:0;
+  line-height:1;
 }
 
 /* 🔔 Bell icon */
 .notify-btn i{
-  font-size:15px;
-  line-height:15px;
+  font-size:13px;
+  line-height:1;
+  display:block;
   transition: color 0.2s;
 }
 
@@ -127,12 +124,16 @@ textarea{
   content:'';
   position:absolute;
   width:2px;
-  height:70%;
+  height:65%;
   background:#9ca3af;
   border-radius:2px;
   transform:rotate(45deg);
   transition:opacity 0.2s;
   opacity:1;
+  top:50%;
+  left:50%;
+  margin-top:-32%;
+  margin-left:-1px;
 }
 
 /* ACTIVE — remove slash, go teal */
@@ -311,19 +312,27 @@ select::-ms-expand { display: none; }
 
 .custom-dropdown {
   position: relative;
-  width: 160px;
+  width: 120px;
   font-size: 13px;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .dropdown-selected {
   background: #fff;
   border: 1px solid #d6e3df;
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 28px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  gap: 4px;
 }
 
 .dropdown-menu {
@@ -477,19 +486,24 @@ select::-ms-expand { display: none; }
 
 .priority-wrapper{
   position: relative;
-  width: 140px;
+  width: 100px;
   font-size: 13px;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .priority-selected{
   background:#fff;
   border:1px solid #d6e3df;
   border-radius:20px;
-  padding:6px 12px;
+  padding:4px 10px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   cursor:pointer;
+  height:28px;
+  box-sizing:border-box;
+  white-space:nowrap;
 }
 
 .priority-menu{
@@ -922,8 +936,11 @@ priorityMenu.addEventListener("click", (e) => {
 
   window.priorityValue = item.dataset.value;
 
-  prioritySelected.innerHTML =
-    item.innerText + ' <i class="fa fa-chevron-down"></i>';
+  // Update selected highlight
+  document.querySelectorAll(".priority-item").forEach(i => i.classList.remove("selected"));
+  item.classList.add("selected");
+
+prioritySelected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></i>';
 
   priorityMenu.style.display = "none";
 });
@@ -1003,7 +1020,6 @@ priorityMenu.addEventListener("click", (e) => {
 <script>
 const BEAMS_INSTANCE_ID = '423440a8-1fc5-4373-8e6b-0085dccafc58';
 
-// ✅ FIX: owner role uses adminId, not userId
 const BEAMS_USER_ID = (function() {
     const role    = '<%= session.role %>';
     const adminId = '<%= session.adminId || "" %>';
@@ -1013,9 +1029,8 @@ const BEAMS_USER_ID = (function() {
 })();
 
 let _beamsClient = null;
-let _beamsReady  = false;  // guard: subscribe only once per page load
+let _beamsReady  = false;
 
-// ── Load Beams SDK on demand ──
 function loadBeamsSDK() {
     return new Promise((resolve, reject) => {
         if (window.PusherPushNotifications) return resolve();
@@ -1029,19 +1044,15 @@ function loadBeamsSDK() {
 }
 
 async function initBeams() {
-    // ✅ Push not supported in this browser → silently exit
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.warn('[Beams] Push not supported in this browser');
         return;
     }
 
     try {
-        // ✅ Register service worker FIRST — must be done before Beams SDK init
-        // Path must be at root so scope covers the whole site
         const swReg = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
         console.log('[Beams] ✅ SW registered, scope:', swReg.scope);
 
-        // ✅ Load SDK lazily — does not block page render
         await loadBeamsSDK();
 
         const PPN = window.PusherPushNotifications;
@@ -1055,16 +1066,25 @@ async function initBeams() {
         const permission = Notification.permission;
 
         if (permission === 'granted') {
-            // Already allowed — subscribe silently (no banner)
+            // ✅ Already allowed — subscribe silently, no banner
             await subscribeBeams();
 
         } else if (permission === 'default') {
-            // ✅ Only show banner if user never dismissed it
+            // ✅ Never asked — show banner OR auto-ask if first login
+            const alreadySubscribed = localStorage.getItem('beams_subscribed_' + BEAMS_USER_ID);
             const dismissed = localStorage.getItem('notif_banner_dismissed');
-            if (!dismissed) showNotifBanner();
 
+            if (!alreadySubscribed && !dismissed) {
+                // ✅ First time for this user — auto trigger permission popup
+                // Small delay so page finishes loading first
+                setTimeout(async () => {
+                    await requestBeamsPermission();
+                }, 1500);
+            } else if (!dismissed) {
+                showNotifBanner();
+            }
         }
-        // 'denied' → do nothing, user must manually re-enable in browser settings
+        // 'denied' → do nothing, user goes to Settings to fix
 
     } catch (err) {
         console.warn('[Beams] Init error:', err.message);
@@ -1072,20 +1092,22 @@ async function initBeams() {
 }
 
 async function subscribeBeams() {
-    // ✅ Guard: don't subscribe twice in the same page load
     if (_beamsReady) return;
     if (!_beamsClient) return;
 
     try {
         await _beamsClient.start();
 
-        // ✅ TokenProvider hits /beams-auth with session cookie
         const tokenProvider = new window.PusherPushNotifications.TokenProvider({
             url: '/beams-auth',
             credentials: 'include',
         });
 
         await _beamsClient.setUserId(BEAMS_USER_ID, tokenProvider);
+
+        // ✅ Remember this user subscribed — survives logout/login
+        localStorage.setItem('beams_subscribed_' + BEAMS_USER_ID, '1');
+        localStorage.removeItem('notif_banner_dismissed');
 
         _beamsReady = true;
         console.log('[Beams] ✅ Subscribed as:', BEAMS_USER_ID);
@@ -1169,4 +1191,22 @@ function showDeniedGuide() {
 
 // ✅ Start Beams after page is fully loaded — does not block anything
 window.addEventListener('load', initBeams);
+// ✅ When page loads, re-subscribe silently to ensure Beams is active
+// This re-registers device if Chrome was closed and Beams lost the subscription
+window.addEventListener('load', async () => {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        // ✅ If push subscription expired (common after Chrome restart), renew it
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub && Notification.permission === 'granted') {
+            console.log('[Beams] 🔄 Push subscription lost — re-subscribing...');
+            setTimeout(async () => {
+                await subscribeBeams();
+            }, 2000);
+        }
+    } catch (e) {
+        console.warn('[Beams] Subscription check failed:', e.message);
+    }
+});
 </script>

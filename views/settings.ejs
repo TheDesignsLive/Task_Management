@@ -1,3 +1,4 @@
+<!-- setting.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,7 +108,11 @@ button:hover{background:#0b7373;}
 <% if (session.role === 'admin' || session.role === 'owner') { %>
 <div class="settings-item" onclick="openLabelsDialog()">Section Labels <span style="font-size:11px;color:#aaa;margin-left:6px;">(<%= label_changes %> & <%= label_update %>)</span></div>
 <% } %>
-        <div class="settings-item danger" onclick="openDeleteDialog()">Delete Profile</div>
+      <div class="settings-item" onclick="openNotifDialog()" id="notifSettingItem">
+  Notifications 
+  <span id="notifStatusBadge" style="font-size:11px;margin-left:6px;padding:2px 8px;border-radius:10px;background:#e6f7f5;color:#0f9d9a;">checking...</span>
+</div>
+<div class="settings-item danger" onclick="openDeleteDialog()">Delete Profile</div>
         <div class="settings-item danger" onclick="openLogoutModal()">Logout</div>
     </div>
   </div>
@@ -229,6 +234,18 @@ button:hover{background:#0b7373;}
     <div class="modal-buttons">
       <button type="button" onclick="closeDeleteDialogs()" class="btn btn-cancel">Okay</button>
     </div>
+  </div>
+</div>
+<div id="notifDialog" class="dialog-overlay">
+  <div class="dialog-box">
+    <span class="close-btn" onclick="closeNotifDialog()">✖</span>
+    <h3 style="margin-top:0;">🔔 Notifications</h3>
+    <p style="font-size:14px;color:#555;line-height:1.7;text-align:left;" id="notifDialogMsg">Checking...</p>
+    <button type="button" id="notifDialogBtn" onclick="handleNotifAction()"
+      style="background:#0f9d9a;color:#fff;border:none;padding:10px;border-radius:6px;
+             cursor:pointer;width:100%;font-weight:bold;margin-top:10px;font-size:14px;">
+      Enable Notifications
+    </button>
   </div>
 </div>
 
@@ -504,6 +521,172 @@ async function confirmDeleteProfile() {
         showAlertDialog("Error", "Server Error.", false);
     }
 }
+</script>
+
+<script>
+// ===== NOTIFICATION SETTINGS =====
+
+function _updateNotifBadge() {
+    const badge = document.getElementById('notifStatusBadge');
+    if (!badge) return;
+    const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'default';
+    if (perm === 'granted') {
+        badge.innerText = 'ON';
+        badge.style.background = '#e6f7f5';
+        badge.style.color = '#0f9d9a';
+    } else if (perm === 'denied') {
+        badge.innerText = 'Blocked';
+        badge.style.background = '#fde8e8';
+        badge.style.color = '#d9534f';
+    } else {
+        badge.innerText = 'OFF';
+        badge.style.background = '#f1f1f1';
+        badge.style.color = '#888';
+    }
+}
+
+function openNotifDialog() {
+    if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+        alert('Push notifications are not supported in this browser.');
+        return;
+    }
+
+    document.getElementById('notifDialog').style.display = 'flex';
+    const perm = Notification.permission;
+    const msg  = document.getElementById('notifDialogMsg');
+    const btn  = document.getElementById('notifDialogBtn');
+
+    if (perm === 'granted') {
+        msg.innerHTML = '✅ Notifications are <strong style="color:#0f9d9a;">enabled</strong>.<br><br>You will receive task alerts even when the browser is closed.';
+        btn.innerText = '✅ Already Enabled';
+        btn.style.background = '#aaa';
+        btn.style.cursor = 'default';
+        btn.disabled = true;
+
+    } else if (perm === 'denied') {
+        msg.innerHTML = `❌ Notifications are <strong style="color:#d9534f;">blocked</strong> by your browser.<br><br>
+            To fix this:<br>
+            <span style="font-size:13px;line-height:2.2;display:block;margin-top:4px;">
+            1️⃣ Click the <strong>🔒 lock icon</strong> in the address bar<br>
+            2️⃣ Find <strong>Notifications</strong> → set to <strong>Allow</strong><br>
+            3️⃣ <strong>Reload</strong> this page
+            </span>`;
+        btn.innerText = '📋 Copy These Steps';
+        btn.style.background = '#6c757d';
+        btn.style.cursor = 'pointer';
+        btn.disabled = false;
+
+    } else {
+        msg.innerHTML = 'Notifications are <strong>off</strong>.<br><br>Click below and then click <strong>Allow</strong> in the browser popup to start receiving task alerts.';
+        btn.innerText = '🔔 Enable Notifications';
+        btn.style.background = '#0f9d9a';
+        btn.style.cursor = 'pointer';
+        btn.disabled = false;
+    }
+
+    _updateNotifBadge();
+}
+
+function closeNotifDialog() {
+    document.getElementById('notifDialog').style.display = 'none';
+}
+
+async function handleNotifAction() {
+    const perm = Notification.permission;
+
+    if (perm === 'denied') {
+        // Browser blocked — can't show popup. Copy steps to clipboard.
+        const steps = 'To enable notifications:\n1. Click the lock icon in the address bar\n2. Find Notifications → set to Allow\n3. Reload the page';
+        try {
+            await navigator.clipboard.writeText(steps);
+            const btn = document.getElementById('notifDialogBtn');
+            const orig = btn.innerText;
+            btn.innerText = '✅ Copied to Clipboard!';
+            setTimeout(() => { btn.innerText = orig; }, 2500);
+        } catch(e) {
+            alert('To enable: click the 🔒 lock icon in address bar → Notifications → Allow → Reload.');
+        }
+        return;
+    }
+
+    if (perm === 'granted') return;
+
+    // 'default' — ask permission via Beams flow
+    try {
+        if (typeof requestBeamsPermission === 'function') {
+            await requestBeamsPermission();
+        } else {
+            await Notification.requestPermission();
+        }
+    } catch(e) {
+        console.warn('[Notif] Permission error:', e);
+    }
+
+    // Refresh dialog to show new state
+    openNotifDialog();
+}
+
+// Run on page load to set badge correctly
+_updateNotifBadge();
+</script>
+    document.getElementById('notifDialog').style.display = 'flex';
+    const perm = Notification.permission;
+    const msg  = document.getElementById('notifDialogMsg');
+    const btn  = document.getElementById('notifDialogBtn');
+
+    if (perm === 'granted') {
+        msg.innerHTML = '✅ Notifications are <strong>enabled</strong>. You will receive task alerts.';
+        btn.innerText = 'Already Enabled';
+        btn.style.background = '#aaa';
+        btn.disabled = true;
+    } else if (perm === 'denied') {
+        msg.innerHTML = '❌ Notifications are <strong>blocked</strong> by your browser.<br><br>To enable: click the 🔒 lock icon in the address bar → Notifications → Allow → Reload.';
+        btn.innerText = 'Blocked — Enable in Browser Settings';
+        btn.style.background = '#d9534f';
+        btn.disabled = true;
+    } else {
+        msg.innerHTML = 'You have not allowed notifications yet. Click below to enable task alerts.';
+        btn.innerText = 'Enable Notifications';
+        btn.style.background = '#0f9d9a';
+        btn.disabled = false;
+    }
+}
+
+function closeNotifDialog() {
+    document.getElementById('notifDialog').style.display = 'none';
+}
+
+async function handleNotifAction() {
+    if (typeof requestBeamsPermission === 'function') {
+        await requestBeamsPermission();
+    } else {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+            openNotifDialog(); // refresh dialog state
+        }
+    }
+    openNotifDialog(); // refresh state after action
+}
+
+// Update the badge in the settings list on load
+(function updateNotifBadge() {
+    const badge = document.getElementById('notifStatusBadge');
+    if (!badge) return;
+    const perm = Notification.permission;
+    if (perm === 'granted') {
+        badge.innerText = 'ON';
+        badge.style.background = '#e6f7f5';
+        badge.style.color = '#0f9d9a';
+    } else if (perm === 'denied') {
+        badge.innerText = 'Blocked';
+        badge.style.background = '#fde8e8';
+        badge.style.color = '#d9534f';
+    } else {
+        badge.innerText = 'OFF';
+        badge.style.background = '#f1f1f1';
+        badge.style.color = '#888';
+    }
+})();
 </script>
 
 </body>

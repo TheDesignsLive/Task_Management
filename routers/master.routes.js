@@ -59,7 +59,7 @@ router.post('/add-task', async (req, res) => {
     const toBeamsId   = (userId) => String(userId);
     const adminBeamsId = () => `admin_${admin_id}`;
 
-    // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
     // CASE 1 — TEAM ASSIGNMENT  (assignedTo = "team_X")
     // ═══════════════════════════════════════════════
     if (typeof assignedTo === "string" && assignedTo.startsWith("team_")) {
@@ -69,78 +69,76 @@ router.post('/add-task', async (req, res) => {
         SELECT u.id 
         FROM users u
         JOIN roles r ON u.role_id = r.id
-        WHERE r.team_id = ?
-      `, [teamId]);
+        WHERE r.team_id = ? AND u.admin_id = ?
+      `, [teamId, admin_id]);
 
       const notifyIds = [];
 
-      for (const user of users) {
-        await con.execute(
+      // ✅ FAST: all inserts run at same time, not one by one
+      await Promise.all(users.map(user => {
+        const isSelf = (req.session.role !== 'admin') && (user.id === req.session.userId);
+        if (!isSelf) notifyIds.push(toBeamsId(user.id));
+        return con.execute(
           `INSERT INTO tasks
            (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
           [admin_id, title || 'No Title', description || null,
            (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned]
         );
-        // Only notify others, not the sender themselves
-        const isSelf = (req.session.role !== 'admin') && (user.id === req.session.userId);
-        if (!isSelf) notifyIds.push(toBeamsId(user.id));
-      }
+      }));
 
       // ✅ Fire-and-forget — does NOT slow down response
-      if (notifyUser) pushSilent(notifyIds, pushTitle, pushBody);
+      if (notifyUser && notifyIds.length > 0) pushSilent(notifyIds, pushTitle, pushBody);
 
       req.io.emit('update_tasks');
       notifyMobile();
       return res.json({ success: true });
     }
 
-    // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
     // CASE 2 — ALL MEMBERS  (assignedTo = "all")
     // ═══════════════════════════════════════════════
     if (assignedTo === "all") {
       const [users] = await con.execute("SELECT id FROM users WHERE admin_id=?", [admin_id]);
       const notifyIds = [];
 
-      for (const user of users) {
-        // Skip the sender
-        const isSelf = (req.session.role === 'admin')
-          ? (user.id === req.session.adminId)
-          : (user.id === req.session.userId);
-        if (isSelf) continue;
-
-        try {
-          await con.execute(
+      // ✅ FAST: all inserts run at same time
+      const insertPromises = users
+        .filter(user => {
+          const isSelf = (req.session.role === 'admin')
+            ? (user.id === req.session.adminId)
+            : (user.id === req.session.userId);
+          return !isSelf;
+        })
+        .map(user => {
+          notifyIds.push(toBeamsId(user.id));
+          return con.execute(
             `INSERT INTO tasks
              (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
             [admin_id, title || 'No Title', description || null,
              (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned]
           );
-          notifyIds.push(toBeamsId(user.id));
-        } catch (err) {
-          console.error(`Failed to insert task for user ${user.id}:`, err);
-        }
-      }
+        });
 
-      // Also insert for admin (assigned_to = 0) and notify admin if sender is NOT admin
-      try {
-        await con.execute(
+      // Also insert for admin (assigned_to = 0)
+      insertPromises.push(
+        con.execute(
           `INSERT INTO tasks
            (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
            VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'OTHERS', 'OPEN')`,
           [admin_id, title || 'No Title', description || null,
            (priority || 'LOW').toUpperCase(), finalDate, assigned_by, who_assigned]
-        );
-        if (req.session.role !== 'admin') {
-          notifyIds.push(adminBeamsId());
-        }
-      } catch (err) {
-        console.error('Failed to insert task for admin:', err);
+        )
+      );
+      if (req.session.role !== 'admin') {
+        notifyIds.push(adminBeamsId());
       }
 
+      await Promise.all(insertPromises);
+
       // ✅ Fire-and-forget — does NOT slow down response
-      if (notifyUser) pushSilent(notifyIds, pushTitle, pushBody);
+      if (notifyUser && notifyIds.length > 0) pushSilent(notifyIds, pushTitle, pushBody);
 
       req.io.emit('update_tasks');
       notifyMobile();

@@ -20,40 +20,60 @@ const beamsClient = new BeamsClient({
 async function sendPushToUsers(userIds, title, body, url = '/') {
     if (!userIds || userIds.length === 0) return;
 
+    // ✅ Deduplicate IDs — prevent double notifications
+    const uniqueIds = [...new Set(userIds.map(id => String(id)))];
+
     // Pusher Beams limit: 100 users per call
     const chunks = [];
-    for (let i = 0; i < userIds.length; i += 100) {
-        chunks.push(userIds.slice(i, i + 100));
+    for (let i = 0; i < uniqueIds.length; i += 100) {
+        chunks.push(uniqueIds.slice(i, i + 100));
     }
 
-    for (const chunk of chunks) {
+    // ✅ All chunks fire at same time — fast even with 200+ users
+    await Promise.all(chunks.map(async chunk => {
         try {
-            await beamsClient.publishToUsers(
-                chunk.map(id => String(id)),
-                {
-                    web: {
-                        notification: {
-                            title,
-                            body,
-                            icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                            deep_link: `https://tms.thedesigns.live${url}`,
-                        },
-                    },
-                    fcm: {
-                        notification: { title, body },
-                        data: { url: `https://tms.thedesigns.live${url}` },
-                    },
-                    apns: {
-                        aps: { alert: { title, body }, sound: 'default' },
-                        data: { url: `https://tms.thedesigns.live${url}` },
-                    },
-                }
-            );
+ await beamsClient.publishToUsers(chunk, {
+    web: {
+        notification: {
+            title,
+            body,
+            icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
+            deep_link: `https://tms.thedesigns.live${url}`,
+        },
+    },
+    fcm: {
+        notification: { title, body },
+        data: { url: `https://tms.thedesigns.live${url}` },
+        android: {
+            priority: 'high',                   // ✅ Force immediate delivery on Android
+            ttl: '86400s',                       // ✅ Store 24hrs if device offline
+            notification: {
+                sound: 'default',
+                channelId: 'tms_tasks',
+                priority: 'high',
+                defaultSound: true,
+            },
+        },
+    },
+    apns: {
+        aps: {
+            alert: { title, body },
+            sound: 'default',
+            badge: 1,
+            contentAvailable: true,              // ✅ Wake app in background
+        },
+        data: { url: `https://tms.thedesigns.live${url}` },
+        headers: {
+            'apns-priority': '10',               // ✅ Immediate delivery (5=low, 10=high)
+            'apns-expiration': String(Math.floor(Date.now() / 1000) + 86400), // 24hr TTL
+        },
+    },
+});
             console.log('[Beams] ✅ Push sent to:', chunk);
         } catch (err) {
             console.error('[Beams] ❌ Push error:', err.message);
         }
-    }
+    }));
 }
 
 module.exports = { sendPushToUsers };
