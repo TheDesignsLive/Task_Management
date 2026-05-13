@@ -9,18 +9,22 @@ const { sendPushToUsers } = require('../utils/pushNotify');
 // ==============================
 // ADD TASK
 // ==============================
+// ==============================
+// ADD TASK
+// ==============================
 router.post('/add-task', async (req, res) => {
   try {
     if (!req.session.role) return res.json({ success: false, message: 'Unauthorized' });
 
-    const { title, description, date, priority, assignedTo } = req.body;
+    const { title, description, date, priority, assignedTo, notifyUser } = req.body;
 
     if (!req.session.adminId && !req.session.userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const assigned_by = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
+    const assigned_by  = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
     const who_assigned = req.session.role;
+    const assignerName = req.session.adminName || req.session.userName || 'Someone';
 
     let admin_id;
     if (req.session.role === 'admin') {
@@ -31,6 +35,7 @@ router.post('/add-task', async (req, res) => {
       admin_id = rows[0].admin_id;
     }
 
+    // ── Resolve self-assignment to 0 ──
     let finalAssignedTo = assignedTo;
     if (req.session.role === 'admin') {
       if (parseInt(assignedTo) === req.session.adminId) finalAssignedTo = 0;
@@ -44,7 +49,13 @@ router.post('/add-task', async (req, res) => {
     if (req.session.role === 'admin' && parseInt(finalAssignedTo) !== 0) sectionValue = 'OTHERS';
     if (req.session.role !== 'admin' && parseInt(finalAssignedTo) !== parseInt(req.session.userId)) sectionValue = 'OTHERS';
 
-// HANDLE TEAM ASSIGNMENT
+    // ── Helper: build Beams user ID from a DB user row ──
+    const toBeamsId = (userId) => String(userId);
+    const adminBeamsId = () => `admin_${admin_id}`;
+
+    // ═══════════════════════════════════════════════
+    // CASE 1 — TEAM ASSIGNMENT  (assignedTo = "team_X")
+    // ═══════════════════════════════════════════════
     if (typeof assignedTo === "string" && assignedTo.startsWith("team_")) {
       const teamId = assignedTo.split("_")[1];
 
@@ -55,27 +66,23 @@ router.post('/add-task', async (req, res) => {
         WHERE r.team_id = ?
       `, [teamId]);
 
-      const teamUserIds = [];
-      for (let user of users) {
+      const notifyIds = [];
+
+      for (const user of users) {
         await con.execute(
           `INSERT INTO tasks
-          (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
+           (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
           [admin_id, title || 'No Title', description || null,
            (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned]
         );
-        teamUserIds.push(String(user.id));
+        // Only notify others, not the sender
+        const isSelf = (req.session.role !== 'admin') && (user.id === req.session.userId);
+        if (!isSelf) notifyIds.push(toBeamsId(user.id));
       }
 
-      // ── Push notification if notifyUser enabled ──
-      if (req.body.notifyUser && teamUserIds.length > 0) {
-        const assignerName = req.session.adminName || req.session.userName || 'Someone';
-        await sendPushToUsers(
-          teamUserIds,
-          '📋 New Task Assigned',
-          `${assignerName}: ${title || 'New Task'}`,
-          '/home'
-        );
+      if (notifyUser && notifyIds.length > 0) {
+        await sendPushToUsers(notifyIds, '📋 New Task Assigned', `${assignerName}: ${title || 'New Task'}`, '/home');
       }
 
       req.io.emit('update_tasks');
@@ -83,53 +90,52 @@ router.post('/add-task', async (req, res) => {
       return res.json({ success: true });
     }
 
-// HANDLE "ALL MEMBERS"
+    // ═══════════════════════════════════════════════
+    // CASE 2 — ALL MEMBERS  (assignedTo = "all")
+    // ═══════════════════════════════════════════════
     if (assignedTo === "all") {
       const [users] = await con.execute("SELECT id FROM users WHERE admin_id=?", [admin_id]);
-      const allNotifyIds = [];
+      const notifyIds = [];
 
-      for (let user of users) {
-        if ((req.session.role === 'admin' && user.id === req.session.adminId) ||
-            (req.session.role !== 'admin' && user.id === req.session.userId)) continue;
+      for (const user of users) {
+        // Skip the sender
+        const isSelf = (req.session.role === 'admin')
+          ? (user.id === req.session.adminId)
+          : (user.id === req.session.userId);
+        if (isSelf) continue;
 
         try {
           await con.execute(
             `INSERT INTO tasks
-            (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
+             (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
             [admin_id, title || 'No Title', description || null,
              (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned]
           );
-          allNotifyIds.push(String(user.id));
+          notifyIds.push(toBeamsId(user.id));
         } catch (err) {
           console.error(`Failed to insert task for user ${user.id}:`, err);
         }
       }
 
-      // Also include admin (user-0 maps to admin interest)
-      allNotifyIds.push(`admin_${admin_id}`);
-
+      // Also insert for admin (assigned_to = 0) and notify admin if sender is NOT admin
       try {
         await con.execute(
           `INSERT INTO tasks
-          (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
-          VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'OTHERS', 'OPEN')`,
+           (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
+           VALUES (?, ?, ?, 0, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
           [admin_id, title || 'No Title', description || null,
            (priority || 'LOW').toUpperCase(), finalDate, assigned_by, who_assigned]
         );
+        if (req.session.role !== 'admin') {
+          notifyIds.push(adminBeamsId());
+        }
       } catch (err) {
         console.error('Failed to insert task for admin:', err);
       }
 
-      // ── Push notification if notifyUser enabled ──
-      if (req.body.notifyUser && allNotifyIds.length > 0) {
-        const assignerName = req.session.adminName || req.session.userName || 'Someone';
-        await sendPushToUsers(
-          allNotifyIds,
-          '📋 New Task Assigned',
-          `${assignerName}: ${title || 'New Task'}`,
-          '/home'
-        );
+      if (notifyUser && notifyIds.length > 0) {
+        await sendPushToUsers(notifyIds, '📋 New Task Assigned', `${assignerName}: ${title || 'New Task'}`, '/home');
       }
 
       req.io.emit('update_tasks');
@@ -137,7 +143,9 @@ router.post('/add-task', async (req, res) => {
       return res.json({ success: true, message: 'Task added successfully' });
     }
 
-// NORMAL INSERT
+    // ═══════════════════════════════════════════════
+    // CASE 3 — NORMAL SINGLE INSERT
+    // ═══════════════════════════════════════════════
     await con.execute(
       `INSERT INTO tasks
        (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
@@ -146,33 +154,19 @@ router.post('/add-task', async (req, res) => {
        (priority || 'LOW').toUpperCase(), finalDate, finalAssignedTo, assigned_by, who_assigned, sectionValue]
     );
 
-    // ── Push notification if notifyUser enabled ──
-    if (req.body.notifyUser) {
-      const assignerName = req.session.adminName || req.session.userName || 'Someone';
-
-      // Determine who to notify
-      let notifyIds = [];
-      const selfId = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
+    // ── Notify only if notifyUser=true AND it's not a self-task ──
+    if (notifyUser) {
+      const selfId    = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
       const isSelfTask = parseInt(finalAssignedTo) === 0
-        ? (req.session.role === 'admin')   // 0 = admin's own task
+        ? (req.session.role === 'admin')       // 0 = admin's own task
         : parseInt(finalAssignedTo) === parseInt(selfId);
 
       if (!isSelfTask) {
-        // Notify the assigned person
-        if (parseInt(finalAssignedTo) === 0) {
-          notifyIds.push(`admin_${admin_id}`);
-        } else {
-          notifyIds.push(String(finalAssignedTo));
-        }
-      }
+        const notifyId = parseInt(finalAssignedTo) === 0
+          ? adminBeamsId()
+          : toBeamsId(finalAssignedTo);
 
-      if (notifyIds.length > 0) {
-        await sendPushToUsers(
-          notifyIds,
-          '📋 New Task Assigned',
-          `${assignerName}: ${title || 'New Task'}`,
-          '/home'
-        );
+        await sendPushToUsers([notifyId], '📋 New Task Assigned', `${assignerName}: ${title || 'New Task'}`, '/home');
       }
     }
 
