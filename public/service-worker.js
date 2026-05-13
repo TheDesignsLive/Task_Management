@@ -1,5 +1,5 @@
-// public/service-worker.js
-// public/service-worker.js
+
+// public/service-worker.js desktop version file
 importScripts('https://js.pusher.com/beams/service-worker.js');
 
 // ✅ Force show notification when tab IS open (browsers skip it by default)

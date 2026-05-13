@@ -1,4 +1,4 @@
-// routers/master.routes.js
+// routers/master.routes.js desktop version file
 const express = require('express');
 const router = express.Router();
 const con = require('../config/db');

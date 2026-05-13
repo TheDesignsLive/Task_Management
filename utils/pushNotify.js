@@ -1,4 +1,4 @@
-// utils/pushNotify.js
+// utils/pushNotify.js desktop version file
 const PusherPushNotifications = require('@pusher/push-notifications-server');
 
 const BeamsClient =
