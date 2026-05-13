@@ -1,16 +1,16 @@
 {
   "short_name": "MyTMS",
   "name": "Task Management System",
-  "icons": [
+"icons": [
     {
-      "src": "/images/tms.svg",
+      "src": "/images/tms_logo.jpeg",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/jpeg"
     },
     {
-      "src": "/images/tms.svg",
+      "src": "/images/tms_logo.jpeg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/jpeg"
     }
   ],
   "start_url": "/",
