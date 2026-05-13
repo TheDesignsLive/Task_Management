@@ -17,7 +17,7 @@ const beamsClient = new BeamsClient({
  *   - Regular users  → String(userId)   e.g. "42"
  *   - Admins         → "admin_" + adminId  e.g. "admin_5"
  */
-async function sendPushToUsers(userIds, title, body, url = '/') {
+async function sendPushToUsers(userIds, title, body, url = '/', isMobile = false) {
     if (!userIds || userIds.length === 0) return;
 
     // ✅ Deduplicate IDs — prevent double notifications
@@ -32,26 +32,39 @@ async function sendPushToUsers(userIds, title, body, url = '/') {
     // ✅ All chunks fire at same time — fast even with 200+ users
     await Promise.all(chunks.map(async chunk => {
         try {
- await beamsClient.publishToUsers(chunk, {
+const baseUrl = 'https://tms.thedesigns.live';
+const mobileUrl = 'https://m-tms.thedesigns.live';
+const logoUrl = `${baseUrl}/images/tms_logo.jpeg`;
+
+await beamsClient.publishToUsers(chunk, {
     web: {
         notification: {
             title,
             body,
-            icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-            deep_link: `https://tms.thedesigns.live${url}`,
+            icon: logoUrl,
+            deep_link: `${baseUrl}${url}`,
         },
     },
     fcm: {
-        notification: { title, body },
-        data: { url: `https://tms.thedesigns.live${url}` },
+        notification: {
+            title,
+            body,
+            icon: logoUrl,          // ✅ TMS logo on Android notification
+        },
+        data: {
+            url: `${mobileUrl}${url}`,   // ✅ Opens mobile app URL
+            icon: logoUrl,
+        },
         android: {
-            priority: 'high',                   // ✅ Force immediate delivery on Android
-            ttl: '86400s',                       // ✅ Store 24hrs if device offline
+            priority: 'high',
+            ttl: '86400s',
             notification: {
                 sound: 'default',
                 channelId: 'tms_tasks',
                 priority: 'high',
                 defaultSound: true,
+                icon: logoUrl,       // ✅ Logo in Android notification tray
+                imageUrl: logoUrl,   // ✅ Large image in notification
             },
         },
     },
@@ -60,12 +73,17 @@ async function sendPushToUsers(userIds, title, body, url = '/') {
             alert: { title, body },
             sound: 'default',
             badge: 1,
-            contentAvailable: true,              // ✅ Wake app in background
+            contentAvailable: true,
         },
-        data: { url: `https://tms.thedesigns.live${url}` },
+        data: {
+            url: `${mobileUrl}${url}`,   // ✅ Opens mobile app URL on iOS
+        },
         headers: {
-            'apns-priority': '10',               // ✅ Immediate delivery (5=low, 10=high)
-            'apns-expiration': String(Math.floor(Date.now() / 1000) + 86400), // 24hr TTL
+            'apns-priority': '10',
+            'apns-expiration': String(Math.floor(Date.now() / 1000) + 86400),
+        },
+        fcm_options: {
+            image: logoUrl,          // ✅ Logo on iOS notification
         },
     },
 });

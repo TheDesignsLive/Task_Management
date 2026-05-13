@@ -345,6 +345,10 @@ const beamsClient = new BeamsClient({
 });
 
 app.get('/beams-auth', (req, res) => {
+    // ✅ FIX: Allow mobile app to call this endpoint cross-origin
+    res.header('Access-Control-Allow-Origin', 'https://m-tms.thedesigns.live');
+    res.header('Access-Control-Allow-Credentials', 'true');
+
     if (!req.session.adminId && !req.session.userId) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
