@@ -350,14 +350,16 @@ app.get('/beams-auth', (req, res) => {
     }
 
     let beamsUserId;
+
+    // ✅ FIX: 'owner' role also uses adminId (same as admin)
+    // This MUST match exactly what navbar.ejs sends as BEAMS_USER_ID
     if (req.session.role === 'admin' || req.session.role === 'owner') {
         beamsUserId = `admin_${req.session.adminId}`;
     } else {
         beamsUserId = String(req.session.userId);
     }
 
-const beamsToken = beamsClient.generateToken(beamsUserId);
-    // TokenProvider expects exactly { token: "..." }
+    const beamsToken = beamsClient.generateToken(beamsUserId);
     return res.json({ token: beamsToken.token });
 });
 

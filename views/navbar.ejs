@@ -979,7 +979,6 @@ priorityMenu.addEventListener("click", (e) => {
     border-radius:14px;
     box-shadow:0 8px 24px rgba(0,0,0,0.4);
     z-index:99999;
-    display:none;
     align-items:center;
     gap:14px;
     font-size:13px;
@@ -999,74 +998,143 @@ priorityMenu.addEventListener("click", (e) => {
   ">✕</button>
 </div>
 
+
+
 <script>
 const BEAMS_INSTANCE_ID = '423440a8-1fc5-4373-8e6b-0085dccafc58';
-const BEAMS_USER_ID = '<%= session.role === "admin" ? "admin_" + session.adminId : String(session.userId) %>';
+
+// ✅ FIX: owner role uses adminId, not userId
+const BEAMS_USER_ID = (function() {
+    const role    = '<%= session.role %>';
+    const adminId = '<%= session.adminId || "" %>';
+    const userId  = '<%= session.userId  || "" %>';
+    if (role === 'admin' || role === 'owner') return 'admin_' + adminId;
+    return String(userId);
+})();
 
 let _beamsClient = null;
+let _beamsReady  = false;  // guard: subscribe only once per page load
+
+// ── Load Beams SDK on demand ──
+function loadBeamsSDK() {
+    return new Promise((resolve, reject) => {
+        if (window.PusherPushNotifications) return resolve();
+        const s = document.createElement('script');
+        s.src   = 'https://js.pusher.com/beams/1.0/push-notifications-cdn.js';
+        s.async = true;
+        s.onload  = resolve;
+        s.onerror = () => reject(new Error('Beams SDK failed to load'));
+        document.head.appendChild(s);
+    });
+}
 
 async function initBeams() {
+    // ✅ Push not supported in this browser → silently exit
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('[Beams] Push not supported');
+        console.warn('[Beams] Push not supported in this browser');
         return;
     }
-    // ✅ Load Beams SDK lazily — only when needed, lightweight
-    if (!window.PusherPushNotifications) {
-        await new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = 'https://js.pusher.com/beams/1.0/push-notifications-cdn.js';
-            s.onload = resolve;
-            s.onerror = reject;
-            document.head.appendChild(s);
-        });
-    }
-    const PPN = window.PusherPushNotifications;
-    if (!PPN) return;
 
     try {
-        await navigator.serviceWorker.register('/service-worker.js');
+        // ✅ Register service worker FIRST — must be done before Beams SDK init
+        // Path must be at root so scope covers the whole site
+        const swReg = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
+        console.log('[Beams] ✅ SW registered, scope:', swReg.scope);
+
+        // ✅ Load SDK lazily — does not block page render
+        await loadBeamsSDK();
+
+        const PPN = window.PusherPushNotifications;
+        if (!PPN || !PPN.Client) {
+            console.warn('[Beams] SDK not available after load');
+            return;
+        }
+
         _beamsClient = new PPN.Client({ instanceId: BEAMS_INSTANCE_ID });
 
         const permission = Notification.permission;
 
         if (permission === 'granted') {
+            // Already allowed — subscribe silently (no banner)
             await subscribeBeams();
+
         } else if (permission === 'default') {
+            // ✅ Only show banner if user never dismissed it
             const dismissed = localStorage.getItem('notif_banner_dismissed');
             if (!dismissed) showNotifBanner();
+
         }
-        // 'denied' → do nothing silently
+        // 'denied' → do nothing, user must manually re-enable in browser settings
+
     } catch (err) {
         console.warn('[Beams] Init error:', err.message);
     }
 }
 
 async function subscribeBeams() {
+    // ✅ Guard: don't subscribe twice in the same page load
+    if (_beamsReady) return;
     if (!_beamsClient) return;
+
     try {
         await _beamsClient.start();
 
-        const tokenProvider = new PusherPushNotifications.TokenProvider({
+        // ✅ TokenProvider hits /beams-auth with session cookie
+        const tokenProvider = new window.PusherPushNotifications.TokenProvider({
             url: '/beams-auth',
             credentials: 'include',
         });
 
         await _beamsClient.setUserId(BEAMS_USER_ID, tokenProvider);
 
-        console.log('[Beams] ✅ Subscribed:', BEAMS_USER_ID);
+        _beamsReady = true;
+        console.log('[Beams] ✅ Subscribed as:', BEAMS_USER_ID);
         hideNotifBanner();
+
     } catch (err) {
         console.warn('[Beams] Subscribe error:', err.message);
     }
 }
 
 async function requestBeamsPermission() {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-        await subscribeBeams();
-    } else if (permission === 'denied') {
-        hideNotifBanner();
-        showDeniedGuide();
+    // ✅ Make sure SDK is loaded before asking permission
+    if (!_beamsClient) {
+        try {
+            await loadBeamsSDK();
+            const PPN = window.PusherPushNotifications;
+            if (PPN && PPN.Client) {
+                _beamsClient = new PPN.Client({ instanceId: BEAMS_INSTANCE_ID });
+            }
+        } catch(e) {
+            console.warn('[Beams] SDK load failed during permission request');
+            return;
+        }
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            // ✅ Clear dismissed flag so future sessions work too
+            localStorage.removeItem('notif_banner_dismissed');
+            await subscribeBeams();
+        } else if (permission === 'denied') {
+            hideNotifBanner();
+            showDeniedGuide();
+        }
+    } catch(err) {
+        console.warn('[Beams] Permission error:', err.message);
+    }
+}
+
+// ── Called on logout: stop Beams so device unregisters cleanly ──
+// Call this before redirecting to /logout if you want clean unsubscribe
+async function stopBeams() {
+    if (!_beamsClient) return;
+    try {
+        await _beamsClient.stop();
+        console.log('[Beams] ✅ Stopped (logout)');
+    } catch(err) {
+        console.warn('[Beams] Stop error:', err.message);
     }
 }
 
@@ -1082,16 +1150,23 @@ function hideNotifBanner() {
 
 function dismissNotifBanner() {
     hideNotifBanner();
-    // Remember dismissal so we don't keep showing it
+    // ✅ Remember dismissal across sessions — but NOT forever
+    // We use sessionStorage for "this session" dismiss + localStorage for "never show again"
+    // Here we do localStorage so the banner doesn't reappear on every page load
     localStorage.setItem('notif_banner_dismissed', '1');
 }
 
 function showDeniedGuide() {
-    // Show how to re-enable from browser settings
-    const msg = `Notifications blocked.\n\nTo enable:\n1. Click the 🔒 lock icon in address bar\n2. Click "Site settings"\n3. Set Notifications → Allow\n4. Reload the page`;
-    alert(msg);
+    alert(
+        'Notifications are blocked by your browser.\n\n' +
+        'To enable:\n' +
+        '1. Click the 🔒 lock icon in the address bar\n' +
+        '2. Find "Notifications" → set to Allow\n' +
+        '3. Reload the page\n\n' +
+        'After that, notifications will work automatically.'
+    );
 }
 
-// Start Beams after page loads
+// ✅ Start Beams after page is fully loaded — does not block anything
 window.addEventListener('load', initBeams);
 </script>

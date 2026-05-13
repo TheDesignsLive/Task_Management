@@ -6,9 +6,13 @@ const db = require('../config/db');
 const { notifyMobile } = require('../utils/notifyMobile');
 const { sendPushToUsers } = require('../utils/pushNotify');
 
-// ==============================
-// ADD TASK
-// ==============================
+// ── Fire-and-forget push helper — never slows down the response ──
+function pushSilent(ids, title, body) {
+  if (!ids || ids.length === 0) return;
+  sendPushToUsers(ids, title, body, '/home')
+    .catch(err => console.error('[Push] silent error:', err.message));
+}
+
 // ==============================
 // ADD TASK
 // ==============================
@@ -25,6 +29,8 @@ router.post('/add-task', async (req, res) => {
     const assigned_by  = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
     const who_assigned = req.session.role;
     const assignerName = req.session.adminName || req.session.userName || 'Someone';
+    const pushTitle    = '📋 New Task Assigned';
+    const pushBody     = `${assignerName}: ${title || 'New Task'}`;
 
     let admin_id;
     if (req.session.role === 'admin') {
@@ -49,8 +55,8 @@ router.post('/add-task', async (req, res) => {
     if (req.session.role === 'admin' && parseInt(finalAssignedTo) !== 0) sectionValue = 'OTHERS';
     if (req.session.role !== 'admin' && parseInt(finalAssignedTo) !== parseInt(req.session.userId)) sectionValue = 'OTHERS';
 
-    // ── Helper: build Beams user ID from a DB user row ──
-    const toBeamsId = (userId) => String(userId);
+    // ── Beams ID helpers ──
+    const toBeamsId   = (userId) => String(userId);
     const adminBeamsId = () => `admin_${admin_id}`;
 
     // ═══════════════════════════════════════════════
@@ -76,14 +82,13 @@ router.post('/add-task', async (req, res) => {
           [admin_id, title || 'No Title', description || null,
            (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned]
         );
-        // Only notify others, not the sender
+        // Only notify others, not the sender themselves
         const isSelf = (req.session.role !== 'admin') && (user.id === req.session.userId);
         if (!isSelf) notifyIds.push(toBeamsId(user.id));
       }
 
-      if (notifyUser && notifyIds.length > 0) {
-        await sendPushToUsers(notifyIds, '📋 New Task Assigned', `${assignerName}: ${title || 'New Task'}`, '/home');
-      }
+      // ✅ Fire-and-forget — does NOT slow down response
+      if (notifyUser) pushSilent(notifyIds, pushTitle, pushBody);
 
       req.io.emit('update_tasks');
       notifyMobile();
@@ -123,7 +128,7 @@ router.post('/add-task', async (req, res) => {
         await con.execute(
           `INSERT INTO tasks
            (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
-           VALUES (?, ?, ?, 0, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
+           VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'OTHERS', 'OPEN')`,
           [admin_id, title || 'No Title', description || null,
            (priority || 'LOW').toUpperCase(), finalDate, assigned_by, who_assigned]
         );
@@ -134,9 +139,8 @@ router.post('/add-task', async (req, res) => {
         console.error('Failed to insert task for admin:', err);
       }
 
-      if (notifyUser && notifyIds.length > 0) {
-        await sendPushToUsers(notifyIds, '📋 New Task Assigned', `${assignerName}: ${title || 'New Task'}`, '/home');
-      }
+      // ✅ Fire-and-forget — does NOT slow down response
+      if (notifyUser) pushSilent(notifyIds, pushTitle, pushBody);
 
       req.io.emit('update_tasks');
       notifyMobile();
@@ -156,9 +160,9 @@ router.post('/add-task', async (req, res) => {
 
     // ── Notify only if notifyUser=true AND it's not a self-task ──
     if (notifyUser) {
-      const selfId    = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
+      const selfId     = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
       const isSelfTask = parseInt(finalAssignedTo) === 0
-        ? (req.session.role === 'admin')       // 0 = admin's own task
+        ? (req.session.role === 'admin')  // 0 = admin's own task
         : parseInt(finalAssignedTo) === parseInt(selfId);
 
       if (!isSelfTask) {
@@ -166,7 +170,8 @@ router.post('/add-task', async (req, res) => {
           ? adminBeamsId()
           : toBeamsId(finalAssignedTo);
 
-        await sendPushToUsers([notifyId], '📋 New Task Assigned', `${assignerName}: ${title || 'New Task'}`, '/home');
+        // ✅ Fire-and-forget — does NOT slow down response
+        pushSilent([notifyId], pushTitle, pushBody);
       }
     }
 
@@ -348,20 +353,20 @@ router.post('/delete-task/:id', async (req, res) => {
 // ==============================
 router.post('/delete-completed-tasks', async (req, res) => {
   try {
-    const role = req.session.role;
+    const role    = req.session.role;
     const adminId = req.session.adminId;
-    const userId = req.session.userId;
+    const userId  = req.session.userId;
 
     if (!role) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    let query = '';
+    let query  = '';
     let params = [];
 
     if (role === 'admin') {
-      query = "DELETE FROM tasks WHERE admin_id = ? AND assigned_to = 0 AND status = 'COMPLETED'";
+      query  = "DELETE FROM tasks WHERE admin_id = ? AND assigned_to = 0 AND status = 'COMPLETED'";
       params = [adminId];
     } else if (role === 'user' || role === 'owner') {
-      query = "DELETE FROM tasks WHERE admin_id = ? AND assigned_to = ? AND status = 'COMPLETED'";
+      query  = "DELETE FROM tasks WHERE admin_id = ? AND assigned_to = ? AND status = 'COMPLETED'";
       params = [adminId, userId];
     } else {
       return res.status(403).json({ success: false, message: 'Forbidden: Invalid role' });
@@ -392,10 +397,10 @@ router.post('/delete-completed-tasks', async (req, res) => {
 // ==============================
 router.get('/get-team-members/:teamId', async (req, res) => {
   try {
-    const { teamId } = req.params;
-    const currentUserId = req.session.userId || null;
+    const { teamId }      = req.params;
+    const currentUserId   = req.session.userId || null;
 
-    let query = `
+    let query  = `
       SELECT u.id, u.name 
       FROM users u
       JOIN roles r ON u.role_id = r.id
