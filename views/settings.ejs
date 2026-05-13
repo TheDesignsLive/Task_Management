@@ -629,65 +629,6 @@ async function handleNotifAction() {
 // Run on page load to set badge correctly
 _updateNotifBadge();
 </script>
-    document.getElementById('notifDialog').style.display = 'flex';
-    const perm = Notification.permission;
-    const msg  = document.getElementById('notifDialogMsg');
-    const btn  = document.getElementById('notifDialogBtn');
-
-    if (perm === 'granted') {
-        msg.innerHTML = '✅ Notifications are <strong>enabled</strong>. You will receive task alerts.';
-        btn.innerText = 'Already Enabled';
-        btn.style.background = '#aaa';
-        btn.disabled = true;
-    } else if (perm === 'denied') {
-        msg.innerHTML = '❌ Notifications are <strong>blocked</strong> by your browser.<br><br>To enable: click the 🔒 lock icon in the address bar → Notifications → Allow → Reload.';
-        btn.innerText = 'Blocked — Enable in Browser Settings';
-        btn.style.background = '#d9534f';
-        btn.disabled = true;
-    } else {
-        msg.innerHTML = 'You have not allowed notifications yet. Click below to enable task alerts.';
-        btn.innerText = 'Enable Notifications';
-        btn.style.background = '#0f9d9a';
-        btn.disabled = false;
-    }
-}
-
-function closeNotifDialog() {
-    document.getElementById('notifDialog').style.display = 'none';
-}
-
-async function handleNotifAction() {
-    if (typeof requestBeamsPermission === 'function') {
-        await requestBeamsPermission();
-    } else {
-        const perm = await Notification.requestPermission();
-        if (perm === 'granted') {
-            openNotifDialog(); // refresh dialog state
-        }
-    }
-    openNotifDialog(); // refresh state after action
-}
-
-// Update the badge in the settings list on load
-(function updateNotifBadge() {
-    const badge = document.getElementById('notifStatusBadge');
-    if (!badge) return;
-    const perm = Notification.permission;
-    if (perm === 'granted') {
-        badge.innerText = 'ON';
-        badge.style.background = '#e6f7f5';
-        badge.style.color = '#0f9d9a';
-    } else if (perm === 'denied') {
-        badge.innerText = 'Blocked';
-        badge.style.background = '#fde8e8';
-        badge.style.color = '#d9534f';
-    } else {
-        badge.innerText = 'OFF';
-        badge.style.background = '#f1f1f1';
-        badge.style.color = '#888';
-    }
-})();
-</script>
 
 </body>
 </html>
