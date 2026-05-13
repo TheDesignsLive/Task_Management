@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const fs = require("fs");
-const mysql = require("mysql2");
+const db = require("../config/db.js");
 const path = require("path");
 const nodemailer = require("nodemailer");
 const { debugLog } = require("../utils/logger");
@@ -131,7 +131,7 @@ router.post("/import/verify-otp", (req, res) => {
 });
 
 // ================= IMPORT SQL =================
-router.post("/import/upload", upload.single("file"), (req, res) => {
+router.post("/import/upload", upload.single("file"), async (req, res) => {
     try {
         if (!req.session.importVerified) {
             return res.json({ success: false, message: "OTP not verified" });
@@ -144,26 +144,36 @@ router.post("/import/upload", upload.single("file"), (req, res) => {
             return res.json({ success: false, message: "Empty file" });
         }
 
-        const connection = mysql.createConnection({
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASS,
-            database: process.env.DB_NAME,
-            multipleStatements: true
-        });
+const connection = await db.getConnection();
 
-        connection.query(sql, (err) => {
-            if (err) {
-                console.error(err);
-                return res.json({ success: false });
+        try {
+            // multipleStatements is not on the pool, so run statements one by one
+// Split on semicolons that appear at the END of a line (handles multi-line INSERTs)
+            const statements = sql
+                .split(/;\s*(?:\r?\n|$)/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0 && !s.startsWith('--') && !s.startsWith('/*') && !s.startsWith('#'));
+
+            for (const stmt of statements) {
+                // INSERT IGNORE so duplicate rows are skipped instead of crashing
+                const safeStmt = stmt.replace(/^INSERT\s+INTO\s+/i, 'INSERT IGNORE INTO ');
+                try {
+                    await connection.query(safeStmt);
+                } catch (stmtErr) {
+                    console.warn('[Import] Skipped statement:', stmtErr.sqlMessage || stmtErr.message);
+                }
             }
 
             fs.unlinkSync(filePath);
-
             req.session.importVerified = false; // reset
-
             res.json({ success: true });
-        });
+
+        } catch (err) {
+            console.error(err);
+            res.json({ success: false });
+        } finally {
+            connection.release();
+        }
 
     } catch (err) {
         console.error(err);
