@@ -28,3 +28,29 @@ self.addEventListener('notificationclick', (event) => {
 // Without these, Chrome waits for old SW to die — Beams breaks on fresh installs
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
+
+// ✅ Show ALL missed notifications when browser was closed
+// Without this, Chrome collapses multiple notifications into one (shows only latest)
+self.addEventListener('push', (event) => {
+    if (!event.data) return;
+    try {
+        const payload = event.data.json();
+        const n = payload?.notification || payload?.data;
+        if (!n || !n.title) return;
+
+        // ✅ Unique tag per notification = all notifications show, none replaced
+        event.waitUntil(
+            self.registration.showNotification(n.title, {
+                body:               n.body || '',
+                icon:               'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                badge:              'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                tag:                'tms-' + Date.now(),   // ✅ unique = no collapse
+                data:               { url: n.deep_link || 'https://tms.thedesigns.live/home' },
+                requireInteraction: false,
+                silent:             false,
+            })
+        );
+    } catch (e) {
+        // Beams handles its own format — this catches any edge cases
+    }
+});
