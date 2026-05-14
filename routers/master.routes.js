@@ -7,9 +7,11 @@ const { notifyMobile } = require('../utils/notifyMobile');
 const { sendPushToUsers } = require('../utils/pushNotify');
 
 // ── Fire-and-forget push helper — never slows down the response ──
+// ✅ Deduplicates IDs here before sending — guarantees 1 notification per user
 function pushSilent(ids, title, body) {
   if (!ids || ids.length === 0) return;
-  sendPushToUsers(ids, title, body, '/home')
+  const uniqueIds = [...new Set(ids.map(id => String(id)))];
+  sendPushToUsers(uniqueIds, title, body, '/home')
     .catch(err => console.error('[Push] silent error:', err.message));
 }
 
@@ -72,12 +74,14 @@ router.post('/add-task', async (req, res) => {
         WHERE r.team_id = ? AND u.admin_id = ?
       `, [teamId, admin_id]);
 
-      const notifyIds = [];
+const notifyIds = [];
 
       // ✅ FAST: all inserts run at same time, not one by one
       await Promise.all(users.map(user => {
         const isSelf = (req.session.role !== 'admin') && (user.id === req.session.userId);
-        if (!isSelf) notifyIds.push(toBeamsId(user.id));
+        // ✅ Only add each userId ONCE — prevents duplicate notifications
+        const beamsId = toBeamsId(user.id);
+        if (!isSelf && !notifyIds.includes(beamsId)) notifyIds.push(beamsId);
         return con.execute(
           `INSERT INTO tasks
            (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
@@ -87,7 +91,7 @@ router.post('/add-task', async (req, res) => {
         );
       }));
 
-      // ✅ Fire-and-forget — does NOT slow down response
+      // ✅ Fire-and-forget — 1 notification per user, not per device
       if (notifyUser && notifyIds.length > 0) pushSilent(notifyIds, pushTitle, pushBody);
 
       req.io.emit('update_tasks');
@@ -103,7 +107,7 @@ router.post('/add-task', async (req, res) => {
       const notifyIds = [];
 
       // ✅ FAST: all inserts run at same time
-      const insertPromises = users
+const insertPromises = users
         .filter(user => {
           const isSelf = (req.session.role === 'admin')
             ? (user.id === req.session.adminId)
@@ -111,7 +115,9 @@ router.post('/add-task', async (req, res) => {
           return !isSelf;
         })
         .map(user => {
-          notifyIds.push(toBeamsId(user.id));
+          // ✅ Only add each userId ONCE — prevents duplicate notifications
+          const beamsId = toBeamsId(user.id);
+          if (!notifyIds.includes(beamsId)) notifyIds.push(beamsId);
           return con.execute(
             `INSERT INTO tasks
              (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)

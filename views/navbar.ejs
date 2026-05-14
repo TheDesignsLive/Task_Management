@@ -1191,18 +1191,18 @@ function showDeniedGuide() {
 
 // ✅ Start Beams after page is fully loaded — does not block anything
 window.addEventListener('load', initBeams);
-// ✅ When page loads, re-subscribe silently to ensure Beams is active
-// This re-registers device if Chrome was closed and Beams lost the subscription
+// ✅ Only re-subscribe if subscription was lost AND Beams not already active
 window.addEventListener('load', async () => {
-    if (!('serviceWorker' in navigator)) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (_beamsReady) return;
+    if (Notification.permission !== 'granted') return;
     try {
         const reg = await navigator.serviceWorker.ready;
-        // ✅ If push subscription expired (common after Chrome restart), renew it
         const sub = await reg.pushManager.getSubscription();
-        if (!sub && Notification.permission === 'granted') {
+        if (!sub) {
             console.log('[Beams] 🔄 Push subscription lost — re-subscribing...');
             setTimeout(async () => {
-                await subscribeBeams();
+                if (!_beamsReady) await subscribeBeams();
             }, 2000);
         }
     } catch (e) {

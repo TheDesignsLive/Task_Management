@@ -1,32 +1,5 @@
-
 // public/service-worker.js desktop version file
 importScripts('https://js.pusher.com/beams/service-worker.js');
-
-// ✅ Force show notification when tab IS open (browsers skip it by default)
-self.addEventListener('push', (event) => {
-    // Let Beams handle its own push first — this catches any Beams misses
-    if (!event.data) return;
-
-    try {
-        const payload = event.data.json();
-        const notification = payload?.notification || payload?.data;
-        if (!notification || !notification.title) return;
-
-        // ✅ Show even when tab is open
-        event.waitUntil(
-            self.registration.showNotification(notification.title, {
-                body: notification.body || '',
-                icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                badge: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                data: { url: notification.deep_link || 'https://tms.thedesigns.live/home' },
-                requireInteraction: false,
-                silent: false,
-            })
-        );
-    } catch (e) {
-        // Beams formats differently — let Beams handle it
-    }
-});
 
 // ✅ Notification click handler
 self.addEventListener('notificationclick', (event) => {
@@ -51,6 +24,7 @@ self.addEventListener('notificationclick', (event) => {
     );
 });
 
-// ✅ Activate immediately
+// ✅ Required: activate SW immediately so Beams subscription works on first load
+// Without these, Chrome waits for old SW to die — Beams breaks on fresh installs
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
