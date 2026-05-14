@@ -344,6 +344,26 @@ const beamsClient = new BeamsClient({
     secretKey:  '75EBE2088425312400AD5D15B2476EA23E3CEA61B7DE841FCA0A62E822C3135F',
 });
 
+// ── Helper: push task notification to desktop users ──
+async function pushDesktopTaskNotification(interests, taskTitle, assignerName) {
+    if (!interests || interests.length === 0) return;
+    try {
+        await beamsClient.publishToInterests(interests, {
+            web: {
+                notification: {
+                    title: '📋 New Task Assigned',
+                    body: `"${taskTitle}" — assigned by ${assignerName}`,
+                    icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                    deep_link: 'https://tms.thedesigns.live/home',
+                },
+            },
+        });
+        console.log('[Desktop] 🔔 Push sent to interests:', interests);
+    } catch (err) {
+        console.error('[Desktop] ❌ Beams push failed:', err.message);
+    }
+}
+
 app.get('/beams-auth', (req, res) => {
     res.header('Access-Control-Allow-Origin', 'https://m-tms.thedesigns.live');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -441,18 +461,28 @@ app.use('/', import_master);
 // ✅ NEW: Mobile pings this endpoint when a task changes
 // Desktop then broadcasts socket event to all its connected clients
 // NEW — paste this in desktop app.js
-app.post('/api/notify-task-update', (req, res) => {
+app.post('/api/notify-task-update', async (req, res) => {
     const secret = req.headers['x-mobile-secret'];
     if (secret !== 'tms_mobile_bridge_2026') {
         return res.status(403).json({ success: false, message: 'Forbidden' });
     }
-    // ✅ Only emit if ping came from mobile — prevents infinite loop
     const source = req.headers['x-source'];
     if (source !== 'mobile') {
         return res.status(400).json({ success: false, message: 'Bad source' });
     }
     io.emit('update_tasks');
     console.log('[Desktop] 🔔 task update broadcast triggered by mobile');
+
+    // ── Push notification to desktop users ──
+    try {
+        const { interests, taskTitle, assignerName } = req.body;
+        if (interests && interests.length > 0 && taskTitle) {
+            await pushDesktopTaskNotification(interests, taskTitle, assignerName || 'Someone');
+        }
+    } catch (err) {
+        console.error('[Desktop] push in notify-task-update error:', err.message);
+    }
+
     return res.json({ success: true });
 });
 

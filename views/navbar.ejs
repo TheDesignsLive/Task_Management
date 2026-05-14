@@ -1107,6 +1107,12 @@ async function subscribeBeams() {
 
         // ✅ Remember this user subscribed — survives logout/login
         localStorage.setItem('beams_subscribed_' + BEAMS_USER_ID, '1');
+
+
+      // ADD these two lines:
+      localStorage.setItem('desktop_beams_' + BEAMS_USER_ID, '1');
+      localStorage.setItem('desktop_beams_last_user', BEAMS_USER_ID);
+
         localStorage.removeItem('notif_banner_dismissed');
 
         _beamsReady = true;
