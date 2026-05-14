@@ -16,9 +16,17 @@ const beamsClient = new BeamsClient({
  * userIds must match the format used in beams-auth:
  *   - Regular users  → String(userId)   e.g. "42"
  *   - Admins         → "admin_" + adminId  e.g. "admin_5"
+ *
+ * ⚠️  Only send the platforms you have configured in Pusher Beams dashboard.
+ *     Sending fcm/apns without credentials causes the ENTIRE call to fail,
+ *     including web — which breaks desktop-to-desktop notifications too.
  */
-async function sendPushToUsers(userIds, title, body, url = '/', isMobile = false) {
+async function sendPushToUsers(userIds, title, body, url = '/') {
     if (!userIds || userIds.length === 0) return;
+
+    const baseUrl   = 'https://tms.thedesigns.live';
+    const mobileUrl = 'https://m-tms.thedesigns.live';
+    const logoUrl   = `${baseUrl}/images/tms_logo.jpeg`;
 
     // ✅ Deduplicate IDs — prevent double notifications
     const uniqueIds = [...new Set(userIds.map(id => String(id)))];
@@ -29,68 +37,58 @@ async function sendPushToUsers(userIds, title, body, url = '/', isMobile = false
         chunks.push(uniqueIds.slice(i, i + 100));
     }
 
-    // ✅ All chunks fire at same time — fast even with 200+ users
     await Promise.all(chunks.map(async chunk => {
+        // ── 1. WEB push (desktop Chrome/Edge/Firefox) ──────────────────────
+        // Always safe — web push works as long as Beams instance exists
         try {
-const baseUrl = 'https://tms.thedesigns.live';
-const mobileUrl = 'https://m-tms.thedesigns.live';
-const logoUrl = `${baseUrl}/images/tms_logo.jpeg`;
-
-await beamsClient.publishToUsers(chunk, {
-    web: {
-        notification: {
-            title,
-            body,
-            icon: logoUrl,
-            deep_link: `${baseUrl}${url}`,
-        },
-    },
-    fcm: {
-        notification: {
-            title,
-            body,
-            icon: logoUrl,
-        },
-        data: {
-            url: `${mobileUrl}${url}`,
-            icon: logoUrl,
-            deep_link: `${mobileUrl}${url}`,
-        },
-        android: {
-            priority: 'high',
-            ttl: '86400s',
-            notification: {
-                sound: 'default',
-                channelId: 'tms_tasks',
-                priority: 'high',
-                defaultSound: true,
-                icon: logoUrl,
-                imageUrl: logoUrl,
-            },
-        },
-    },
-    apns: {
-        aps: {
-            alert: { title, body },
-            sound: 'default',
-            badge: 1,
-            contentAvailable: true,
-        },
-        data: {
-            url: `${mobileUrl}${url}`,   // ✅ Opens mobile app URL on iOS
-        },
-        headers: {
-            'apns-priority': '10',
-            'apns-expiration': String(Math.floor(Date.now() / 1000) + 86400),
-        },
-        fcm_options: {
-            image: logoUrl,          // ✅ Logo on iOS notification
-        },
-    },
-});
-            console.log('[Beams] ✅ Push sent to:', chunk);
+            await beamsClient.publishToUsers(chunk, {
+                web: {
+                    notification: {
+                        title,
+                        body,
+                        icon: logoUrl,
+                        deep_link: `${baseUrl}${url}`,
+                    },
+                },
+            });
+            console.log('[Beams] ✅ Web push sent to:', chunk);
         } catch (err) {
-            console.error('[Beams] ❌ Push error:', err.message);
+            console.error('[Beams] ❌ Web push error:', err.message);
+        }
+
+        // ── 2. FCM push (Android mobile PWA) ───────────────────────────────
+        // Only fires if FCM is configured in Pusher Beams dashboard.
+        // If not configured, this block is skipped — web push above still works.
+        try {
+            await beamsClient.publishToUsers(chunk, {
+                fcm: {
+                    notification: {
+                        title,
+                        body,
+                    },
+                    data: {
+                        url:       `${mobileUrl}${url}`,
+                        deep_link: `${mobileUrl}${url}`,
+                        icon:      logoUrl,
+                    },
+                    android: {
+                        priority: 'high',
+                        ttl: '86400s',
+                        notification: {
+                            sound:        'default',
+                            channelId:    'tms_tasks',
+                            priority:     'high',
+                            defaultSound: true,
+                            imageUrl:     logoUrl,
+                        },
+                    },
+                },
+            });
+            console.log('[Beams] ✅ FCM push sent to:', chunk);
+        } catch (err) {
+            // ✅ Silently skip — FCM not configured in Beams dashboard is expected
+            // This will NOT affect web/desktop notifications
+            console.warn('[Beams] ⚠️ FCM push skipped (configure FCM in Pusher dashboard to enable):', err.message);
         }
     }));
 }
