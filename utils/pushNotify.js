@@ -45,26 +45,32 @@ await beamsClient.publishToUsers(chunk, {
             deep_link: `${baseUrl}${url}`,
         },
     },
-    fcm: {
+fcm: {
         notification: {
             title,
             body,
-            icon: logoUrl,          // ✅ TMS logo on Android notification
+            // ✅ FCM icon must be a relative path OR a publicly accessible URL
+            // Use desktop URL — always reachable from FCM servers
+            icon: logoUrl,
         },
         data: {
-            url: `${mobileUrl}${url}`,   // ✅ Opens mobile app URL
+            url: `${mobileUrl}${url}`,
+            // ✅ Pass icon in data so service worker can use it too
             icon: logoUrl,
+            deep_link: `${mobileUrl}${url}`,
         },
         android: {
             priority: 'high',
             ttl: '86400s',
             notification: {
                 sound: 'default',
-                channelId: 'tms_tasks',
+                // ✅ channel_id (snake_case) is the correct FCM field
+                channel_id: 'tms_tasks',
                 priority: 'high',
-                defaultSound: true,
-                icon: logoUrl,       // ✅ Logo in Android notification tray
-                imageUrl: logoUrl,   // ✅ Large image in notification
+                default_sound: true,
+                // ✅ Remove icon from here — FCM ignores URL icons in notification block
+                // Android uses the app icon from the installed PWA instead
+                image: logoUrl,
             },
         },
     },
