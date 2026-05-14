@@ -49,11 +49,12 @@ await beamsClient.publishToUsers(chunk, {
         notification: {
             title,
             body,
-            icon: logoUrl,          // ✅ TMS logo on Android notification
+            icon: logoUrl,
         },
         data: {
-            url: `${mobileUrl}${url}`,   // ✅ Opens mobile app URL
+            url: `${mobileUrl}${url}`,
             icon: logoUrl,
+            deep_link: `${mobileUrl}${url}`,
         },
         android: {
             priority: 'high',
@@ -63,8 +64,8 @@ await beamsClient.publishToUsers(chunk, {
                 channelId: 'tms_tasks',
                 priority: 'high',
                 defaultSound: true,
-                icon: logoUrl,       // ✅ Logo in Android notification tray
-                imageUrl: logoUrl,   // ✅ Large image in notification
+                icon: logoUrl,
+                imageUrl: logoUrl,
             },
         },
     },
