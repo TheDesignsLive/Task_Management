@@ -345,22 +345,31 @@ const beamsClient = new BeamsClient({
 });
 
 app.get('/beams-auth', (req, res) => {
-    // ✅ FIX: Allow mobile app to call this endpoint cross-origin
     res.header('Access-Control-Allow-Origin', 'https://m-tms.thedesigns.live');
     res.header('Access-Control-Allow-Credentials', 'true');
 
-    if (!req.session.adminId && !req.session.userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     let beamsUserId;
 
-    // ✅ FIX: 'owner' role also uses adminId (same as admin)
-    // This MUST match exactly what navbar.ejs sends as BEAMS_USER_ID
-    if (req.session.role === 'admin' || req.session.role === 'owner') {
-        beamsUserId = `admin_${req.session.adminId}`;
-    } else {
-        beamsUserId = String(req.session.userId);
+    // ✅ PRIMARY: use session (works for desktop browser — same origin)
+    if (req.session.adminId || req.session.userId) {
+        if (req.session.role === 'admin' || req.session.role === 'owner') {
+            beamsUserId = `admin_${req.session.adminId}`;
+        } else {
+            beamsUserId = String(req.session.userId);
+        }
+    }
+    // ✅ FALLBACK: mobile PWA cross-origin session cookie fails — use query param
+    // Mobile sends beamsUserId in queryParams from TokenProvider
+    else if (req.query.beamsUserId) {
+        const candidate = String(req.query.beamsUserId);
+        // ✅ Only allow valid formats: "123" or "admin_123"
+        if (/^(admin_)?\d+$/.test(candidate)) {
+            beamsUserId = candidate;
+        }
+    }
+
+    if (!beamsUserId) {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const beamsToken = beamsClient.generateToken(beamsUserId);
