@@ -522,6 +522,7 @@ const wasMaster = req.session.masterAuthenticated;
 
 req.session.adminId             = adminId;
 req.session.userId              = null;
+req.session.userName            = null;
 req.session.role                = 'admin';
 req.session.control_type        = 'ADMIN';
 req.session.adminName           = adminData[0].name;
