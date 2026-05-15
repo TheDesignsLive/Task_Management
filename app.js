@@ -364,6 +364,22 @@ async function pushDesktopTaskNotification(interests, taskTitle, assignerName) {
     }
 }
 
+app.options('/beams-auth', (req, res) => {
+    const origin = req.headers.origin;
+    const allowed = [
+        'https://m-tms.thedesigns.live',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+    ];
+    if (origin && allowed.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, x-beams-user');
+        res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    }
+    res.sendStatus(204);
+});
+
 app.get('/beams-auth', (req, res) => {
     const origin = req.headers.origin;
     const allowed = [
@@ -378,19 +394,17 @@ app.get('/beams-auth', (req, res) => {
 
     let beamsUserId;
 
-    // ✅ PRIMARY: use session (works for desktop browser — same origin)
-    if (req.session.adminId || req.session.userId) {
+    // PRIMARY: session (desktop same-origin)
+    if (req.session && (req.session.adminId || req.session.userId)) {
         if (req.session.role === 'admin' || req.session.role === 'owner') {
             beamsUserId = `admin_${req.session.adminId}`;
         } else {
             beamsUserId = String(req.session.userId);
         }
     }
-    // ✅ FALLBACK: mobile PWA cross-origin session cookie fails — use query param
-    // Mobile sends beamsUserId in queryParams from TokenProvider
+    // FALLBACK: mobile sends beamsUserId in query (cross-origin, cookie unavailable)
     else if (req.query.beamsUserId) {
         const candidate = String(req.query.beamsUserId);
-        // ✅ Only allow valid formats: "123" or "admin_123"
         if (/^(admin_)?\d+$/.test(candidate)) {
             beamsUserId = candidate;
         }
@@ -400,6 +414,7 @@ app.get('/beams-auth', (req, res) => {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    console.log('[Beams Auth] Generating token for:', beamsUserId, '| origin:', origin);
     const beamsToken = beamsClient.generateToken(beamsUserId);
     return res.json({ token: beamsToken.token });
 });
