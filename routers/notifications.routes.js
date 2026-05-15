@@ -6,6 +6,13 @@ const multer = require('multer');
 const path = require('path');
 const { notifyMobile } = require('../utils/notifyMobile'); // ✅ ADD
 
+const PushNotifications = require('@pusher/push-notifications-server');
+
+const beamsClient = new PushNotifications({
+    instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+    secretKey: '75EBE2088425312400AD5D15B2476EA23E3CEA61B7DE841FCA0A62E822C3135F',
+});
+
 // ================= MULTER =================
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/uploads'),
@@ -353,6 +360,93 @@ router.post('/add-announcement', upload.single('attachment'), async (req, res) =
             WHERE a.id=?`, [result.insertId]);
 
         const ann = rows[0];
+        // ================= PUSH NOTIFICATION (DESKTOP → SAME AS MOBILE) =================
+
+let interests = [];
+
+if (parseInt(role_id) === 0) {
+    interests.push(`company-${adminId}-all`);
+} else {
+    interests.push(`company-${adminId}-team-${role_id}`);
+}
+
+interests = [...new Set(interests)];
+
+console.log('[Beams][Desktop] Sending to interests:', interests);
+
+// Chunk (future-safe)
+const chunkSize = 100;
+const interestChunks = [];
+for (let i = 0; i < interests.length; i += chunkSize) {
+    interestChunks.push(interests.slice(i, i + chunkSize));
+}
+
+// Payload
+const pushTitle = ann.title || 'New Announcement';
+const pushBody  = ann.description || '';
+const pushIcon  = 'https://tms.thedesigns.live/images/tms_logo.jpeg';
+const pushUrl   = 'https://m-tms.thedesigns.live';
+
+try {
+    const pushPayload = {
+        web: {
+            notification: {
+                title: pushTitle,
+                body: pushBody,
+                icon: pushIcon,
+                deep_link: pushUrl,
+            },
+        },
+        fcm: {
+            notification: {
+                title: pushTitle,
+                body: pushBody,
+                image: pushIcon,
+            },
+            data: {
+                url: pushUrl,
+                type: 'announcement',
+            },
+        },
+        apns: {
+            aps: {
+                alert: {
+                    title: pushTitle,
+                    body: pushBody,
+                },
+                sound: 'default',
+                badge: 1,
+            },
+            data: {
+                url: pushUrl,
+                type: 'announcement',
+            },
+        },
+    };
+
+    for (const chunk of interestChunks) {
+        if (chunk.length === 0) continue;
+        await beamsClient.publishToInterests(chunk, pushPayload);
+    }
+
+    // Notify other admins (optional same as mobile)
+    const [otherAdmins] = await con.query(
+        'SELECT id FROM admins WHERE id != ?',
+        [adminId]
+    );
+
+    const adminUserIds = otherAdmins.map(a => `admin_${a.id}`);
+
+    if (adminUserIds.length > 0) {
+        await beamsClient.publishToUsers(adminUserIds, pushPayload);
+        console.log('[Beams][Desktop] Admins notified:', adminUserIds);
+    }
+
+    console.log('[Desktop] 🔔 Push sent for announcement:', ann.id);
+
+} catch (err) {
+    console.error('[Desktop] ❌ Push failed:', err.message);
+}
         req.io.emit('new_announcement', ann);
         notifyMobile('announcement_add', { id: ann.id });
 
