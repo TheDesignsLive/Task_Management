@@ -486,8 +486,8 @@
 
     <h2>Secure Database Import</h2>
 
-    <p style="font-size:13px; color:#aaa; text-align:center;">
-        OTP sent to Super Admin Email
+<p style="font-size:13px; color:#aaa; text-align:center;">
+        OTP sent to <span id="importEmailLabel" style="color:#00d1b2; font-weight:bold;">Super Admin Email</span>
     </p>
 
     <!-- OTP DIRECT -->
@@ -1088,8 +1088,11 @@ otpInput.focus();
 
         const data = await res.json();
 
-        if (data.success) {
-            showPopup("OTP sent to super admin email ");
+if (data.success) {
+            if (data.email) {
+                document.getElementById("importEmailLabel").textContent = data.email;
+            }
+            showPopup("OTP sent to " + (data.email || "super admin email"));
         } else {
             showPopup("Failed to send OTP ❌", "error");
         }

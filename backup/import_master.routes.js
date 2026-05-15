@@ -1,4 +1,4 @@
-
+//import_master.routes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -33,9 +33,13 @@ router.post("/import/send-otp", (req, res) => {
         }
 
         try {
+            const [rows] = await db.query('SELECT email FROM master_auth LIMIT 1');
+            if (!rows.length) return res.json({ success: false, message: "Master email not configured" });
+            const masterEmail = rows[0].email;
+
            await transporter.sendMail({
     from: "social.designs.live@gmail.com",
-    to: "thedesigns.live@gmail.com",    //thedesigns.live@gmail.com
+    to: masterEmail,
     subject: "🔐 Secure Database Import OTP",
     
     html: `
@@ -89,9 +93,9 @@ router.post("/import/send-otp", (req, res) => {
     `
 });
 
-            debugLog("OTP SENT:", otp); // debug
+    debugLog("OTP SENT:", otp); // debug
 
-            res.json({ success: true });
+            res.json({ success: true, email: masterEmail });
 
         } catch (mailErr) {
             console.error("Mail error:", mailErr);
