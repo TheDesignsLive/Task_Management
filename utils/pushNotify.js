@@ -70,4 +70,4 @@ async function sendPushToUsers(userIds, title, body, url = '/') {
     }));
 }
 
-module.exports = { sendPushToUsers };
+module.exports = { sendPushToUsers, beamsClient };
