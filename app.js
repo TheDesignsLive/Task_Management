@@ -365,7 +365,15 @@ async function pushDesktopTaskNotification(interests, taskTitle, assignerName) {
 }
 
 app.get('/beams-auth', (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'https://m-tms.thedesigns.live');
+    const origin = req.headers.origin;
+    const allowed = [
+        'https://m-tms.thedesigns.live',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+    ];
+    if (origin && allowed.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Credentials', 'true');
 
     let beamsUserId;
