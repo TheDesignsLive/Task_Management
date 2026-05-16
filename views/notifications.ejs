@@ -345,13 +345,13 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
             <label>Description</label>
             <textarea name="description" id="edit_description"></textarea>
             
-            <label>Target Role</label>
-            <select name="role_id" id="edit_role_id" required>
-                <option value="0">All</option> 
-                <% roles.forEach(role => { %>
-                    <option value="<%= role.id %>"><%= role.role_name %></option>
-                <% }) %>
-            </select>
+            <label>Target Team</label>
+<select name="role_id" id="edit_role_id" required>
+    <option value="0">All Members</option> 
+    <% teams.forEach(team => { %>
+        <option value="<%= team.id %>"><%= team.name %></option>
+    <% }) %>
+</select>
             
             <label>Change Attachment (Keep empty to retain old)</label>
             <input type="file" name="attachment">
@@ -640,6 +640,23 @@ socket.on('new_announcement', (a) => {
     });
 
     socket.on('update_members', () => { if (!isProcessingAjax) window.location.reload(); });
+</script>
+<script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+<script>
+(async () => {
+    if (!window.PusherPushNotifications) return;
+    try {
+        const beamsClient = new PusherPushNotifications.Client({
+            instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+        });
+        await beamsClient.start();
+        // Admin/Owner — company-specific admin channel
+        await beamsClient.addDeviceInterest(`admin-<%= session.adminId %>-admins`);
+        console.log('[Beams Desktop] Subscribed to admin channel');
+    } catch (e) {
+        console.error('[Beams Desktop] Error:', e.message);
+    }
+})();
 </script>
 </body>
 </html>
