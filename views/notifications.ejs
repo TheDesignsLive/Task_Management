@@ -317,12 +317,12 @@ body{ margin:0; font-family: Arial, sans-serif; background:#3C3A3A; overflow: hi
             <textarea name="description" placeholder="Detail description..."></textarea>
             
             <label>Who should receive this?</label>
-            <select name="role_id" required>
-                <option value="0">All</option> 
-                <% roles.forEach(role => { %>
-                    <option value="<%= role.id %>"><%= role.role_name %></option>
-                <% }) %>
-            </select>
+<select name="role_id" required>
+    <option value="0">All Members</option> 
+    <% teams.forEach(team => { %>
+    <option value="<%= team.id %>"><%= team.name %></option>
+<% }) %>
+</select>
             
             <label>Attachment (Image/PDF)</label>
             <input type="file" name="attachment">

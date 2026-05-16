@@ -125,12 +125,18 @@ router.get('/notifications', async (req, res) => {
         if (aRows.length > 0) adminName = aRows[0].name;
 
 
-        const [rRows] = await con.query(
-            "SELECT id, role_name FROM roles WHERE admin_id=?",
-            [adminId]
-        );
+       const [rRows] = await con.query(
+    "SELECT id, role_name FROM roles WHERE admin_id=?",
+    [adminId]
+);
+roles = rRows;
 
-        roles = rRows;
+const [tRows] = await con.query(
+    "SELECT id, name FROM teams WHERE admin_id=?",
+    [adminId]
+);
+// teams variable add karo
+const teams = tRows;
 
 
         // ================= MEMBERS =================
@@ -299,16 +305,8 @@ router.get('/notifications', async (req, res) => {
 
 
         res.render('notifications', {
-            members,
-            adminName,
-            memberRequests,
-            deletionRequests,
-            roles,
-            announcements,
-            session: req.session,
-            activePage: "notifications"
-        });
-
+    members, adminName, memberRequests, deletionRequests, roles, teams, announcements, session: req.session, activePage: "notifications"
+});
     } catch (err) {
         console.error(err);
         res.send("Error loading notifications");
@@ -366,31 +364,11 @@ try {
         ? `company-${adminId}-all`
         : `company-${adminId}-team-${role_id}`;
 
-    await beamsClient.publishToInterests([memberInterest], {
-        web: {
-            notification: {
-                title: ann.title || 'New Announcement',
-                body: ann.description || '',
-                icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                deep_link: 'https://m-tms.thedesigns.live',
-            },
-        },
-    });
-
-    // Admin/Owner channel — same company, self exclude
-    const senderChannel = `admin-${adminId}-admins`;
-    // Note: sender bhi is channel pe subscribe hai isliye
-    // sender ko notification milegi — yeh acceptable hai desktop add karne pe
-    await beamsClient.publishToInterests([`admin-${adminId}-admins`], {
-        web: {
-            notification: {
-                title: ann.title || 'New Announcement',
-                body: ann.description || '',
-                icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                deep_link: 'https://m-tms.thedesigns.live',
-            },
-        },
-    });
+    const allInterests = [...new Set([memberInterest, `admin-${adminId}-admins`])];
+await beamsClient.publishToInterests(allInterests, {
+    web: { notification: { title: ann.title || 'New Announcement', body: ann.description || '', icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg', deep_link: 'https://m-tms.thedesigns.live' } },
+});
+console.log('[Beams Desktop] Push sent to:', allInterests);
 } catch (pushErr) {
     console.error('[Beams Desktop] Push failed:', pushErr.message);
 }
