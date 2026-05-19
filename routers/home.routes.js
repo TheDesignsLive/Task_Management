@@ -17,13 +17,13 @@ router.get('/api/get-all-tasks', async (req, res) => {
         if (req.session.role === "admin") {
 
 const [taskRows] = await con.query(
-    "SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type, admin_id FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
+ "SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type, admin_id, completed_at FROM tasks WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin' ORDER BY due_date ASC",
   [adminId]
 );
 
 const [otherTaskRows] = await con.query(
  `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-          t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type, t.admin_id,
+          t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type, t.admin_id, t.completed_at,
           u.name AS assigned_by_name
    FROM tasks t 
    JOIN users u ON t.assigned_by = u.id 
@@ -50,8 +50,8 @@ const [adminTasksRows] = await con.query(
 );
 
 const [userOwnTasksRows] = await con.query(
-    `SELECT id, title, description, priority, due_date, status, section,
-            assigned_by, assigned_to, who_assigned, admin_id
+`SELECT id, title, description, priority, due_date, status, section,
+            assigned_by, assigned_to, who_assigned, admin_id, completed_at
      FROM tasks 
      WHERE admin_id=? AND assigned_to=? AND (who_assigned='user' OR who_assigned='owner') AND assigned_by=? 
      ORDER BY due_date ASC`,
@@ -114,8 +114,8 @@ router.get('/home', async (req, res) => {
         teams = teamRows;
 
                     // ✅ FIXED
-        const [taskRows] = await con.query(
-            `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type
+const [taskRows] = await con.query(
+            `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type, completed_at
             FROM tasks 
             WHERE admin_id=? AND assigned_to=0 AND who_assigned='admin'
             ORDER BY due_date ASC`,
@@ -123,7 +123,7 @@ router.get('/home', async (req, res) => {
         );
         const [otherTaskRows] = await con.query(
         `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-                t.assigned_by, t.assigned_to, t.who_assigned,
+                t.assigned_by, t.assigned_to, t.who_assigned, t.completed_at,
                 u.name AS assigned_by_name
         FROM tasks t 
         JOIN users u ON t.assigned_by = u.id 
@@ -164,9 +164,9 @@ AND (t.who_assigned='user' OR t.who_assigned='owner')
         teams = teamRows;
 
             // ✅ FIXED
-            const [adminTasksRows] = await con.query(
+    const [adminTasksRows] = await con.query(
                 `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-                        t.assigned_by, t.assigned_to, t.who_assigned,
+                        t.assigned_by, t.assigned_to, t.who_assigned, t.completed_at,
                         a.name AS assigned_by_name 
                 FROM tasks t 
                 JOIN admins a ON t.assigned_by = a.id 
@@ -176,7 +176,7 @@ AND (t.who_assigned='user' OR t.who_assigned='owner')
             );
 
           const [userOwnTasksRows] = await con.query(
-                `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type 
+                `SELECT id, title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, repeat_type, completed_at 
                  FROM tasks 
                  WHERE admin_id=? AND assigned_to=? AND (who_assigned='user' OR who_assigned='owner') AND assigned_by=? 
                  ORDER BY due_date ASC`,
@@ -186,7 +186,7 @@ AND (t.who_assigned='user' OR t.who_assigned='owner')
                     // ✅ FIXED
         const [userToOthersTasksRows] = await con.query(
             `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-                    t.assigned_by, t.assigned_to, t.who_assigned,
+                    t.assigned_by, t.assigned_to, t.who_assigned, t.completed_at,
                     u.name AS assigned_by_name 
             FROM tasks t 
             JOIN users u ON t.assigned_by = u.id 
@@ -231,7 +231,8 @@ router.post('/update-task-date', async (req, res) => {
 router.post('/update-task-status', async (req, res) => {
     const { id, status } = req.body;
     try {
-        await con.query("UPDATE tasks SET status=? WHERE id=?", [status, id]);
+        const completedAt = status === 'COMPLETED' ? new Date() : null;
+        await con.query("UPDATE tasks SET status=?, completed_at=? WHERE id=?", [status, completedAt, id]);
 
         // ── Repeat logic: spawn next task when completing a repeating task ──
         if (status === 'COMPLETED') {

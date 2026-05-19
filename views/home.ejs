@@ -1241,6 +1241,16 @@ if(infoIcon){
 div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
+
+    // ✅ Use current real timestamp so task sorts by actual completion time (ASC)
+    const localTask = currentTasks.find(t => t.id == task.id);
+    if (localTask) {
+      localTask.status = status;
+      localTask.section = section;
+      localTask.completed_at = status === 'COMPLETED' ? new Date().toISOString() : null;
+    }
+    renderAllSections(currentTasks);
+
     await updateTaskStatus(task.id, status, section);
   });
 
@@ -1299,7 +1309,14 @@ function renderAllSections(taskList) {
     });
     appendTasksToContainer(sections[sec], sortByPriority(noDateTasks), null);
   });
-  sectionTasks['COMPLETED'].forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
+sectionTasks['COMPLETED']
+    .sort((a, b) => {
+      // ✅ ASC: oldest completed_at first, newest last
+      const ta = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+      const tb = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+      return ta - tb;
+    })
+    .forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
   attachDateEvents();
 }
 

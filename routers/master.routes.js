@@ -61,6 +61,7 @@ router.post('/add-task', async (req, res) => {
     const toBeamsId   = (userId) => String(userId);
     const adminBeamsId = () => `admin_${admin_id}`;
 
+    
 // ═══════════════════════════════════════════════
     // CASE 1 — TEAM ASSIGNMENT  (assignedTo = "team_X")
     // ═══════════════════════════════════════════════
@@ -200,9 +201,10 @@ router.post('/update-task-status', async (req, res) => {
     if (!status || status === null) status = 'OPEN';
     if (!section || section === null) section = 'TASK';
 
+const completedAt = status === 'COMPLETED' ? new Date() : null;
     await db.execute(
-      `UPDATE tasks SET status = ?, section = ? WHERE id = ?`,
-      [status, section, id]
+      `UPDATE tasks SET status = ?, section = ?, completed_at = ? WHERE id = ?`,
+      [status, section, completedAt, id]
     );
 
     req.io.emit('update_tasks');
