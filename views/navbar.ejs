@@ -1090,6 +1090,27 @@ async function initBeams() {
         console.warn('[Beams] Init error:', err.message);
     }
 }
+// ✅ SAVE CURRENT USER ID FOR SERVICE WORKER
+async function storeMyIdForSW() {
+    try {
+        const userId = BEAMS_USER_ID; // already calculated
+
+        const cache = await caches.open('tms-user-data');
+
+        await cache.put(
+            '/my-id',
+            new Response(userId)
+        );
+
+        console.log('[SW] ✅ My ID stored:', userId);
+
+    } catch (err) {
+        console.error('[SW] ❌ Failed to store ID:', err);
+    }
+}
+
+// ✅ call after page load
+window.addEventListener('load', storeMyIdForSW);
 
 async function subscribeBeams() {
     if (_beamsReady) return;
