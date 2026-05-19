@@ -1402,10 +1402,10 @@ attachDateEvents();
     'update-section': sectionTasks['UPDATE'].length,
     'other-section':  sectionTasks['OTHERS'].length,
   };
-  document.querySelectorAll('.column-header[id]').forEach(h => {
+document.querySelectorAll('.column-header[id]').forEach(h => {
     const sec = h.id === 'header-changes' ? 'change-section' : 'update-section';
     const base = h.textContent.replace(/\s*\(\d+\)$/, '').trim();
-    h.textContent = countMap[sec] > 0 ? `${base} (${countMap[sec]})` : base;
+    h.textContent = base;
   });
 const taskCol = document.querySelector('.task-column .column-header');
   if (taskCol) {
@@ -1415,7 +1415,7 @@ const taskCol = document.querySelector('.task-column .column-header');
   const otherCol = document.querySelector('.column-wrapper:last-of-type .column-header');
   if (otherCol && !otherCol.id) {
     const base = otherCol.textContent.replace(/\s*\(\d+\)$/, '').trim();
-    otherCol.textContent = countMap['other-section'] > 0 ? `${base} (${countMap['other-section']})` : base;
+    otherCol.textContent = base;
   }
 }
 
