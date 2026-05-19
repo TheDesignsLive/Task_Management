@@ -31,8 +31,13 @@ router.post('/add-task', async (req, res) => {
     const assigned_by  = req.session.role === 'admin' ? req.session.adminId : req.session.userId;
     const who_assigned = req.session.role;
     const assignerName = req.session.adminName || req.session.userName || 'Someone';
-    const pushTitle    = '📋 New Task Assigned';
-    const pushBody     = `${assignerName}: ${title || 'New Task'}`;
+  const pushTitle    = title || 'New Task';
+const pushBody     = assignerName;
+
+// sender id (mobile jaisa)
+const senderUniqueId = req.session.role === 'admin'
+  ? `admin-${req.session.adminId}`
+  : `${req.session.userId}`;
 
     let admin_id;
     if (req.session.role === 'admin') {
@@ -93,7 +98,14 @@ const notifyIds = [];
       }));
 
       // ✅ Fire-and-forget — 1 notification per user, not per device
-      if (notifyUser && notifyIds.length > 0) pushSilent(notifyIds, pushTitle, pushBody);
+      if (notifyUser) {
+  const interest = `company-${admin_id}-team-${teamId}`;
+
+  sendPushToUsers([interest], pushTitle, pushBody, {
+    type: 'task',
+    sender_id: senderUniqueId
+  });
+}
 
       req.io.emit('update_tasks');
       notifyMobile();
@@ -145,7 +157,17 @@ const insertPromises = users
       await Promise.all(insertPromises);
 
       // ✅ Fire-and-forget — does NOT slow down response
-      if (notifyUser && notifyIds.length > 0) pushSilent(notifyIds, pushTitle, pushBody);
+      if (notifyUser) {
+  const interests = [
+    `company-${admin_id}-all`,
+    `admin-${admin_id}`
+  ];
+
+  sendPushToUsers(interests, pushTitle, pushBody, {
+    type: 'task',
+    sender_id: senderUniqueId
+  });
+}
 
       req.io.emit('update_tasks');
       notifyMobile();
@@ -176,7 +198,18 @@ const insertPromises = users
           : toBeamsId(finalAssignedTo);
 
         // ✅ Fire-and-forget — does NOT slow down response
-        pushSilent([notifyId], pushTitle, pushBody);
+        let interest = '';
+
+if (parseInt(finalAssignedTo) === 0) {
+  interest = `admin-user-${admin_id}`;
+} else {
+  interest = `user-${finalAssignedTo}`;
+}
+
+sendPushToUsers([interest], pushTitle, pushBody, {
+  type: 'task',
+  sender_id: senderUniqueId
+});
       }
     }
 
