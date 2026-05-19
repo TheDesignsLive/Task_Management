@@ -222,7 +222,23 @@ html, body {
   position: relative;
 }
 
-.task-item:hover { background-color: #555; }
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.task-skeleton {
+  height: 34px;
+  margin: 6px 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3a3a3a 25%, #444 50%, #3a3a3a 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+.task-item.dragging { opacity: 0.4; border: 2px dashed #0F8989; background: #2a4a4a !important; }
+.task-main:hover, .task-change:hover, .task-update:hover, .task-other:hover {
+  box-shadow: inset 0 0 0 2px rgba(15,137,137,0.18);
+  transition: box-shadow 0.15s;
+}
 .completed-task { opacity: 0.6; cursor: default; }
 
 .task-checkbox {
@@ -564,6 +580,12 @@ html, body {
   height: 100%;   
   flex: 1;        /* ✅ FIX: Allows completed column to stretch avoiding dark gaps */
 }
+.drop-active {
+  background: rgba(15,137,137,0.07) !important;
+  box-shadow: inset 0 0 0 2px rgba(15,137,137,0.4);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
 /* HEADER STYLE */
 .column-header{
   height:30px;
@@ -838,7 +860,25 @@ body.no-select { user-select: none; -webkit-user-select: none; }
 
 
 
+/* Invalid drop target */
+.drop-invalid {
+  background: rgba(220, 53, 69, 0.08) !important;
+  box-shadow: inset 0 0 0 2px rgba(220, 53, 69, 0.5);
+  transition: background 0.15s, box-shadow 0.15s;
+}
 
+.drop-invalid-overlay {
+  position: sticky;
+  bottom: 50%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 36px;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.7;
+  user-select: none;
+}
 
 </style>
 </head>
@@ -933,12 +973,30 @@ body.no-select { user-select: none; -webkit-user-select: none; }
 
   const role = "<%= session.role %>"; // "admin" or "user"
 
+let _refreshPending = false;
+let _selfUpdating = false;
+
+function showSkeletons() {
+  ['task-section','change-section','update-section','other-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.children.length === 0) {
+      el.innerHTML = Array(4).fill('<div class="task-skeleton"></div>').join('');
+    }
+  });
+}
+
 async function refreshTasksUI() {
-  const res = await fetch('/api/get-all-tasks');
-  const data = await res.json();
-  if(data.success) {
+  if (_refreshPending) return;
+  _refreshPending = true;
+  try {
+    const res = await fetch('/api/get-all-tasks');
+    const data = await res.json();
+    if (data.success) {
       currentTasks = data.tasks;
       renderAllSections(data.tasks);
+    }
+  } finally {
+    _refreshPending = false;
   }
 }
 
@@ -970,12 +1028,17 @@ function getPriorityClass(priority) {
   return '';
 }
 
+const _checkboxInFlight = new Set();
+
 async function updateTaskStatus(id, status, section=null) {
+  _selfUpdating = true;
+  setTimeout(() => { _selfUpdating = false; }, 2000);
   const res = await fetch('/update-task-status', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, status, section })
   });
+  _checkboxInFlight.delete(String(id));
   return res.json();
 }
 
@@ -1239,10 +1302,16 @@ if(infoIcon){
 }
 
 div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
+    const taskIdStr = String(task.id);
+    if (_checkboxInFlight.has(taskIdStr)) {
+      e.target.checked = !e.target.checked; // revert accidental double-click
+      return;
+    }
+    _checkboxInFlight.add(taskIdStr);
+
     const status = e.target.checked ? 'COMPLETED' : 'OPEN';
     const section = e.target.checked ? 'COMPLETED' : 'TASK';
 
-    // ✅ Use current real timestamp so task sorts by actual completion time (ASC)
     const localTask = currentTasks.find(t => t.id == task.id);
     if (localTask) {
       localTask.status = status;
@@ -1317,7 +1386,33 @@ sectionTasks['COMPLETED']
       return ta - tb;
     })
     .forEach(task => sections['COMPLETED'].appendChild(createTaskElement(task)));
-  attachDateEvents();
+attachDateEvents();
+
+  // Update column header counts
+  const labelC = document.getElementById('header-changes');
+  const labelU = document.getElementById('header-update');
+  const taskHeader = document.querySelector('.column-header');
+  const countMap = {
+    'task-section':   sectionTasks['TASK'].length,
+    'change-section': sectionTasks['CHANGES'].length,
+    'update-section': sectionTasks['UPDATE'].length,
+    'other-section':  sectionTasks['OTHERS'].length,
+  };
+  document.querySelectorAll('.column-header[id]').forEach(h => {
+    const sec = h.id === 'header-changes' ? 'change-section' : 'update-section';
+    const base = h.textContent.replace(/\s*\(\d+\)$/, '').trim();
+    h.textContent = countMap[sec] > 0 ? `${base} (${countMap[sec]})` : base;
+  });
+  const taskCol = document.querySelector('.task-column .column-header');
+  if (taskCol) {
+    const base = taskCol.textContent.replace(/\s*\(\d+\)$/, '').trim();
+    taskCol.textContent = countMap['task-section'] > 0 ? `${base} (${countMap['task-section']})` : base;
+  }
+  const otherCol = document.querySelector('.column-wrapper:last-of-type .column-header');
+  if (otherCol && !otherCol.id) {
+    const base = otherCol.textContent.replace(/\s*\(\d+\)$/, '').trim();
+    otherCol.textContent = countMap['other-section'] > 0 ? `${base} (${countMap['other-section']})` : base;
+  }
 }
 
 function appendTasksToContainer(container, taskArray, dateStr) {
@@ -1382,13 +1477,107 @@ const containers = {
   'task-section': 'TASK', 
   'change-section': 'CHANGES', 
   'update-section': 'UPDATE',
-  'other-section': 'OTHERS'   // ✅ ADD THIS
+  'other-section': 'OTHERS'
 };
 
-  Object.keys(containers).forEach(containerId => {
+function isDropAllowed(draggingId, containerId) {
+  const draggedEl = document.querySelector(`.task-item[data-id='${draggingId}']`);
+  if (!draggedEl) return null;
+  const parent = draggedEl.parentElement;
+  const currentSection = parent.id;
+  const targetSection = containers[containerId];
+  const assignedBy = draggedEl.dataset.assignedBy;
+  const assignedTo = draggedEl.dataset.assignedTo;
+  const whoAssigned = draggedEl.dataset.whoAssigned;
+
+  if (currentSection === containerId) return null;
+  if (currentSection === "other-section" && targetSection === "TASK") return false;
+
+  if (role === "admin") {
+    if (currentSection === "task-section" && targetSection === "OTHERS") return false;
+    if (currentSection === "other-section" && targetSection === "TASK") return false;
+    if (currentSection === "change-section") {
+      if (whoAssigned === "admin" && !(targetSection === "TASK" || targetSection === "UPDATE")) return false;
+      if (whoAssigned === "user" && !(targetSection === "OTHERS" || targetSection === "UPDATE")) return false;
+    }
+    if (currentSection === "update-section") {
+      if (whoAssigned === "admin" && !(targetSection === "TASK" || targetSection === "CHANGES")) return false;
+      if (whoAssigned === "user" && !(targetSection === "OTHERS" || targetSection === "CHANGES")) return false;
+    }
+  } else {
+    if (currentSection === "change-section" || currentSection === "update-section") {
+      if (targetSection === "TASK" && assignedBy !== assignedTo) return false;
+      if (targetSection === "OTHERS" && assignedBy === assignedTo) return false;
+    }
+    if (currentSection === "task-section" && targetSection === "OTHERS") {
+      if (assignedBy === assignedTo) return false;
+    }
+  }
+  return true;
+}
+
+// Track currently dragging id
+let _draggingId = null;
+document.addEventListener('dragstart', (e) => {
+  if (e.target.classList.contains('task-item')) {
+    _draggingId = e.target.dataset.id;
+  }
+});
+document.addEventListener('dragend', () => {
+  _draggingId = null;
+  // Clean up all invalid overlays
+  document.querySelectorAll('.drop-invalid-overlay').forEach(el => el.remove());
+  Object.keys(containers).forEach(id => {
+    const c = document.getElementById(id);
+    if (c) {
+      c.classList.remove('drop-active', 'drop-invalid');
+    }
+  });
+});
+
+ Object.keys(containers).forEach(containerId => {
     const container = document.getElementById(containerId);
 
-    container.addEventListener('dragover', e => e.preventDefault());
+container.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!_draggingId) return;
+      const allowed = isDropAllowed(_draggingId, containerId);
+      if (allowed === null) {
+        // Same section — no highlight at all
+        container.classList.remove('drop-active', 'drop-invalid');
+        const existing = container.querySelector('.drop-invalid-overlay');
+        if (existing) existing.remove();
+      } else if (allowed) {
+        container.classList.add('drop-active');
+        container.classList.remove('drop-invalid');
+        const existing = container.querySelector('.drop-invalid-overlay');
+        if (existing) existing.remove();
+      } else {
+        container.classList.remove('drop-active');
+        container.classList.add('drop-invalid');
+        if (!container.querySelector('.drop-invalid-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'drop-invalid-overlay';
+          overlay.innerHTML = '🚫';
+          container.appendChild(overlay);
+        }
+      }
+    });
+
+    container.addEventListener('dragleave', (e) => {
+      // Only remove if truly leaving the container (not entering a child)
+      if (!container.contains(e.relatedTarget)) {
+        container.classList.remove('drop-active', 'drop-invalid');
+        const overlay = container.querySelector('.drop-invalid-overlay');
+        if (overlay) overlay.remove();
+      }
+    });
+
+    container.addEventListener('drop', (e) => {
+      container.classList.remove('drop-active', 'drop-invalid');
+      const overlay = container.querySelector('.drop-invalid-overlay');
+      if (overlay) overlay.remove();
+    });
 
 container.addEventListener('drop', async (e) => {
   e.preventDefault();
@@ -1403,90 +1592,60 @@ container.addEventListener('drop', async (e) => {
   let currentSection = parent.id;
 
   const targetSection = containers[containerId];
-const assignedBy = draggedEl.dataset.assignedBy;
-const assignedTo = draggedEl.dataset.assignedTo;
+  const assignedBy = draggedEl.dataset.assignedBy;
+  const assignedTo = draggedEl.dataset.assignedTo;
+  const whoAssigned = draggedEl.dataset.whoAssigned;
 
-const whoAssigned = draggedEl.dataset.whoAssigned;
+  if (currentSection === containerId) return;
+  if (currentSection === "other-section" && targetSection === "TASK") return;
 
-// ❌ same section
-if (currentSection === containerId) return;
-
-// ❌ GLOBAL BLOCK
-if (currentSection === "other-section" && targetSection === "TASK") return;
-
-
-// ================= ROLE BASED =================
-if (role === "admin") {
-
-  // ===== TASK COLUMN =====
-  if (currentSection === "task-section") {
-    if (targetSection === "OTHERS") return;
-  }
-
-  // ===== OTHERS COLUMN =====
-  if (currentSection === "other-section") {
-    if (targetSection === "TASK") return;
-  }
-
-  // ===== CHANGE COLUMN =====
-  if (currentSection === "change-section") {
-
-    if (whoAssigned === "admin") {
-      if (!(targetSection === "TASK" || targetSection === "UPDATE")) return;
+  if (role === "admin") {
+    if (currentSection === "task-section") {
+      if (targetSection === "OTHERS") return;
     }
-
-    if (whoAssigned === "user") {
-      if (!(targetSection === "OTHERS" || targetSection === "UPDATE")) return;
+    if (currentSection === "other-section") {
+      if (targetSection === "TASK") return;
     }
-  }
-
-  // ===== UPDATE COLUMN =====
-  if (currentSection === "update-section") {
-
-    if (whoAssigned === "admin") {
-      if (!(targetSection === "TASK" || targetSection === "CHANGES")) return;
+    if (currentSection === "change-section") {
+      if (whoAssigned === "admin") {
+        if (!(targetSection === "TASK" || targetSection === "UPDATE")) return;
+      }
+      if (whoAssigned === "user") {
+        if (!(targetSection === "OTHERS" || targetSection === "UPDATE")) return;
+      }
     }
-
-    if (whoAssigned === "user") {
-      if (!(targetSection === "OTHERS" || targetSection === "CHANGES")) return;
+    if (currentSection === "update-section") {
+      if (whoAssigned === "admin") {
+        if (!(targetSection === "TASK" || targetSection === "CHANGES")) return;
+      }
+      if (whoAssigned === "user") {
+        if (!(targetSection === "OTHERS" || targetSection === "CHANGES")) return;
+      }
     }
-  }
-
-} else {
-
-  // ===== USER RULES =====
-
-  if (currentSection === "change-section" || currentSection === "update-section") {
-
-    if (targetSection === "TASK") {
-      if (assignedBy !== assignedTo) return;
+  } else {
+    if (currentSection === "change-section" || currentSection === "update-section") {
+      if (targetSection === "TASK") {
+        if (assignedBy !== assignedTo) return;
+      }
+      if (targetSection === "OTHERS") {
+        if (assignedBy === assignedTo) return;
+      }
     }
-
-    if (targetSection === "OTHERS") {
+    if (currentSection === "task-section" && targetSection === "OTHERS") {
       if (assignedBy === assignedTo) return;
     }
   }
 
-  if (currentSection === "task-section" && targetSection === "OTHERS") {
-    if (assignedBy === assignedTo) return;
-  }
-}
-
-  // ===== DATE LOGIC =====
   const targetEl = e.target.closest('.task-item, .date-separator');
-
   let due_date = undefined;
-
   if (targetEl) {
     let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
-
     if (rawDate && rawDate !== "") {
       const parts = rawDate.split("-");
       due_date = parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
     } 
   }
 
-  // ✅ UPDATE SECTION (NO REFRESH)
   await fetch('/update-task-section', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1494,7 +1653,6 @@ if (role === "admin") {
   });
   await refreshTasksUI();
 
-  // ✅ UPDATE DATE
   if (due_date !== undefined) {
     await fetch('/update-task-date', {
       method: 'POST',
@@ -1555,7 +1713,15 @@ if (role === "admin") {
 }
 
 document.addEventListener('dragstart', (e) => {
-  if(e.target.classList.contains('task-item')) e.dataTransfer.setData('text/plain', e.target.dataset.id);
+  if(e.target.classList.contains('task-item')) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+    e.target.classList.add('dragging');
+  }
+});
+document.addEventListener('dragend', (e) => {
+  if(e.target.classList.contains('task-item')) {
+    e.target.classList.remove('dragging');
+  }
 });
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -2412,7 +2578,8 @@ board.addEventListener('wheel', function(e) {
 <script>
     const socket = io();
     socket.on('update_tasks', () => {
-       refreshTasksUI();
+      if (_selfUpdating) return;
+      refreshTasksUI();
     });
 </script>
 </body>
