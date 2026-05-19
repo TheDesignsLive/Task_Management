@@ -436,7 +436,7 @@ if(task.due_date){
   <div class="right-section">
     <div class="top-columns">
       <div class="column-wrapper">
-        <div class="column-header"><%= label_changes %></div>
+<div class="column-header"><%= label_changes.charAt(0).toUpperCase() + label_changes.slice(1).toLowerCase() %></div>
       <div class="task-change">
       <% tasks.filter(t=>t.section==='CHANGES' && t.status==='OPEN').forEach(task=>{ %>
 <%
@@ -474,7 +474,7 @@ if(task.due_date){
 </div>
       <div class="vertical-line"></div> 
 <div class="column-wrapper">
-<div class="column-header"><%= label_update %></div>
+<div class="column-header"><%= label_update.charAt(0).toUpperCase() + label_update.slice(1).toLowerCase() %></div>
 <div class="task-update">
 <% tasks.filter(t=>t.section==='UPDATE' && t.status==='OPEN').forEach(task=>{ %>
 <%
