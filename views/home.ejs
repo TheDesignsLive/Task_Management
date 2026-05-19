@@ -1403,10 +1403,10 @@ attachDateEvents();
     const base = h.textContent.replace(/\s*\(\d+\)$/, '').trim();
     h.textContent = countMap[sec] > 0 ? `${base} (${countMap[sec]})` : base;
   });
-  const taskCol = document.querySelector('.task-column .column-header');
+const taskCol = document.querySelector('.task-column .column-header');
   if (taskCol) {
     const base = taskCol.textContent.replace(/\s*\(\d+\)$/, '').trim();
-    taskCol.textContent = countMap['task-section'] > 0 ? `${base} (${countMap['task-section']})` : base;
+    taskCol.textContent = base;
   }
   const otherCol = document.querySelector('.column-wrapper:last-of-type .column-header');
   if (otherCol && !otherCol.id) {
