@@ -1053,13 +1053,37 @@ async function uploadSQL() {
     const formData = new FormData();
     formData.append("file", file);
 
-  const res = await fetch("/import/upload", {
-    method: "POST",
-    body: formData,
-    credentials: "include"   // 🔥 MUST ADD
-});
+    // Show loading
+    const importBtn = document.querySelector("#fileSection .btn.green");
+    const originalText = importBtn.innerHTML;
+    importBtn.disabled = true;
+    importBtn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" style="animation:spinImport 0.9s linear infinite;flex-shrink:0;" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="6" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/>
+            <path d="M8 2 A6 6 0 0 1 14 8" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        Importing...
+    </span>`;
+
+    // Inject keyframe once
+    if (!document.getElementById('spinImportStyle')) {
+        const s = document.createElement('style');
+        s.id = 'spinImportStyle';
+        s.textContent = '@keyframes spinImport { to { transform: rotate(360deg); } }';
+        document.head.appendChild(s);
+    }
+
+    const res = await fetch("/import/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include"   // 🔥 MUST ADD
+    });
 
     const data = await res.json();
+
+    // Restore button
+    importBtn.disabled = false;
+    importBtn.innerHTML = originalText;
 
     if (data.success) {
         showPopup("Database Imported ✅");
