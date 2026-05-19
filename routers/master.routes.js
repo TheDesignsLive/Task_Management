@@ -236,7 +236,7 @@ await beamsClient.publishToInterests(interests, {
         let interests = [];
 
 if (parseInt(finalAssignedTo) === 0) {
-  interests = [`admin-${admin_id}`];
+ interests = [`admin-user-${admin_id}`];
 } else {
   interests = [`user-${finalAssignedTo}`];
 }
