@@ -78,7 +78,6 @@ router.post('/add-member', (req, res) => {
     (admin_id, role_id, request_type, requested_by, name, email, phone, password, profile_pic, status, created_at)
     VALUES (?, ?, 'ADD', ?, ?, ?, ?, ?, ?, 'PENDING', NOW())`,
     [admin_id, role_id, userId, name, email, phone, hashedPassword, profile_pic]
-);
                     );
                     debugLog('User requested to add a new member', { requestedBy: userId, newMemberEmail: email });
 
