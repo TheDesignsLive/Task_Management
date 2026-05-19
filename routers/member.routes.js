@@ -73,7 +73,12 @@ router.post('/add-member', (req, res) => {
 
             // ================= USER =================
             else {
-              
+
+                // 🔥 BEST: use session (faster)
+          controlType = req.session.control_type;
+
+                // fallback (if not stored in session)
+                if (!controlType) {
                     const [roleData] = await con.execute(
                         `INSERT INTO member_requests 
                         (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, status, created_at) 
@@ -116,7 +121,7 @@ router.post('/add-member', (req, res) => {
                     } catch (pushErr) {
                         console.error('[Beams Desktop] Add member request push failed:', pushErr.message);
                     }
-                
+                }
             }
 
             req.io.emit('update_members');
