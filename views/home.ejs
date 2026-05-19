@@ -1953,8 +1953,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // column headers
         const hC = document.getElementById('header-changes');
         const hU = document.getElementById('header-update');
-        if (hC) hC.textContent = data.labelChanges;
-        if (hU) hU.textContent = data.labelUpdate;
+  if (hC) hC.textContent = data.labelChanges.charAt(0).toUpperCase() + data.labelChanges.slice(1).toLowerCase();
+        if (hU) hU.textContent = data.labelUpdate.charAt(0).toUpperCase() + data.labelUpdate.slice(1).toLowerCase();
       }
     })
     .catch(() => {}); // silently fail, defaults already set in HTML
