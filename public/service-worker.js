@@ -1,18 +1,24 @@
-// public/service-worker.js desktop version file
-importScripts('https://js.pusher.com/beams/service-worker.js');
+// public/service-worker.js — Desktop version (FINAL CLEAN)
+
+// ❌ DO NOT import Beams service worker (same as mobile)
+// importScripts('https://js.pusher.com/beams/service-worker.js'); // REMOVED
+
+// ✅ Activate immediately
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
+
 
 // ✅ Notification click handler
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
-    const url = (event.notification.data && event.notification.data.url)
-              || (event.notification.data && event.notification.data.deep_link)
-              || 'https://tms.thedesigns.live/home';
+    const url =
+        (event.notification.data && event.notification.data.url) ||
+        'https://tms.thedesigns.live/home';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            for (let i = 0; i < windowClients.length; i++) {
-                const client = windowClients[i];
+            for (let client of windowClients) {
                 if (client.url.includes('tms.thedesigns.live') && 'focus' in client) {
                     return client.focus().then(() => {
                         if ('navigate' in client) return client.navigate(url);
@@ -24,33 +30,84 @@ self.addEventListener('notificationclick', (event) => {
     );
 });
 
-// ✅ Required: activate SW immediately so Beams subscription works on first load
-// Without these, Chrome waits for old SW to die — Beams breaks on fresh installs
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
 
-// ✅ Show ALL missed notifications when browser was closed
-// Without this, Chrome collapses multiple notifications into one (shows only latest)
+// ✅ PUSH HANDLER (FULL CONTROL — SAME AS MOBILE)
 self.addEventListener('push', (event) => {
     if (!event.data) return;
-    try {
-        const payload = event.data.json();
-        const n = payload?.notification || payload?.data;
-        if (!n || !n.title) return;
 
-        // ✅ Unique tag per notification = all notifications show, none replaced
-        event.waitUntil(
-            self.registration.showNotification(n.title, {
-                body:               n.body || '',
-                icon:               'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                badge:              'https://tms.thedesigns.live/images/tms_logo.jpeg',
-                tag:                'tms-' + Date.now(),   // ✅ unique = no collapse
-                data:               { url: n.deep_link || 'https://tms.thedesigns.live/home' },
-                requireInteraction: false,
-                silent:             false,
-            })
-        );
-    } catch (e) {
-        // Beams handles its own format — this catches any edge cases
-    }
+    event.waitUntil(
+        (async () => {
+            try {
+                const payload = event.data.json();
+
+                // ✅ sender id (backend se)
+                const senderId = payload?.data?.sender_id;
+
+                // ✅ apni ID cache se
+                const cache = await caches.open('tms-user-data');
+                const cachedResponse = await cache.match('/my-id');
+                const myId = cachedResponse ? await cachedResponse.text() : null;
+
+                // ✅ SELF-NOTIFICATION BLOCK
+                if (senderId && myId && senderId === myId) {
+                    console.log('[SW-DESKTOP] Self notification blocked:', myId);
+                    return;
+                }
+
+                // ✅ Extract notification safely
+                const n =
+                    payload?.notification ||
+                    payload?.data?.notification ||
+                    payload?.aps?.alert ||
+                    null;
+
+                const title =
+                    n?.title ||
+                    payload?.title ||
+                    payload?.data?.title ||
+                    'TMS Workspace';
+
+                const body =
+                    n?.body ||
+                    payload?.body ||
+                    payload?.data?.body ||
+                    '';
+
+                const deepLink =
+                    payload?.data?.url ||
+                    payload?.data?.deep_link ||
+                    'https://tms.thedesigns.live/home';
+
+                if (!title) return;
+
+                // ✅ SHOW NOTIFICATION (NO COLLAPSE)
+                await self.registration.showNotification(title, {
+                    body: body,
+                    icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                    badge: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
+                    tag: 'tms-task-' + Date.now(), // unique
+                    data: { url: deepLink },
+                    requireInteraction: false,
+                    silent: false,
+                });
+
+                // ✅ Send message to open tabs (real-time UI update)
+                const windowClients = await clients.matchAll({
+                    type: 'window',
+                    includeUncontrolled: true,
+                });
+
+                windowClients.forEach((client) => {
+                    client.postMessage({
+                        type: 'BEAMS_PUSH_RECEIVED',
+                        title: title,
+                        body: body,
+                    });
+                });
+
+            } catch (err) {
+                console.error('[SW-DESKTOP] Push error:', err);
+            }
+        })()
+    );
 });
