@@ -5,6 +5,12 @@ const con = require('../config/db');
 const db = require('../config/db');
 const { notifyMobile } = require('../utils/notifyMobile');
 const { sendPushToUsers } = require('../utils/pushNotify');
+const PushNotifications = require('@pusher/push-notifications-server');
+
+const beamsClient = new PushNotifications({
+    instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+    secretKey: '75EBE2088425312400AD5D15B2476EA23E3CEA61B7DE841FCA0A62E822C3135F',
+});
 
 // ── Fire-and-forget push helper — never slows down the response ──
 // ✅ Deduplicates IDs here before sending — guarantees 1 notification per user
@@ -99,12 +105,27 @@ const notifyIds = [];
 
       // ✅ Fire-and-forget — 1 notification per user, not per device
       if (notifyUser) {
-  const interest = `company-${admin_id}-team-${teamId}`;
+  const interests = [`company-${admin_id}-team-${teamId}`];
 
-  sendPushToUsers([interest], pushTitle, pushBody, {
-    type: 'task',
-    sender_id: senderUniqueId
-  });
+await beamsClient.publishToInterests(interests, {
+  web: {
+    notification: {
+      title: pushTitle,
+      body: pushBody,
+      deep_link: "https://m-tms.thedesigns.live",
+    }
+  },
+  fcm: {
+    notification: {
+      title: pushTitle,
+      body: pushBody,
+    },
+    data: {
+      url: "https://m-tms.thedesigns.live",
+      sender_id: senderUniqueId,
+    }
+  }
+});
 }
 
       req.io.emit('update_tasks');
@@ -159,14 +180,29 @@ const insertPromises = users
       // ✅ Fire-and-forget — does NOT slow down response
       if (notifyUser) {
   const interests = [
-    `company-${admin_id}-all`,
-    `admin-${admin_id}`
-  ];
+  `company-${admin_id}-all`,
+  `admin-${admin_id}`
+];
 
-  sendPushToUsers(interests, pushTitle, pushBody, {
-    type: 'task',
-    sender_id: senderUniqueId
-  });
+await beamsClient.publishToInterests(interests, {
+  web: {
+    notification: {
+      title: pushTitle,
+      body: pushBody,
+      deep_link: "https://m-tms.thedesigns.live",
+    }
+  },
+  fcm: {
+    notification: {
+      title: pushTitle,
+      body: pushBody,
+    },
+    data: {
+      url: "https://m-tms.thedesigns.live",
+      sender_id: senderUniqueId,
+    }
+  }
+});
 }
 
       req.io.emit('update_tasks');
@@ -197,18 +233,32 @@ const insertPromises = users
           ? adminBeamsId()
           : toBeamsId(finalAssignedTo);
 
-        // ✅ Fire-and-forget — does NOT slow down response
-        let interest = '';
+        let interests = [];
 
 if (parseInt(finalAssignedTo) === 0) {
-  interest = `admin-user-${admin_id}`;
+  interests = [`admin-${admin_id}`];
 } else {
-  interest = `user-${finalAssignedTo}`;
+  interests = [`user-${finalAssignedTo}`];
 }
 
-sendPushToUsers([interest], pushTitle, pushBody, {
-  type: 'task',
-  sender_id: senderUniqueId
+await beamsClient.publishToInterests(interests, {
+  web: {
+    notification: {
+      title: pushTitle,
+      body: pushBody,
+      deep_link: "https://m-tms.thedesigns.live",
+    }
+  },
+  fcm: {
+    notification: {
+      title: pushTitle,
+      body: pushBody,
+    },
+    data: {
+      url: "https://m-tms.thedesigns.live",
+      sender_id: senderUniqueId,
+    }
+  }
 });
       }
     }
