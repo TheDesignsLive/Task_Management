@@ -1916,15 +1916,20 @@ else if (theSection === 'CHANGES') {
 
   sectionSection.style.display = showSection ? 'block' : 'none';
 
-  const menuW = 220, menuH = 340;
+ctxMenu.style.display = 'block';
+  _ctxMenuOpen = true;
+
+  // Measure actual rendered size after showing
+  const menuW = ctxMenu.offsetWidth || 220;
+  const menuH = ctxMenu.offsetHeight || 400;
   let left = x + 4;
   let top  = y + 4;
   if (left + menuW > window.innerWidth)  left = x - menuW - 4;
   if (top  + menuH > window.innerHeight) top  = y - menuH - 4;
+  if (top < 4) top = 4;
+  if (left < 4) left = 4;
   ctxMenu.style.left = left + 'px';
   ctxMenu.style.top  = top  + 'px';
-  ctxMenu.style.display = 'block';
-  _ctxMenuOpen = true;
 }
 
 function hideContextMenu() {
