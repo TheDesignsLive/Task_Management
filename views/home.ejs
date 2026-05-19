@@ -1108,8 +1108,9 @@ div.dataset.assignedBy = task.assigned_by ?? "";
       </div>
 
 <div class="${task.status === 'COMPLETED' ? 'completed-menu' : 'task-options-menu'}">
-        <div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>
-        <div class="repeat-opt"><i class="fa-solid fa-rotate"></i> Repeat</div>
+        ${task.status !== 'COMPLETED' ? `<div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>` : ''}
+        ${task.status !== 'COMPLETED' ? `<div class="repeat-opt"><i class="fa-solid fa-rotate"></i> Repeat</div>` : ''}
+        ${task.status === 'COMPLETED' ? `<div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>` : ''}
         <div class="delete-opt" style="color:red"><i class="fa-solid fa-trash"></i> Delete</div>
       </div>
     </div>
@@ -1173,10 +1174,13 @@ document.querySelectorAll('.task-options-menu, .completed-menu')
 menu.style.zIndex = 2000;
   });
 
-div.querySelector('.edit-opt').addEventListener('click', () => {
-    div.dispatchEvent(new Event('dblclick'));
-    menu.style.display = 'none';
-  });
+const editOpt = div.querySelector('.edit-opt');
+  if (editOpt) {
+    editOpt.addEventListener('click', () => {
+      div.dispatchEvent(new Event('dblclick'));
+      menu.style.display = 'none';
+    });
+  }
 
   // ── Repeat option ──
   const repeatOptEl = div.querySelector('.repeat-opt');
