@@ -60,7 +60,7 @@ router.post('/add-member', (req, res) => {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             // ================= ADMIN =================
-            if (req.session.role === "admin") {
+            if (req.session.role === "admin" || req.session.role === 'owner') {
 
                 await con.execute(
                     `INSERT INTO users 
@@ -73,17 +73,12 @@ router.post('/add-member', (req, res) => {
 
             // ================= USER =================
             else {
-
-                // 🔥 BEST: use session (faster)
-          controlType = req.session.control_type;
-
-                // fallback (if not stored in session)
-                if (!controlType) {
                     const [roleData] = await con.execute(
-                        `INSERT INTO member_requests 
-                        (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, status, created_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())`,
-                        [admin_id, role_id, userId, name, email, phone, hashedPassword, profile_pic]
+    `INSERT INTO member_requests
+    (admin_id, role_id, request_type, requested_by, name, email, phone, password, profile_pic, status, created_at)
+    VALUES (?, ?, 'ADD', ?, ?, ?, ?, ?, ?, 'PENDING', NOW())`,
+    [admin_id, role_id, userId, name, email, phone, hashedPassword, profile_pic]
+);
                     );
                     debugLog('User requested to add a new member', { requestedBy: userId, newMemberEmail: email });
 
@@ -121,7 +116,7 @@ router.post('/add-member', (req, res) => {
                     } catch (pushErr) {
                         console.error('[Beams Desktop] Add member request push failed:', pushErr.message);
                     }
-                }
+                
             }
 
             req.io.emit('update_members');
