@@ -157,7 +157,7 @@ router.post("/login", async (req, res) => {
         // USER LOGIN
         if (login_type === "user") {
            const [rows] = await con.query(
-             "SELECT u.*, r.control_type FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email=? AND u.status='ACTIVE'",
+             "SELECT u.*, r.control_type, r.team_id FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email=? AND u.status='ACTIVE'",
     [email]
 );
 
@@ -180,6 +180,7 @@ router.post("/login", async (req, res) => {
 
                 req.session.adminId = rows[0].admin_id;
                 req.session.role_id = rows[0].role_id;
+                req.session.team_id = rows[0].team_id;
                 req.session.userName = rows[0].name;
                 debugLog('User successfully logged in:', { userId: rows[0].id, email: rows[0].email, role: req.session.role });
                 return res.redirect("/home");

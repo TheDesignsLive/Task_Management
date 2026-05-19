@@ -1104,6 +1104,34 @@ async function subscribeBeams() {
         });
 
         await _beamsClient.setUserId(BEAMS_USER_ID, tokenProvider);
+        // ================== ADD THIS BLOCK ==================
+const role    = '<%= session.role %>';
+const adminId = '<%= session.adminId || "" %>';
+const userId  = '<%= session.userId  || "" %>';
+const teamId  = '<%= session.team_id || "" %>';
+
+if (role === 'admin') {
+    await _beamsClient.addDeviceInterest(`admin-${adminId}`);
+}
+
+else if (role === 'owner') {
+    await _beamsClient.addDeviceInterest(`admin-${adminId}`);
+    await _beamsClient.addDeviceInterest(`user-${userId}`);
+
+    if (teamId) {
+        await _beamsClient.addDeviceInterest(`company-${adminId}-team-${teamId}`);
+    }
+}
+
+else {
+    await _beamsClient.addDeviceInterest(`company-${adminId}-all`);
+    await _beamsClient.addDeviceInterest(`user-${userId}`);
+
+    if (teamId) {
+        await _beamsClient.addDeviceInterest(`company-${adminId}-team-${teamId}`);
+    }
+}
+// ====================================================
 
         // ✅ Remember this user subscribed — survives logout/login
         localStorage.setItem('beams_subscribed_' + BEAMS_USER_ID, '1');
