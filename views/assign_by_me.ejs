@@ -28,12 +28,17 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .task-item { font-size: 13px; padding: 6px; margin: 6px 0; background-color: #444; color: #fff; border-radius: 4px; transition: background 0.2s; }
 .task-item:hover { background-color: #555; }
 .completed-task { opacity: 0.6; background-color: #2E2D2D; }
-.task-row { display: flex; align-items: center; gap: 6px; position: relative; }
+.task-row { display: flex; align-items: center; gap: 10px; position: relative; }
 .task-title { flex: 1.2; min-width: 0; word-break: break-word; }
 .task-desc { flex: 1.5; min-width: 0; word-break: break-word; font-size: 11px; opacity: 0.8; }
-.task-sec-val { flex: 0.6; font-size: 10px; color: #0F8989; font-weight: bold; text-align: center; background: #ddd; border-radius: 4px; padding: 2px 4px; color: #333; }
-.task-assign { flex: 1; text-align: center; }
-.task-date { flex: 0.8; font-size: 10px; opacity: 0.7; text-align: right; white-space: nowrap; }
+.task-sec-val { flex: 0 0 auto; font-size: 10px; font-weight: bold; text-align: center; background: #ddd; border-radius: 4px; padding: 2px 6px; color: #333; white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
+.task-assign { flex: 0 0 110px; min-width: 0; text-align: center; }
+.task-date { flex: 0 0 auto; font-size: 10px; opacity: 0.7; text-align: right; white-space: nowrap; }
+.task-date.past-date { color: #ff4d4d !important; opacity: 1; }
+.task-info-icon { flex-shrink: 0; cursor: pointer; color: #aaa; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; vertical-align: middle; align-self: center; }
+.task-info-icon:hover { color: white; stroke: white; }
+.desc-tooltip { display: none; }
+.task-item.abm-expanded .abm-task-details { display: block !important; }
 .task-checkbox { width: 12px; height: 12px; appearance: none; border: 2px solid white; border-radius: 3px; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; }
 .task-checkbox:checked::after { content: "✔"; position: absolute; top: 0; left: 1px; font-size: 7px; color: white; }
 .priority-HIGH { border-color: #ff4d4d; }
@@ -77,7 +82,6 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
   width: 100%; 
   text-align: left; 
 }
-
 .assign-by-me-page .custom-select-btn { 
   background-color: #555; 
   color: white; 
@@ -87,6 +91,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
   cursor: pointer; 
   font-size: 11px; 
   width: 100%; 
+  max-width: 110px;
   box-sizing: border-box;
   display: flex; 
   justify-content: space-between; 
@@ -352,6 +357,153 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     align-items: center;
 }
 
+/* ===== MULTI SELECT ===== */
+.task-item.selected {
+  background-color: #1a4a4a !important;
+  border-left: 3px solid #0F8989;
+  outline: 1px solid #0F8989;
+}
+.task-item.selected:hover { background-color: #1e5555 !important; }
+
+body.no-select { user-select: none; -webkit-user-select: none; }
+
+/* CONTEXT MENU */
+#abm-context-menu {
+  display: none;
+  position: fixed;
+  background: #2E2D2D;
+  border-radius: 14px;
+  border: 1px solid #0F8989;
+  border-top: 3px solid #0F8989;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.10);
+  z-index: 999999;
+  min-width: 210px;
+  overflow: visible;
+  animation: abmCtxPop 0.18s cubic-bezier(.34,1.56,.64,1);
+  padding: 6px 0;
+}
+
+@keyframes abmCtxPop {
+  from { opacity: 0; transform: scale(0.88) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+#abm-context-menu .ctx-section {
+  padding: 2px 0;
+  border-bottom: 1px solid #3C3A3A;
+}
+#abm-context-menu .ctx-section:last-child { border-bottom: none; }
+
+#abm-context-menu .ctx-label {
+  padding: 6px 16px 3px;
+  font-size: 10px;
+  color: #0F8989;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+#abm-context-menu .ctx-item {
+  padding: 9px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #eee;
+  transition: background 0.1s, color 0.1s;
+  position: relative;
+}
+#abm-context-menu .ctx-item:hover { background: #f0fafa; color: #0F8989 !important; font-weight: 700; }
+#abm-context-menu .ctx-item.danger { color: #e74c3c; font-weight: 700; }
+#abm-context-menu .ctx-item.danger:hover { background: #fff0f0 !important; color: #b71c1c !important; }
+#abm-context-menu .ctx-item i { width: 16px; text-align: center; font-size: 13px; }
+
+.ctx-item-selected-info {
+  color: #0F8989 !important;
+  font-size: 11px !important;
+  padding: 6px 16px !important;
+  cursor: default !important;
+  font-weight: 700;
+  background: rgba(15,137,137,0.15);
+}
+.ctx-item-selected-info:hover { background: rgba(15,137,137,0.15) !important; color: #0F8989 !important; }
+
+/* Date icon row */
+.ctx-icon-row {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 6px;
+  justify-content: space-between;
+}
+.ctx-icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 32px;
+  transition: background 0.15s;
+  color: #aaa;
+}
+.ctx-icon-btn i { font-size: 14px; line-height: 1; color: #aaa; }
+.ctx-icon-btn span { font-size: 9px; font-weight: 600; white-space: nowrap; color: #aaa; }
+.ctx-icon-btn:hover { background: #f0fafa; }
+.ctx-icon-btn:hover i { color: #0F8989; }
+.ctx-icon-btn:hover span { color: #0F8989; }
+
+.ctx-cal-icon { color: #555; }
+.ctx-cal-num { color: #555; font-size: 7px; font-weight: 800; }
+.ctx-icon-btn:hover .ctx-cal-icon { color: #0F8989; }
+.ctx-icon-btn:hover .ctx-cal-num { color: #0F8989; }
+
+/* Priority row */
+.ctx-priority-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px 10px 8px;
+}
+.ctx-priority-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 10px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex: 1;
+}
+.ctx-priority-btn span { font-size: 9px; font-weight: 700; color: #aaa; }
+.ctx-priority-btn i { font-size: 16px; }
+.ctx-priority-btn.p-high i  { color: #e74c3c; }
+.ctx-priority-btn.p-medium i{ color: #f39c12; }
+.ctx-priority-btn.p-low i   { color: #3498db; }
+.ctx-priority-btn.p-high:hover  { background:#fff0f0; }
+.ctx-priority-btn.p-medium:hover{ background:#fffbf0; }
+.ctx-priority-btn.p-low:hover   { background:#f0f4ff; }
+
+/* Bulk delete modal */
+#abm-delete-confirm {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9999999;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-calendar {
+  position: fixed !important;
+  top: 20% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10000 !important;
+}
+
 .edit-date {
     width: 100%;
     padding-right: 28px;
@@ -405,7 +557,99 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 
 <div id="singleDeleteModal" class="modal"><div class="modal-content"><h3>Delete This Task?</h3><div class="modal-buttons"><button id="confirmSingleDelete" class="btn delete">Delete</button><button id="cancelSingleDelete" class="btn cancel">Cancel</button></div></div></div>
 <div id="deleteModal" class="modal"><div class="modal-content"><h3>Delete Completed Tasks?</h3><div class="modal-buttons"><button id="confirmDelete" class="btn delete">Delete</button><button id="cancelDelete" class="btn cancel">Cancel</button></div></div></div>
+
+<!-- ABM Right-click context menu -->
+<div id="abm-context-menu">
+  <div class="ctx-section">
+    <div class="ctx-item ctx-item-selected-info" style="pointer-events:none;">
+      <i class="fa-solid fa-check-double" style="color:#0F8989;"></i>
+      <span id="abm-ctx-selected-label">1 task selected</span>
+    </div>
+  </div>
+
+  <div class="ctx-section">
+    <div class="ctx-label">Change Date</div>
+    <div class="ctx-icon-row">
+      <div class="ctx-icon-btn" data-action="date-today" title="Today">
+        <i class="fa-solid fa-sun"></i>
+        <span>Today</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-tomorrow" title="Tomorrow">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <span>Tom</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-7" title="Next Week">
+        <span style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;">
+          <i class="fa-regular fa-calendar ctx-cal-icon" style="font-size:16px; position:absolute;"></i>
+          <span class="ctx-cal-num" style="position:relative; font-size:7px; font-weight:800; margin-top:5px; z-index:1; line-height:1;">7</span>
+        </span>
+        <span>7d</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-30" title="Next Month">
+        <span style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;">
+          <i class="fa-regular fa-calendar ctx-cal-icon" style="font-size:16px; position:absolute;"></i>
+          <span class="ctx-cal-num" style="position:relative; font-size:7px; font-weight:800; margin-top:5px; z-index:1; line-height:1;">1</span>
+        </span>
+        <span>1 Month</span>
+      </div>
+      <div class="ctx-icon-btn" data-action="date-custom" title="Pick Date">
+        <i class="fa-solid fa-calendar-plus"></i>
+        <span>Custom</span>
+      </div>
+    </div>
+    <input type="text" id="abm-ctx-custom-date-input" style="display:none;">
+  </div>
+
+  <div class="ctx-section">
+    <div class="ctx-label">Change Priority</div>
+    <div class="ctx-priority-row">
+      <div class="ctx-priority-btn p-high" data-priority="HIGH" title="High">
+        <i class="fa-solid fa-flag"></i>
+        <span>High</span>
+      </div>
+      <div class="ctx-priority-btn p-medium" data-priority="MEDIUM" title="Medium">
+        <i class="fa-solid fa-flag"></i>
+        <span>Medium</span>
+      </div>
+      <div class="ctx-priority-btn p-low" data-priority="LOW" title="Low">
+        <i class="fa-solid fa-flag"></i>
+        <span>Low</span>
+      </div>
+    </div>
+  </div>
+
+<div class="ctx-section">
+    <div class="ctx-item" id="abm-ctx-done-btn" style="color:#0F8989;">
+      <i class="fa-solid fa-circle-check"></i> Mark as Done
+    </div>
+    <div class="ctx-item" id="abm-ctx-undone-btn" style="color:#f39c12; display:none;">
+      <i class="fa-solid fa-rotate-left"></i> Mark as Incomplete
+    </div>
+  </div>
+
+  <div class="ctx-section">
+    <div class="ctx-item danger" id="abm-ctx-delete-btn">
+      <i class="fa-solid fa-trash"></i> Delete Selected
+    </div>
+  </div>
 </div>
+
+<!-- ABM Bulk delete confirmation -->
+<div id="abm-delete-confirm" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:16px; border-top:3px solid #e74c3c; width:300px; padding:28px 24px; font-family:Arial,sans-serif; text-align:center; box-shadow:0 16px 48px rgba(0,0,0,0.22);">
+    <div style="width:52px;height:52px;background:#fff0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#e74c3c;font-size:24px;"></i>
+    </div>
+    <div style="color:#1a1a1a;font-weight:700;font-size:16px;margin-bottom:6px;">Delete Selected Tasks?</div>
+    <div id="abm-delete-count" style="color:#888;font-size:13px;margin-bottom:22px;">This cannot be undone.</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="abm-delete-cancel" style="background:#f0f0f0;color:#444;border:none;padding:10px 24px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">Cancel</button>
+      <button id="abm-delete-ok" style="background:#e74c3c;color:white;border:none;padding:10px 24px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">Delete</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- tooltip removed, using click-expand instead -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
 let members = <%- JSON.stringify(typeof members !== 'undefined' ? members : []) %>;
@@ -415,6 +659,46 @@ const LABEL_UPDATE = "<%= label_update %>";
 const adminName = "<%= adminName %>";
 const userRole = "<%= session.role %>";
 let isProcessingAjax = false;
+
+function getDateLabel(dateStr) {
+    if (!dateStr || dateStr === 'null') return '';
+    const d = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+    const taskDay = new Date(d); taskDay.setHours(0,0,0,0);
+    if (taskDay.getTime() === today.getTime()) return 'Today';
+    if (taskDay.getTime() === tomorrow.getTime()) return 'Tom';
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+}
+
+function isDatePast(dateStr) {
+    if (!dateStr || dateStr === 'null') return false;
+    const d = new Date(dateStr);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const taskDay = new Date(d); taskDay.setHours(0,0,0,0);
+    return taskDay < today;
+}
+
+function escapeAttr(str) {
+    if (!str) return '';
+    return String(str).replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/\n/g, ' ');
+}
+
+function showDescTooltip(e, desc) {
+    const tip = document.getElementById('desc-tooltip');
+    tip.textContent = desc;
+    tip.style.display = 'block';
+    const x = e.clientX + 12;
+    const y = e.clientY - 10;
+    tip.style.left = (x + 230 > window.innerWidth ? x - 240 : x) + 'px';
+    tip.style.top = y + 'px';
+}
+
+function hideDescTooltip() {
+    const tip = document.getElementById('desc-tooltip');
+    if (tip) tip.style.display = 'none';
+}
 
 async function refreshABMUI() {
     const res = await fetch(window.location.pathname, { headers: { 'Accept': 'application/json', 'x-requested-with': 'XMLHttpRequest' } });
@@ -432,7 +716,8 @@ function buildCustomDropdown(taskId, currentId, currentName) {
     
     // Note the added event to toggleCustomMenu
     let html = `<div class="custom-dropdown" onclick="event.stopPropagation(); toggleCustomMenu(event, '${taskId}')">`;
-    html += `<div class="custom-select-btn" title="${displayName}">${displayName}</div>`;
+const truncatedDisplay = displayName.length > 13 ? displayName.substring(0, 13) + '...' : displayName;
+    html += `<div class="custom-select-btn" title="${displayName}">${truncatedDisplay}</div>`;
     html += `<div class="custom-menu" id="assign-menu-${taskId}">`;
     
     html += `<div class="custom-menu-item" onclick="changeAssignee('${taskId}', '${myId}')">Self</div>`;
@@ -514,82 +799,91 @@ async function changeAssignee(taskId, newAssigneeId) {
     } catch(err) { console.error(err); }
 }
 
+function truncateName(name, maxLen) {
+    if (!name) return '';
+    return name.length > maxLen ? name.substring(0, maxLen) + '...' : name;
+}
+
 function renderTasks(openTasks, completedTasks) {
     const openContainer = document.getElementById('open-task-list');
     const compContainer = document.getElementById('completed-task-list');
     openContainer.innerHTML = '';
     compContainer.innerHTML = '';
 
-    openTasks.forEach(task => {
+openTasks.forEach(task => {
         const item = document.createElement('div');
         item.className = 'task-item';
         item.id = 'task-' + task.id;
+        item.dataset.id = String(task.id);
+
+        const hasDesc = task.description && task.description !== '' && task.description !== 'null';
+        const dateLabel = getDateLabel(task.due_date);
+        const isPast = isDatePast(task.due_date);
+        const dateClass = isPast ? 'task-date past-date' : 'task-date';
+        const assignName = truncateName(task.assigned_to, 10);
+
         item.innerHTML = `
        <div class="task-row" ondblclick="openEdit('${task.id}')">
             <input type="checkbox" class="task-checkbox priority-${task.priority}" onchange="toggleCheckboxStatus('${task.id}', this)">
             <div class="task-title">${task.title}</div>
-            <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
             <div class="task-sec-val">${task.section === 'CHANGES' ? LABEL_CHANGES : task.section === 'UPDATE' ? LABEL_UPDATE : (task.section || 'TASK')}</div>
             <div class="task-assign">
                 ${buildCustomDropdown(task.id, task.assignee_id, task.assigned_to)}
             </div>
-            <div class="task-date" onclick="quickEditDate('${task.id}', '${task.due_date || ''}')">
-    ${formatDate(task.due_date)}
-</div>
-
-<input type="text" id="quick-date-${task.id}" style="display:none;">
+    ${hasDesc ? `<svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>` : ''}
+            <div class="${dateClass}" onclick="quickEditDate('${task.id}', '${task.due_date || ''}')">
+                ${dateLabel}
+            </div>
+            <input type="text" id="quick-date-${task.id}" style="display:none;">
             <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
            <div class="task-options-menu" id="menu-${task.id}">
                 <div onclick="openEdit('${task.id}')">Edit</div>
                 <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
             </div>
         </div>
-
-
-<!-- ✅ ADD EDIT BOX HERE -->
+<!-- DESC EXPAND -->
+<div class="abm-task-details" style="display:none; padding: 6px 4px 2px 22px; font-size:11px; color:#ccc; border-top:1px solid #555; margin-top:4px; line-height:1.5;">${task.description || ''}</div>
+<!-- EDIT BOX -->
 <div class="edit-box" id="edit-${task.id}">
     <input type="text" class="edit-title" id="title-${task.id}" value="${task.title}" placeholder="Title">
-
     <textarea class="edit-desc" id="desc-${task.id}" placeholder="Description">${task.description || ''}</textarea>
-
     <div class="edit-row">
         <select class="edit-priority" id="priority-${task.id}">
             <option value="HIGH" ${task.priority==='HIGH'?'selected':''}>High</option>
             <option value="MEDIUM" ${task.priority==='MEDIUM'?'selected':''}>Medium</option>
             <option value="LOW" ${task.priority==='LOW'?'selected':''}>Low</option>
         </select>
-
      <div class="date-wrapper">
-<input type="text" 
-       class="edit-date" 
-       id="date-${task.id}" 
-   value="${task.due_date ? formatInputDate(task.due_date) : ''}"
-       placeholder="Select date">
+<input type="text" class="edit-date" id="date-${task.id}" value="${task.due_date ? formatInputDate(task.due_date) : ''}" placeholder="Select date">
     <span class="calendar-icon" onclick="openCalendar('date-${task.id}')">📅</span>
 </div>
-       
     </div>
-
     <div class="edit-actions">
         <button class="save-btn" onclick="saveEdit('${task.id}')">Save</button>
         <button class="cancel-btn" onclick="closeEdit('${task.id}')">Cancel</button>
     </div>
 </div>
 `;
-                    openContainer.appendChild(item);
-                });
+        openContainer.appendChild(item);
+        attachABMMultiSelect(item, task.id);
+    });
 
-                completedTasks.forEach(task => {
-                    const item = document.createElement('div');
-                    item.className = 'task-item completed-task';
-                    item.id = 'task-' + task.id;
-                    item.innerHTML = `
+completedTasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'task-item completed-task';
+        item.id = 'task-' + task.id;
+        item.dataset.id = String(task.id);
+        item.dataset.completed = 'true';
+
+        const hasDesc = task.description && task.description !== '' && task.description !== 'null';
+
+        item.innerHTML = `
                <div class="task-row" ondblclick="openEdit('${task.id}')">
                         <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
                         <div class="task-title">${task.title}</div>
-                        <div class="task-desc">${(task.description == null || task.description == "" || task.description == "null") ? "_" : task.description}</div>
                         <div class="task-sec-val">${task.section === 'CHANGES' ? LABEL_CHANGES : task.section === 'UPDATE' ? LABEL_UPDATE : (task.section || 'TASK')}</div>
-                        <div class="task-assign"><span style="font-size: 11px;">${task.assigned_to}</span></div>
+                        <div class="task-assign"><span style="font-size: 11px;" title="${task.assigned_to}">${truncateName(task.assigned_to, 10)}</span></div>
+         ${hasDesc ? `<svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>` : ''}
                         <div class="task-date">${formatDate(task.due_date)}</div>
                         <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
                     <div class="task-options-menu" id="menu-${task.id}">
@@ -598,6 +892,7 @@ function renderTasks(openTasks, completedTasks) {
             </div>
         </div>`;
         compContainer.appendChild(item);
+        attachABMMultiSelect(item, task.id);
     });
 }
 
@@ -656,10 +951,313 @@ function toggleCustomMenu(event, id) {
 }
 
 // Close all menus when clicking outside
-document.addEventListener('click', () => { 
-    if (activeMenu) { activeMenu.style.display = 'none'; activeMenu = null; }
-    if (activeAssignMenu) { activeAssignMenu.style.display = 'none'; activeAssignMenu = null; }
+document.addEventListener('click', (e) => { 
+    if (!e.target.closest('#abm-context-menu')) {
+        if (activeMenu) { activeMenu.style.display = 'none'; activeMenu = null; }
+        if (activeAssignMenu) { activeAssignMenu.style.display = 'none'; activeAssignMenu = null; }
+    }
 });
+
+// =============================================
+// ABM MULTI SELECT SYSTEM
+// =============================================
+
+let abmSelectedIds = new Set();
+let abmLastClickedEl = null;
+let abmCtxMenu = null;
+let abmCtxMenuOpen = false;
+
+function abmGetAllTaskEls() {
+    return Array.from(document.querySelectorAll('.task-item'));
+}
+
+function abmUpdateSelectionUI() {
+    abmGetAllTaskEls().forEach(el => {
+        if (abmSelectedIds.has(el.dataset.id)) {
+            el.classList.add('selected');
+        } else {
+            el.classList.remove('selected');
+        }
+    });
+    if (abmSelectedIds.size === 0) document.body.classList.remove('no-select');
+}
+
+function abmClearSelection() {
+    abmSelectedIds.clear();
+    abmLastClickedEl = null;
+    abmUpdateSelectionUI();
+    document.body.classList.remove('no-select');
+}
+
+function abmSelectTask(el, taskId) {
+    abmSelectedIds.add(String(taskId));
+    abmLastClickedEl = el;
+    abmUpdateSelectionUI();
+}
+
+function abmToggleTask(el, taskId) {
+    const id = String(taskId);
+    if (abmSelectedIds.has(id)) {
+        abmSelectedIds.delete(id);
+    } else {
+        abmSelectedIds.add(id);
+        abmLastClickedEl = el;
+    }
+    abmUpdateSelectionUI();
+}
+
+function abmShiftSelectTo(el) {
+    const allEls = abmGetAllTaskEls();
+    if (!abmLastClickedEl || !allEls.includes(abmLastClickedEl)) {
+        abmSelectTask(el, el.dataset.id);
+        return;
+    }
+    const fromIdx = allEls.indexOf(abmLastClickedEl);
+    const toIdx = allEls.indexOf(el);
+    const start = Math.min(fromIdx, toIdx);
+    const end = Math.max(fromIdx, toIdx);
+    for (let i = start; i <= end; i++) {
+        abmSelectedIds.add(String(allEls[i].dataset.id));
+    }
+    abmUpdateSelectionUI();
+}
+
+function attachABMMultiSelect(div, taskId) {
+    // Long-press mobile
+    let pressTimer = null;
+    div.addEventListener('touchstart', () => {
+        pressTimer = setTimeout(() => {
+            document.body.classList.add('no-select');
+            abmToggleTask(div, taskId);
+        }, 600);
+    }, { passive: true });
+    div.addEventListener('touchend', () => clearTimeout(pressTimer));
+    div.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+    div.addEventListener('click', (e) => {
+        if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .edit-box, .custom-dropdown')) return;
+
+        if (e.shiftKey && abmLastClickedEl) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.body.classList.add('no-select');
+            abmShiftSelectTo(div);
+            return;
+        }
+
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.body.classList.add('no-select');
+            abmToggleTask(div, taskId);
+            return;
+        }
+
+        // Plain left-click — select single
+        if (abmSelectedIds.size > 0) {
+            e.stopPropagation();
+            if (abmSelectedIds.has(String(taskId))) {
+                abmSelectedIds.delete(String(taskId));
+                abmUpdateSelectionUI();
+            } else {
+                abmClearSelection();
+                abmSelectTask(div, taskId);
+            }
+            return;
+        }
+
+        e.stopPropagation();
+        abmSelectTask(div, taskId);
+    });
+
+    div.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+}
+
+// Click outside clears selection
+document.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (!abmCtxMenuOpen) return;
+    if (abmCtxMenu && abmCtxMenu.contains(e.target)) return;
+    abmHideContextMenu();
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target.closest('#abm-context-menu')) return;
+    if (!e.target.closest('.task-item')) {
+        abmClearSelection();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { abmHideContextMenu(); abmClearSelection(); }
+});
+
+// Right-click → context menu
+document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('#abm-context-menu')) return;
+    e.preventDefault();
+    if (abmSelectedIds.size === 0) return;
+    abmShowContextMenu(e.clientX, e.clientY);
+});
+
+function abmShowContextMenu(x, y) {
+    if (!abmCtxMenu) abmCtxMenu = document.getElementById('abm-context-menu');
+    if (!abmCtxMenu) return;
+
+    const count = abmSelectedIds.size;
+    const label = document.getElementById('abm-ctx-selected-label');
+    if (label) label.textContent = count + ' task' + (count !== 1 ? 's' : '') + ' selected';
+
+    // Check if ANY selected task is completed
+    const hasCompleted = [...abmSelectedIds].some(id => {
+        const el = document.getElementById('task-' + id);
+        return el && el.dataset.completed === 'true';
+    });
+    const doneBtn = document.getElementById('abm-ctx-done-btn');
+    const undoneBtn = document.getElementById('abm-ctx-undone-btn');
+    if (hasCompleted) {
+        if (doneBtn) doneBtn.style.display = 'none';
+        if (undoneBtn) undoneBtn.style.display = 'flex';
+    } else {
+        if (doneBtn) doneBtn.style.display = 'flex';
+        if (undoneBtn) undoneBtn.style.display = 'none';
+    }
+
+    abmCtxMenu.style.display = 'block';
+    abmCtxMenuOpen = true;
+
+    const menuW = abmCtxMenu.offsetWidth || 220;
+    const menuH = abmCtxMenu.offsetHeight || 350;
+    let left = x + 4;
+    let top = y + 4;
+    if (left + menuW > window.innerWidth) left = x - menuW - 4;
+    if (top + menuH > window.innerHeight) top = y - menuH - 4;
+    if (top < 4) top = 4;
+    if (left < 4) left = 4;
+    abmCtxMenu.style.left = left + 'px';
+    abmCtxMenu.style.top = top + 'px';
+}
+
+function abmHideContextMenu() {
+    if (!abmCtxMenu) abmCtxMenu = document.getElementById('abm-context-menu');
+    if (abmCtxMenu) abmCtxMenu.style.display = 'none';
+    abmCtxMenuOpen = false;
+}
+
+function abmGetTargetDate(action) {
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    let target;
+    if (action === 'date-today') target = new Date(y, m, d);
+    else if (action === 'date-tomorrow') target = new Date(y, m, d + 1);
+    else if (action === 'date-7') target = new Date(y, m, d + 7);
+    else if (action === 'date-30') target = new Date(y, m + 1, d);
+    else return null;
+    const yy = target.getFullYear();
+    const mm = String(target.getMonth() + 1).padStart(2, '0');
+    const dd = String(target.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+}
+
+async function abmHandleDateAction(action) {
+    const ids = [...abmSelectedIds];
+    if (!ids.length) return;
+
+    if (action === 'date-custom') {
+        abmHideContextMenu();
+        const input = document.getElementById('abm-ctx-custom-date-input');
+        if (input._flatpickr) input._flatpickr.destroy();
+        let picked = false;
+        let fpCustom = flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            appendTo: document.body,
+            disableMobile: true,
+            onOpen: function(s, d, instance) {
+                instance.calendarContainer.classList.add('center-calendar');
+            },
+            onChange: async function(selectedDates, dateStr) {
+                if (!dateStr || picked) return;
+                picked = true;
+                try { fpCustom.close(); } catch(e) {}
+                try { fpCustom.destroy(); } catch(e) {}
+                await abmBulkUpdateDate(ids, dateStr);
+            },
+            onClose: function() {
+                setTimeout(() => { try { if (fpCustom) fpCustom.destroy(); } catch(e) {} }, 200);
+            }
+        });
+        fpCustom.open();
+        return;
+    }
+
+    const due_date = abmGetTargetDate(action);
+    if (!due_date) return;
+    abmHideContextMenu();
+    await abmBulkUpdateDate(ids, due_date);
+}
+
+async function abmBulkUpdateDate(ids, due_date) {
+    await fetch('/api/bulk-update-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, due_date })
+    });
+    abmClearSelection();
+}
+
+async function abmBulkUpdatePriority(priority) {
+    const ids = [...abmSelectedIds];
+    if (!ids.length) return;
+    abmHideContextMenu();
+    await fetch('/api/bulk-update-priority', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, priority })
+    });
+    abmClearSelection();
+}
+
+async function abmBulkMarkDone() {
+    const ids = [...abmSelectedIds];
+    if (!ids.length) return;
+    abmHideContextMenu();
+    await Promise.all(ids.map(id =>
+        fetch('/assign_by_me/update-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status: 'COMPLETED' })
+        })
+    ));
+    abmClearSelection();
+}
+
+async function abmBulkMarkUndone() {
+    const ids = [...abmSelectedIds];
+    if (!ids.length) return;
+    abmHideContextMenu();
+    await Promise.all(ids.map(id =>
+        fetch('/assign_by_me/update-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status: 'OPEN' })
+        })
+    ));
+    abmClearSelection();
+}
+
+async function abmBulkDelete() {
+    const ids = [...abmSelectedIds];
+    if (!ids.length) return;
+    document.getElementById('abm-delete-confirm').style.display = 'none';
+    await fetch('/api/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+    });
+    abmClearSelection();
+}
 
 let taskToDeleteId = null;
 function openSingleDelete(id) { taskToDeleteId = id; document.getElementById("singleDeleteModal").style.display = "flex"; }
@@ -803,6 +1401,60 @@ function openCalendar(inputId) {
     initCalendar(inputId);
     calendars[inputId].open();
 }
+
+// Init ABM context menu button listeners
+document.addEventListener('DOMContentLoaded', () => {
+    abmCtxMenu = document.getElementById('abm-context-menu');
+
+    // Date icon buttons
+    document.querySelectorAll('#abm-context-menu .ctx-icon-btn').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+        btn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            abmHandleDateAction(btn.dataset.action);
+        });
+    });
+
+    // Priority buttons
+    document.querySelectorAll('#abm-context-menu .ctx-priority-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            abmBulkUpdatePriority(btn.dataset.priority);
+        });
+    });
+
+// Mark as done
+    document.getElementById('abm-ctx-done-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        abmBulkMarkDone();
+    });
+
+    // Mark as incomplete
+    document.getElementById('abm-ctx-undone-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        abmBulkMarkUndone();
+    });
+
+    // Delete
+    document.getElementById('abm-ctx-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        abmHideContextMenu();
+        const ids = [...abmSelectedIds];
+        if (!ids.length) return;
+        const count = ids.length;
+        document.getElementById('abm-delete-count').textContent =
+            `${count} task${count > 1 ? 's' : ''} will be permanently removed.`;
+        document.getElementById('abm-delete-confirm').style.display = 'flex';
+    });
+
+    document.getElementById('abm-delete-cancel').addEventListener('click', () => {
+        document.getElementById('abm-delete-confirm').style.display = 'none';
+    });
+
+    document.getElementById('abm-delete-ok').addEventListener('click', async () => {
+        await abmBulkDelete();
+    });
+});
 </script>
 </body>
 </html>
