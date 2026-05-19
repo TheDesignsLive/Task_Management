@@ -1525,7 +1525,7 @@ document.addEventListener('dragstart', (e) => {
 });
 document.addEventListener('dragend', () => {
   _draggingId = null;
-  // Clean up all invalid overlays
+  // Clean up all invalid overlays.
   document.querySelectorAll('.drop-invalid-overlay').forEach(el => el.remove());
   Object.keys(containers).forEach(id => {
     const c = document.getElementById(id);
