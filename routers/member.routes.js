@@ -6,7 +6,12 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { debugLog } = require('../utils/logger');
 const { notifyMobile } = require('../utils/notifyMobile'); // ✅ ADD THIS
+const PushNotifications = require('@pusher/push-notifications-server');
 
+const beamsClient = new PushNotifications({
+    instanceId: '423440a8-1fc5-4373-8e6b-0085dccafc58',
+    secretKey: '75EBE2088425312400AD5D15B2476EA23E3CEA61B7DE841FCA0A62E822C3135F',
+});
 // Multer Config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/images'), 
@@ -75,30 +80,8 @@ router.post('/add-member', (req, res) => {
                 // fallback (if not stored in session)
                 if (!controlType) {
                     const [roleData] = await con.execute(
-                        "SELECT control_type FROM roles WHERE id=?",
-                        [req.session.role_id]
-                    );
-                    controlType = roleData.length > 0 ? roleData[0].control_type : null;
-                }
-
-                // ✅ OWNER or ADMIN → direct insert
-                if (controlType === "OWNER") {
-
-                    await con.execute(
-                        `INSERT INTO users 
-                        (admin_id, role_id, name, email, phone, password, profile_pic, created_by, status, created_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', NOW())`,
-                        [admin_id, role_id, name, email, phone, hashedPassword, profile_pic, userId]
-                    );
-                    debugLog('Owner added a new member', { ownerId: userId, newMemberEmail: email, roleId: role_id });
-                }
-
-                // ✅ PARTIAL → request
-                else {
-
-                    await con.execute(
-                        `INSERT INTO member_requests 
-                        (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, status, created_at) 
+                        `INSERT INTO member_requests 
+                        (admin_id, role_id, requested_by, name, email, phone, password, profile_pic, status, created_at) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())`,
                         [admin_id, role_id, userId, name, email, phone, hashedPassword, profile_pic]
                     );
@@ -106,6 +89,38 @@ router.post('/add-member', (req, res) => {
 
                     // 🔔 notify admin
                     req.io.emit("member_request");
+
+                    // ✅ FETCH REQUESTER NAME & PUSH TO ADMIN CHANNEL
+                    try {
+                        const senderId = `${userId}`;
+                        const [requesterRows] = await con.execute("SELECT name FROM users WHERE id=?", [senderId]);
+                        const requesterName = requesterRows.length ? requesterRows[0].name : 'A member';
+                        
+                        const interests = [`admin-${admin_id}`];
+
+                        await beamsClient.publishToInterests(interests, {
+                            web: {
+                                notification: {
+                                    title: "New Member Request",
+                                    body: `${requesterName} requested to add ${name.trim()}`,
+                                    deep_link: "https://m-tms.thedesigns.live",
+                                },
+                                data: { sender_id: senderId },
+                            },
+                            fcm: {
+                                notification: {
+                                    title: "New Member Request",
+                                    body: `${requesterName} requested to add ${name.trim()}`,
+                                },
+                                data: {
+                                    url: "https://m-tms.thedesigns.live",
+                                    sender_id: senderId,
+                                },
+                            }
+                        });
+                    } catch (pushErr) {
+                        console.error('[Beams Desktop] Add member request push failed:', pushErr.message);
+                    }
                 }
             }
 
@@ -177,13 +192,44 @@ router.get('/delete-member/:id', async (req, res) => {
             const [memberData] = await con.execute('SELECT * FROM users WHERE id = ?', [memberId]);
             if (memberData.length === 0) return res.json({ success: false, message: 'Member not found' });
             const m = memberData[0];
-            await con.execute(
+           await con.execute(
                 `INSERT INTO member_requests (admin_id, role_id, request_type, requested_by, name, email, phone, profile_pic, status, created_at) VALUES (?, ?, 'DELETE', ?, ?, ?, ?, ?, 'PENDING', NOW())`,
                 [m.admin_id, m.role_id, req.session.userId, m.name, m.email, m.phone, m.profile_pic]
             );
             debugLog('Member deletion requested', { targetMemberId: memberId, requestedBy: req.session.userId });
             req.io.emit('member_request');
-            // ❌ REMOVE notifyMobile from here
+
+            // ✅ FETCH REQUESTER NAME & PUSH TO ADMIN CHANNEL
+            try {
+                const senderId = `${req.session.userId}`;
+                const [requesterRows] = await con.execute("SELECT name FROM users WHERE id=?", [senderId]);
+                const requesterName = requesterRows.length ? requesterRows[0].name : 'A member';
+
+                const interests = [`admin-${m.admin_id}`];
+
+                await beamsClient.publishToInterests(interests, {
+                    web: {
+                        notification: {
+                            title: "Delete Request",
+                            body: `${requesterName} requested to delete ${m.name}`,
+                            deep_link: "https://m-tms.thedesigns.live",
+                        },
+                        data: { sender_id: senderId },
+                    },
+                    fcm: {
+                        notification: {
+                            title: "Delete Request",
+                            body: `${requesterName} requested to delete ${m.name}`,
+                        },
+                        data: {
+                            url: "https://m-tms.thedesigns.live",
+                            sender_id: senderId,
+                        },
+                    }
+                });
+            } catch (pushErr) {
+                console.error('[Beams Desktop] Delete member request push failed:', pushErr.message);
+            }
         }
 
         req.io.emit('update_members');

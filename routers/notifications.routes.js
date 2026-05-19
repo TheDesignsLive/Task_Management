@@ -338,75 +338,94 @@ router.post(
       const ann = rows[0];
       req.io.emit("new_announcement", ann);
       // ✅ ADD THIS NEW CHANNELS & SELF-NOTIFICATION PAYLOAD BLOCK
-const senderIsAdmin = req.session.role === 'admin';
-const senderUniqueId = senderIsAdmin 
-    ? `admin-${req.session.adminId}` 
-    : `${req.session.userId}`;
+      const senderIsAdmin = req.session.role === "admin";
+      const senderUniqueId = senderIsAdmin
+        ? `admin-${req.session.adminId}`
+        : `${req.session.userId}`;
 
-let interests = [];
+      let interests = [];
 
-if (senderIsAdmin) {
-    if (parseInt(role_id) === 0) {
-        interests.push(`company-${adminId}-all`);
-        interests.push(`admin-${adminId}`);
-    } else {
-        interests.push(`company-${adminId}-team-${role_id}`);
-        interests.push(`admin-${adminId}`);
-    }
-} else {
-    if (parseInt(role_id) === 0) {
-        interests.push(`company-${adminId}-all`);
-        interests.push(`admin-${adminId}`);
-    } else {
-        interests.push(`company-${adminId}-team-${role_id}`);
-        interests.push(`admin-${adminId}`);
-    }
-}
+      if (senderIsAdmin) {
+        if (parseInt(role_id) === 0) {
+          interests.push(`company-${adminId}-all`);
+          interests.push(`admin-${adminId}`);
+        } else {
+          interests.push(`company-${adminId}-team-${role_id}`);
+          interests.push(`admin-${adminId}`);
+        }
+      } else {
+        if (parseInt(role_id) === 0) {
+          interests.push(`company-${adminId}-all`);
+          interests.push(`admin-${adminId}`);
+        } else {
+          interests.push(`company-${adminId}-team-${role_id}`);
+          interests.push(`admin-${adminId}`);
+        }
+      }
 
-// Push to Mobile Bridge
-notifyMobile('announcement_add', { id: ann.id });
+      // Push to Mobile Bridge
+      notifyMobile("announcement_add", { id: ann.id });
 
-// PUSH NOTIFICATION WITH SENDER FILTER PAYLOAD
-try {
-    const { beamsClient } = require('../utils/pushNotify');
-    
-    const pushTitle = ann.title || 'New Announcement';
-    const pushBody  = ann.description || '';
-    const pushIcon  = 'https://tms.thedesigns.live/images/tms_logo.jpeg';
-    const pushUrl   = 'https://m-tms.thedesigns.live';
+      // PUSH NOTIFICATION WITH SENDER FILTER PAYLOAD
+      try {
+        const { beamsClient } = require("../utils/pushNotify");
 
-    const pushPayload = {
-        web: {
+        const pushTitle = ann.title || "New Announcement";
+        const pushBody = ann.description || "";
+        const pushIcon = "https://tms.thedesigns.live/images/tms_logo.jpeg";
+        const pushUrl = "https://m-tms.thedesigns.live";
+
+        const pushPayload = {
+          web: {
             notification: {
-                title: pushTitle,
-                body: pushBody,
-                icon: pushIcon,
-                deep_link: pushUrl,
-            },
-            data: { 
-                sender_id: senderUniqueId 
-            }
-        },
-        fcm: {
-            notification: {
-                title: pushTitle,
-                body: pushBody,
-                image: pushIcon,
+              title: pushTitle,
+              body: pushBody,
+              icon: pushIcon,
+              deep_link: pushUrl,
             },
             data: {
-                url: pushUrl,
-                type: 'announcement',
-                sender_id: senderUniqueId
+              sender_id: senderUniqueId,
             },
-        }
-    };
+          },
+          fcm: {
+            notification: {
+              title: pushTitle,
+              body: pushBody,
+              image: pushIcon,
+            },
+            data: {
+              url: pushUrl,
+              type: "announcement",
+              sender_id: senderUniqueId,
+            },
+          },
+          apns: {
+            aps: {
+              alert: {
+                title: pushTitle,
+                body: pushBody,
+              },
+              sound: "default",
+            },
+            data: {
+              url: pushUrl,
+              type: "announcement",
+              sender_id: senderUniqueId,
+            },
+          },
+        };
 
-    const uniqueInterests = [...new Set(interests)];
-    await beamsClient.publishToInterests(uniqueInterests, pushPayload);
-    console.log('[Beams Desktop] 🔔 Custom Push sent to:', uniqueInterests, '| Sender:', senderUniqueId);
-} catch (pushErr) {
-    console.error('[Beams Desktop] ❌ Push failed:', pushErr.message);
-}
+        const uniqueInterests = [...new Set(interests)];
+        await beamsClient.publishToInterests(uniqueInterests, pushPayload);
+        console.log(
+          "[Beams Desktop] 🔔 Custom Push sent to:",
+          uniqueInterests,
+          "| Sender:",
+          senderUniqueId,
+        );
+      } catch (pushErr) {
+        console.error("[Beams Desktop] ❌ Push failed:", pushErr.message);
+      }
       res.json({ success: true, announcement: ann });
     } catch (err) {
       console.error(err);
