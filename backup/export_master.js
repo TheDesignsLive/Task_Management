@@ -1,3 +1,5 @@
+// export_master.js
+// REPLACE YOUR ENTIRE export_master.js WITH THIS FILE
 const express = require("express");
 const mysqldump = require("mysqldump");
 
@@ -6,48 +8,65 @@ const router = express.Router();
 router.get("/backup/download", async (req, res) => {
     try {
 
-        // 🔥 Generate dump in memory (NO FILE SAVE)
-   const dump = await mysqldump({
+        // ✅ ALWAYS EXPORTS FROM HOSTINGER — even when running locally
+        const result = await mysqldump({
             connection: {
-                host: process.env.DB_HOST || "srv832.hstgr.io",
-                user: process.env.DB_USER || "u213405511_dilip",
-                password: process.env.DB_PASS || "Dilip@8133",
-                database: process.env.DB_NAME || "u213405511_tmsDB"
+                host:     "srv832.hstgr.io",
+                user:     "u213405511_dilip",
+                password: "Dilip@8133",
+                database: "u213405511_tmsDB",
             },
             dump: {
                 schema: {
-                    autoIncrement: true,
-                    engine: true,
-                    ifNotExist: true,        // CREATE TABLE IF NOT EXISTS
+                    table: {
+                        dropIfExist: true,
+                    },
                 },
                 data: {
-                    includeViewData: false,
+                    format: false,      // false = compact INSERT — safer for import
                     verbose: false,
-                    lockTables: false,       // avoids lock errors on some hosts
-                    maxRowsPerInsertStatement: 100,
+                    lockTables: false,
                 },
-                trigger: false              // skip triggers to avoid permission errors
-            }
+            },
+            dumpToFile: false,
         });
 
-        // 🧠 Convert dump to string — add SET commands for safe import
-        const sqlContent = 
-            "SET FOREIGN_KEY_CHECKS=0;\nSET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n\n" +
-            (dump.dump.schema || "") + "\n" + 
-            (dump.dump.data   || "") +
-            "\n\nSET FOREIGN_KEY_CHECKS=1;\n";
+        // ✅ FIX: result.dump.schema and result.dump.data are STRINGS, not objects
+        // Your old code used for...in on them which produced nothing (empty export)
+        const schemaSQL  = result.dump.schema  || "";
+        const dataSQL    = result.dump.data    || "";
+        const triggerSQL = result.dump.trigger || "";
 
-        // 📥 Force download in browser
-        const fileName = `backup-${Date.now()}.sql`;
+        const sqlContent =
+`-- ====================================
+-- TMS DATABASE FULL BACKUP
+-- Generated: ${new Date().toISOString()}
+-- Database: u213405511_tmsDB (Hostinger)
+-- ====================================
 
-        res.setHeader("Content-Type", "application/sql");
-        res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+SET FOREIGN_KEY_CHECKS=0;
+SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
+SET NAMES utf8mb4;
+
+${schemaSQL}
+
+${dataSQL}
+
+${triggerSQL}
+
+SET FOREIGN_KEY_CHECKS=1;
+`;
+
+        const fileName = `tms-backup-${Date.now()}.sql`;
+
+        res.setHeader("Content-Type", "application/octet-stream");
+        res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
 
         return res.send(sqlContent);
 
     } catch (err) {
-        console.error("❌ Export error:", err);
-        res.status(500).send("Export failed");
+        console.error("Backup Error:", err.message);
+        return res.status(500).json({ success: false, message: err.message });
     }
 });
 

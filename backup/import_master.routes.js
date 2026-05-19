@@ -1,10 +1,10 @@
-//import_master.routes.js
+// import_master.routes.js
+// REPLACE YOUR ENTIRE import_master.routes.js WITH THIS FILE
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const fs = require("fs");
 const db = require("../config/db.js");
-const path = require("path");
 const nodemailer = require("nodemailer");
 const { debugLog } = require("../utils/logger");
 
@@ -37,64 +37,32 @@ router.post("/import/send-otp", (req, res) => {
             if (!rows.length) return res.json({ success: false, message: "Master email not configured" });
             const masterEmail = rows[0].email;
 
-           await transporter.sendMail({
-    from: "social.designs.live@gmail.com",
-    to: masterEmail,
-    subject: "🔐 Secure Database Import OTP",
-    
-    html: `
-    <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
-        
-        <div style="max-width:500px; margin:auto; background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
-            
-            <!-- HEADER -->
-            <div style="background:#00d1b2; padding:20px; text-align:center; color:white;">
-                <h2 style="margin:0;">🔐 TMS Security Alert</h2>
-                <p style="margin:5px 0 0;">Database Import Verification</p>
-            </div>
+            await transporter.sendMail({
+                from: "social.designs.live@gmail.com",
+                to: masterEmail,
+                subject: "🔐 Secure Database Import OTP",
+                html: `
+                <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
+                    <div style="max-width:500px; margin:auto; background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
+                        <div style="background:#00d1b2; padding:20px; text-align:center; color:white;">
+                            <h2 style="margin:0;">🔐 TMS Security Alert</h2>
+                            <p style="margin:5px 0 0;">Database Import Verification</p>
+                        </div>
+                        <div style="padding:25px; text-align:center;">
+                            <p style="color:#555; font-size:14px;">You requested to import a database. Use the OTP below to continue:</p>
+                            <div style="margin:20px auto; padding:15px; font-size:28px; font-weight:bold; letter-spacing:6px; color:#00d1b2; border:2px dashed #00d1b2; border-radius:10px; width:fit-content; background:#f9fefe;">
+                                ${otp}
+                            </div>
+                            <p style="color:#888; font-size:12px;">This OTP is valid for a short time. Do not share it with anyone.</p>
+                        </div>
+                        <div style="background:#f1f1f1; padding:12px; text-align:center; font-size:12px; color:#777;">
+                            © ${new Date().getFullYear()} TMS System | Secure Access
+                        </div>
+                    </div>
+                </div>`
+            });
 
-            <!-- BODY -->
-            <div style="padding:25px; text-align:center;">
-                
-                <p style="color:#555; font-size:14px;">
-                    You requested to import a database. Use the OTP below to continue:
-                </p>
-
-                <!-- OTP BOX -->
-                <div style="
-                    margin:20px auto;
-                    padding:15px;
-                    font-size:28px;
-                    font-weight:bold;
-                    letter-spacing:6px;
-                    color:#00d1b2;
-                    border:2px dashed #00d1b2;
-                    border-radius:10px;
-                    width:fit-content;
-                    background:#f9fefe;
-                ">
-                    ${otp}
-                </div>
-
-                <p style="color:#888; font-size:12px;">
-                    This OTP is valid for a short time. Do not share it with anyone.
-                </p>
-
-            </div>
-
-            <!-- FOOTER -->
-            <div style="background:#f1f1f1; padding:12px; text-align:center; font-size:12px; color:#777;">
-                © ${new Date().getFullYear()} TMS System | Secure Access
-            </div>
-
-        </div>
-
-    </div>
-    `
-});
-
-    debugLog("OTP SENT:", otp); // debug
-
+            debugLog("OTP SENT:", otp);
             res.json({ success: true, email: masterEmail });
 
         } catch (mailErr) {
@@ -113,77 +81,98 @@ router.post("/import/verify-otp", (req, res) => {
     debugLog("Session ID:", req.sessionID);
 
     if (!req.session.importOTP) {
-        return res.json({
-            success: false,
-            message: "Session expired. Resend OTP"
-        });
+        return res.json({ success: false, message: "Session expired. Resend OTP" });
     }
 
     if (parseInt(otp) === req.session.importOTP) {
         req.session.importVerified = true;
-
-        // 🔥 IMPORTANT: destroy OTP after use
         req.session.importOTP = null;
-
         return res.json({ success: true });
     }
 
-    return res.json({
-        success: false,
-        message: "Invalid OTP"
-    });
+    return res.json({ success: false, message: "Invalid OTP" });
 });
 
 // ================= IMPORT SQL =================
 router.post("/import/upload", upload.single("file"), async (req, res) => {
+    let filePath = null;
+
     try {
         if (!req.session.importVerified) {
             return res.json({ success: false, message: "OTP not verified" });
         }
 
-        const filePath = req.file.path;
+        filePath = req.file.path;
         const sql = fs.readFileSync(filePath, "utf8");
 
         if (!sql.trim()) {
             return res.json({ success: false, message: "Empty file" });
         }
 
-const connection = await db.getConnection();
+        // ✅ FIX: Split on ALL semicolons (old regex missed the last statement)
+        const rawStatements = sql.split(";");
+
+        const statements = rawStatements
+            .map(s => s.trim())
+            .filter(s => {
+                if (!s) return false;
+                // Skip blocks that are entirely comments
+                const lines = s.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+                const allComments = lines.every(l =>
+                    l.startsWith("--") || l.startsWith("#") || l.startsWith("/*") || l.startsWith("*")
+                );
+                return !allComments;
+            });
+
+        const connection = await db.getConnection();
 
         try {
-            // multipleStatements is not on the pool, so run statements one by one
-// Split on semicolons that appear at the END of a line (handles multi-line INSERTs)
-            const statements = sql
-                .split(/;\s*(?:\r?\n|$)/)
-                .map(s => s.trim())
-                .filter(s => s.length > 0 && !s.startsWith('--') && !s.startsWith('/*') && !s.startsWith('#'));
+            // ✅ FIX: These three lines MUST run first.
+            // Without FOREIGN_KEY_CHECKS=0, any table with FK references
+            // (users.role_id, tasks.user_id etc) fails silently → shows null/empty on import
+            await connection.query("SET FOREIGN_KEY_CHECKS=0");
+            await connection.query("SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO'");
+            await connection.query("SET NAMES utf8mb4");
+
+            let successCount = 0;
+            let skipCount = 0;
 
             for (const stmt of statements) {
-                // INSERT IGNORE so duplicate rows are skipped instead of crashing
-                const safeStmt = stmt.replace(/^INSERT\s+INTO\s+/i, 'INSERT IGNORE INTO ');
+                // Skip SET statements already handled above
+                if (/^SET\s+(FOREIGN_KEY_CHECKS|SQL_MODE|NAMES)\s*/i.test(stmt)) {
+                    continue;
+                }
+
+                // INSERT IGNORE so duplicates are skipped without crashing
+                const safeStmt = stmt.replace(/^INSERT\s+INTO\s+/i, "INSERT IGNORE INTO ");
+
                 try {
                     await connection.query(safeStmt);
+                    successCount++;
                 } catch (stmtErr) {
-                    console.warn('[Import] Skipped statement:', stmtErr.sqlMessage || stmtErr.message);
+                    const preview = stmt.substring(0, 80).replace(/\n/g, " ");
+                    console.warn(`[Import] Skipped: ${stmtErr.sqlMessage || stmtErr.message} | SQL: ${preview}`);
+                    skipCount++;
                 }
             }
 
-            fs.unlinkSync(filePath);
-            req.session.importVerified = false; // reset
-            res.json({ success: true });
+            console.log(`[Import] Done. Success: ${successCount}, Skipped: ${skipCount}`);
 
-        } catch (err) {
-            console.error(err);
-            res.json({ success: false });
         } finally {
+            // Always re-enable FK checks
+            try { await connection.query("SET FOREIGN_KEY_CHECKS=1"); } catch (_) {}
             connection.release();
         }
 
+        try { fs.unlinkSync(filePath); } catch (_) {}
+        req.session.importVerified = false;
+        res.json({ success: true });
+
     } catch (err) {
-        console.error(err);
-        res.json({ success: false });
+        console.error("[Import] Fatal error:", err);
+        if (filePath) { try { fs.unlinkSync(filePath); } catch (_) {} }
+        res.json({ success: false, message: err.message });
     }
 });
-
 
 module.exports = router;
