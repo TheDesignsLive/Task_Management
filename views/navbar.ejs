@@ -1124,7 +1124,20 @@ async function subscribeBeams() {
             credentials: 'include',
         });
 
-        await _beamsClient.setUserId(BEAMS_USER_ID, tokenProvider);
+        try {
+    const currentId = await _beamsClient.getUserId();
+
+    if (currentId && currentId !== BEAMS_USER_ID) {
+        console.log('[Beams] 🔄 Different user detected, stopping old session...');
+        await _beamsClient.stop();   // 🔥 IMPORTANT FIX
+        await _beamsClient.start();  // restart clean
+    }
+
+} catch (e) {
+    console.log('[Beams] No previous user, fresh start');
+}
+
+await _beamsClient.setUserId(BEAMS_USER_ID, tokenProvider);
         // ================== ADD THIS BLOCK ==================
 const role    = '<%= session.role %>';
 const adminId = '<%= session.adminId || "" %>';
