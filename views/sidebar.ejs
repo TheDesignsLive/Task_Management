@@ -313,7 +313,7 @@
     </p>
 
     <div class="modal-buttons">
-      <a href="/logout" class="btn btn-logout">Logout</a>
+      <button onclick="handleLogout()" class="btn btn-logout">Logout</button>
       <button onclick="closeLogoutModal()" class="btn btn-cancel">Cancel</button>
     </div>
   </div>
@@ -378,5 +378,19 @@ socket.on("member_request",function(){
 });
 
 });
+async function handleLogout() {
+  try {
+    // ===== STEP 1: STOP BEAMS =====
+    if (typeof beamsClient !== "undefined") {
+      await beamsClient.stop();   // 🔥 THIS IS MAIN LINE
+      console.log("Beams stopped");
+    }
 
+  } catch (err) {
+    console.error("Beams stop error:", err);
+  }
+
+  // ===== STEP 2: REDIRECT TO LOGOUT ROUTE =====
+  window.location.href = "/logout";
+}
 </script>
