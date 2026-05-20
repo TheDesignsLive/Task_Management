@@ -203,7 +203,7 @@ button:hover{background:#0b7373;}
     <h2 style="margin-top:0;">Confirm Logout</h2>
     <p style="color:#555;">Logout from <br><strong style="color:#095959;"><%= session.email %></strong> ?</p>
     <div class="modal-buttons">
-      <button type="button" onclick="location.href='/logout'" class="btn btn-danger">Logout</button>
+      <button type="button" onclick="handleLogout()" class="btn btn-danger">Logout</button>
       <button type="button" onclick="closeLogoutModal()" class="btn btn-cancel">Cancel</button>
     </div>
   </div>
@@ -314,6 +314,38 @@ function openDeleteDialog() {
         document.getElementById('del-step2').style.display = 'none';
     }
     else document.getElementById('userCannotDeleteModal').style.display = 'flex';
+}
+async function handleLogout() {
+  try {
+    // ===== 1. STOP BEAMS =====
+    if (typeof beamsClient !== "undefined") {
+      await beamsClient.clearAllState();
+      await beamsClient.stop();
+    }
+
+    // ===== 2. UNSUBSCRIBE PUSH =====
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();  // 🔥 VERY IMPORTANT
+        }
+      }
+    }
+
+    // ===== 3. UNREGISTER SERVICE WORKER =====
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (let registration of registrations) {
+      await registration.unregister(); // 🔥 THIS STOPS BACKGROUND PUSH
+    }
+
+  } catch (err) {
+    console.error("Logout cleanup error:", err);
+  }
+
+  // ===== 4. REDIRECT =====
+  window.location.href = "/logout";
 }
 function closeDeleteDialogs() { 
     document.getElementById('adminDeleteModal').style.display = 'none'; 
