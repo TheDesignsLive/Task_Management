@@ -345,23 +345,12 @@ router.post(
 
       let interests = [];
 
-      if (senderIsAdmin) {
-        if (parseInt(role_id) === 0) {
-          interests.push(`company-${adminId}-all`);
-          interests.push(`admin-${adminId}`);
-        } else {
-          interests.push(`company-${adminId}-team-${role_id}`);
-          interests.push(`admin-${adminId}`);
-        }
+      if (parseInt(role_id) === 0) {
+        interests.push(`company-${adminId}-all`);
       } else {
-        if (parseInt(role_id) === 0) {
-          interests.push(`company-${adminId}-all`);
-          interests.push(`admin-${adminId}`);
-        } else {
-          interests.push(`company-${adminId}-team-${role_id}`);
-          interests.push(`admin-${adminId}`);
-        }
+        interests.push(`company-${adminId}-team-${role_id}`);
       }
+      interests.push(`admin-${adminId}`);
 
       // Push to Mobile Bridge
       notifyMobile("announcement_add", { id: ann.id });
