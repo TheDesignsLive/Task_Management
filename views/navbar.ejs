@@ -781,6 +781,21 @@ body: JSON.stringify({
         textarea.value = '';
         dateInput.value = todayDate;
         dateDisplay.innerText = displayDate(todayDate);
+
+        // ✅ Force refresh even if edit box is open
+        if (typeof refreshTasksUI === 'function') {
+            const anyEditOpen = document.querySelector('.edit-box[style*="flex"]');
+            if (anyEditOpen) {
+                // Close all open edit boxes first, then refresh
+                document.querySelectorAll('.edit-box').forEach(box => {
+                    box.style.display = 'none';
+                });
+                document.querySelectorAll('.task-item').forEach(item => {
+                    item.draggable = true;
+                });
+            }
+            refreshTasksUI();
+        }
         
         // RESET DROPDOWNS HERE
  // RESET PRIORITY
