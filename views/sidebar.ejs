@@ -380,17 +380,34 @@ socket.on("member_request",function(){
 });
 async function handleLogout() {
   try {
-    // ===== STEP 1: STOP BEAMS =====
+    // ===== 1. STOP BEAMS =====
     if (typeof beamsClient !== "undefined") {
-      await beamsClient.clearAllState();  
-      await beamsClient.stop();   // 🔥 THIS IS MAIN LINE
+      await beamsClient.clearAllState();
+      await beamsClient.stop();
+    }
+
+    // ===== 2. UNSUBSCRIBE PUSH =====
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();  // 🔥 VERY IMPORTANT
+        }
+      }
+    }
+
+    // ===== 3. UNREGISTER SERVICE WORKER =====
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (let registration of registrations) {
+      await registration.unregister(); // 🔥 THIS STOPS BACKGROUND PUSH
     }
 
   } catch (err) {
-    console.error("Beams stop error:", err);
+    console.error("Logout cleanup error:", err);
   }
 
-  // ===== STEP 2: REDIRECT TO LOGOUT ROUTE =====
+  // ===== 4. REDIRECT =====
   window.location.href = "/logout";
 }
 </script>
