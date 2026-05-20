@@ -559,7 +559,15 @@ html, body {
 .task-update::-webkit-scrollbar,
 .task-other::-webkit-scrollbar,
 .completed-section::-webkit-scrollbar {
-  width: 3px;
+  width: 2px;
+}
+
+.task-main::-webkit-scrollbar-track,
+.task-change::-webkit-scrollbar-track,
+.task-update::-webkit-scrollbar-track,
+.task-other::-webkit-scrollbar-track,
+.completed-section::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .task-main::-webkit-scrollbar-thumb,
@@ -567,8 +575,8 @@ html, body {
 .task-update::-webkit-scrollbar-thumb,
 .task-other::-webkit-scrollbar-thumb,
 .completed-section::-webkit-scrollbar-thumb {
-  background: rgba(85, 85, 85, 0.4);
-  border-radius: 10px;
+  background: #777;
+  border-radius: 2px;
 }
 
 .task-main::-webkit-scrollbar-thumb:hover,
@@ -576,7 +584,7 @@ html, body {
 .task-update::-webkit-scrollbar-thumb:hover,
 .task-other::-webkit-scrollbar-thumb:hover,
 .completed-section::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 120, 0.7);
+  background: #aaa;
 }
 .task-main,
 .task-change,
