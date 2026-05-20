@@ -382,8 +382,8 @@ async function handleLogout() {
   try {
     // ===== STEP 1: STOP BEAMS =====
     if (typeof beamsClient !== "undefined") {
+      await beamsClient.clearAllState();  
       await beamsClient.stop();   // 🔥 THIS IS MAIN LINE
-      console.log("Beams stopped");
     }
 
   } catch (err) {
