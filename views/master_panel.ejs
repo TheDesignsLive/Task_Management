@@ -669,6 +669,18 @@ if (data.success) {
 
             // Clean cache
             delete companyDataCache[deletedId];
+
+            // ✅ Refresh stats after delete
+            fetch('/masterpage/api/global-stats')
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success) {
+                        document.getElementById('statCompanies').textContent = d.companies;
+                        document.getElementById('statMembers').textContent   = d.members;
+                        document.getElementById('statTasks').textContent     = d.tasks;
+                    }
+                })
+                .catch(() => {});
         } else {
             showPopup(data.message || 'Delete failed ❌', 'error');
             btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Everything';
