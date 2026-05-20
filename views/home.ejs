@@ -1149,10 +1149,13 @@ div.dataset.assignedBy = task.assigned_by ?? "";
 
 div.addEventListener('dblclick', (e) => {
     if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .repeat-badge')) return;
-    // If tasks are selected, double-click should not open edit
-    if (selectedTaskIds.size > 0) return;
-    div.draggable = false; // 🚫 DISABLE DRAG WHEN EDITING
     const editBox = div.querySelector('.edit-box');
+    if (editBox.style.display === 'flex') {
+      editBox.style.display = 'none';
+      if (task.status !== 'COMPLETED') div.draggable = true;
+      return;
+    }
+    div.draggable = false;
     editBox.style.display = 'flex';
     const descTextarea = editBox.querySelector('.edit-desc');
     const dateInput = editBox.querySelector('.edit-date');
@@ -1177,8 +1180,27 @@ menu.style.zIndex = 2000;
 const editOpt = div.querySelector('.edit-opt');
   if (editOpt) {
     editOpt.addEventListener('click', () => {
-      div.dispatchEvent(new Event('dblclick'));
       menu.style.display = 'none';
+      const editBox = div.querySelector('.edit-box');
+      if (editBox.style.display === 'flex') {
+        editBox.style.display = 'none';
+        if (task.status !== 'COMPLETED') div.draggable = true;
+        return;
+      }
+      div.draggable = false;
+      editBox.style.display = 'flex';
+      const descTextarea = editBox.querySelector('.edit-desc');
+      const dateInput = editBox.querySelector('.edit-date');
+      const autoResizeTextarea = (textarea) => {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      };
+      autoResizeTextarea(descTextarea);
+      descTextarea.addEventListener('input', () => autoResizeTextarea(descTextarea));
+      if (dateInput._flatpickr) dateInput._flatpickr.destroy();
+      let dbDate = task.due_date;
+      if (dbDate) dateInput.value = dbDate.split('T')[0];
+      flatpickr(dateInput, { dateFormat: "Y-m-d", defaultDate: dateInput.value || null });
     });
   }
 
@@ -1449,13 +1471,9 @@ function enableDateDragForAllSections() {
       if (!draggingId) return;
 
       const targetEl = e.target.closest('.task-item, .date-separator');
-
-      // ❗ empty space → do nothing
       if (!targetEl) return;
 
       let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
-
-      // ❗ no date → do nothing
       if (!rawDate) return;
 
       const parts = rawDate.split("-");
@@ -1463,13 +1481,22 @@ function enableDateDragForAllSections() {
 
       const due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
 
-      await fetch('/update-task-date', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: draggingId, due_date })
-      });
+      if (draggingId === '__multi__') {
+        const ids = [...selectedTaskIds];
+        if (!ids.length) return;
+        await fetch('/api/bulk-update-date', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids, due_date })
+        });
+      } else {
+        await fetch('/update-task-date', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: draggingId, due_date })
+        });
+      }
 
-      // optional refresh (better UI sync)
       await refreshTasksUI();
     });
 
@@ -1589,13 +1616,86 @@ container.addEventListener('drop', async (e) => {
   const draggingId = e.dataTransfer.getData('text/plain');
   if (!draggingId) return;
 
+  const targetSection = containers[containerId];
+
+  const targetEl = e.target.closest('.task-item, .date-separator');
+  let due_date = undefined;
+  if (targetEl) {
+    let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
+    if (rawDate && rawDate !== "") {
+      const parts = rawDate.split("-");
+      due_date = parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
+    }
+  }
+
+  if (draggingId === '__multi__') {
+    const ids = [...selectedTaskIds];
+    if (!ids.length) return;
+
+    function isTaskAllowed(draggedEl, containerId) {
+      const parent = draggedEl.parentElement;
+      const currentSection = parent.id;
+      const assignedBy = draggedEl.dataset.assignedBy;
+      const assignedTo = draggedEl.dataset.assignedTo;
+      const whoAssigned = draggedEl.dataset.whoAssigned;
+
+      if (currentSection === containerId) return false;
+      if (currentSection === "other-section" && targetSection === "TASK") return false;
+
+      if (role === "admin") {
+        if (currentSection === "task-section" && targetSection === "OTHERS") return false;
+        if (currentSection === "other-section" && targetSection === "TASK") return false;
+        if (currentSection === "change-section") {
+          if (whoAssigned === "admin" && !(targetSection === "TASK" || targetSection === "UPDATE")) return false;
+          if (whoAssigned === "user" && !(targetSection === "OTHERS" || targetSection === "UPDATE")) return false;
+        }
+        if (currentSection === "update-section") {
+          if (whoAssigned === "admin" && !(targetSection === "TASK" || targetSection === "CHANGES")) return false;
+          if (whoAssigned === "user" && !(targetSection === "OTHERS" || targetSection === "CHANGES")) return false;
+        }
+      } else {
+        if (currentSection === "change-section" || currentSection === "update-section") {
+          if (targetSection === "TASK" && assignedBy !== assignedTo) return false;
+          if (targetSection === "OTHERS" && assignedBy === assignedTo) return false;
+        }
+        if (currentSection === "task-section" && targetSection === "OTHERS") {
+          if (assignedBy === assignedTo) return false;
+        }
+      }
+      return true;
+    }
+
+    const allowedIds = ids.filter(id => {
+      const el = document.querySelector(`.task-item[data-id='${id}']`);
+      return el && isTaskAllowed(el, containerId);
+    });
+
+    if (!allowedIds.length) return;
+
+    await fetch('/api/bulk-update-section', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: allowedIds, section: targetSection })
+    });
+
+    if (due_date !== undefined && due_date !== null) {
+      await fetch('/api/bulk-update-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: allowedIds, due_date })
+      });
+    }
+
+    clearSelection();
+    await refreshTasksUI();
+    return;
+  }
+
   const draggedEl = document.querySelector(`.task-item[data-id='${draggingId}']`);
   if (!draggedEl) return;
 
   let parent = draggedEl.parentElement;
   let currentSection = parent.id;
-
-  const targetSection = containers[containerId];
   const assignedBy = draggedEl.dataset.assignedBy;
   const assignedTo = draggedEl.dataset.assignedTo;
   const whoAssigned = draggedEl.dataset.whoAssigned;
@@ -1638,16 +1738,6 @@ container.addEventListener('drop', async (e) => {
     if (currentSection === "task-section" && targetSection === "OTHERS") {
       if (assignedBy === assignedTo) return;
     }
-  }
-
-  const targetEl = e.target.closest('.task-item, .date-separator');
-  let due_date = undefined;
-  if (targetEl) {
-    let rawDate = targetEl.dataset.date ? targetEl.dataset.date.trim() : null;
-    if (rawDate && rawDate !== "") {
-      const parts = rawDate.split("-");
-      due_date = parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
-    } 
   }
 
   await fetch('/update-task-section', {
@@ -1718,13 +1808,21 @@ container.addEventListener('drop', async (e) => {
 
 document.addEventListener('dragstart', (e) => {
   if(e.target.classList.contains('task-item')) {
-    e.dataTransfer.setData('text/plain', e.target.dataset.id);
-    e.target.classList.add('dragging');
+    const draggedId = e.target.dataset.id;
+    if (selectedTaskIds.size > 1 && selectedTaskIds.has(draggedId)) {
+      e.dataTransfer.setData('text/plain', '__multi__');
+      document.querySelectorAll('.task-item').forEach(el => {
+        if (selectedTaskIds.has(el.dataset.id)) el.classList.add('dragging');
+      });
+    } else {
+      e.dataTransfer.setData('text/plain', draggedId);
+      e.target.classList.add('dragging');
+    }
   }
 });
 document.addEventListener('dragend', (e) => {
   if(e.target.classList.contains('task-item')) {
-    e.target.classList.remove('dragging');
+    document.querySelectorAll('.task-item.dragging').forEach(el => el.classList.remove('dragging'));
   }
 });
 
