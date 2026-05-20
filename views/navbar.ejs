@@ -536,6 +536,30 @@ select::-ms-expand { display: none; }
   background: #e9f2ef;
   font-weight: 700;
 }
+
+.export-btn{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  margin-left:5px;
+}
+
+.export-btn i{
+  font-size:14px;
+  color:#0f9d9a;
+}
+
+.export-btn:hover{
+  background:#e6f7f5;
+  transform:scale(1.05);
+}
 </style>
 
 <div class="navbar">
@@ -613,7 +637,9 @@ select::-ms-expand { display: none; }
   </div>
 </div>
   </div>
-
+<button class="export-btn" title="Export Tasks">
+  <i class="fa-solid fa-file-export"></i>
+</button>
   <div class="user-display" id="navWelcomeText">
     Welcome <%= (typeof session !== "undefined" && (session.userName || session.adminName)) ? (session.userName || session.adminName) : "Guest" %>
   </div>
