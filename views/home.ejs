@@ -419,8 +419,8 @@ html, body {
     display: flex;
 }
 .board-container {
-  width: max-content;   /* 🔥 Keeps columns proper width when zoomed in */
-  min-width: 100%;      /* ✅ FIX: Forces container to fill the screen when zoomed out */
+  width: 100%;
+  min-width: max-content;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -531,10 +531,10 @@ html, body {
 
 /* ===== CUSTOM SCROLLBAR ===== */
 
-/* scrollbar size */
+/* scrollbar size - thin for vertical column scrollbars */
 ::-webkit-scrollbar{
   width:2px;
-  height:6px;
+  height:0px;
 }
 
 /* scrollbar track */
@@ -544,13 +544,74 @@ html, body {
 
 /* scrollbar thumb */
 ::-webkit-scrollbar-thumb{
-  background:#777;
+  background:#555;
   border-radius:10px;
 }
 
 /* hover effect */
 ::-webkit-scrollbar-thumb:hover{
-  background:#aaa;
+  background:#777;
+}
+
+/* override for task/column vertical scrollbars — keep ultra thin */
+.task-main::-webkit-scrollbar,
+.task-change::-webkit-scrollbar,
+.task-update::-webkit-scrollbar,
+.task-other::-webkit-scrollbar,
+.completed-section::-webkit-scrollbar {
+  width: 3px;
+}
+
+.task-main::-webkit-scrollbar-thumb,
+.task-change::-webkit-scrollbar-thumb,
+.task-update::-webkit-scrollbar-thumb,
+.task-other::-webkit-scrollbar-thumb,
+.completed-section::-webkit-scrollbar-thumb {
+  background: rgba(85, 85, 85, 0.4);
+  border-radius: 10px;
+}
+
+.task-main::-webkit-scrollbar-thumb:hover,
+.task-change::-webkit-scrollbar-thumb:hover,
+.task-update::-webkit-scrollbar-thumb:hover,
+.task-other::-webkit-scrollbar-thumb:hover,
+.completed-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 120, 0.7);
+}
+.task-main,
+.task-change,
+.task-update,
+.task-other,
+.completed-section {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.task-main:hover,
+.task-change:hover,
+.task-update:hover,
+.task-other:hover,
+.completed-section:hover {
+  scrollbar-color: #555 transparent;
+}
+
+/* show thin horizontal scrollbar on board only */
+.board-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.board-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.board-scroll::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+}
+.board-scroll::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+.board-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
 }
 
 
@@ -1853,9 +1914,10 @@ container.addEventListener('drop', async (e) => {
 let _wasDragging = false;
 
 document.addEventListener('dragstart', (e) => {
-  if(e.target.classList.contains('task-item')) {
+  const taskEl = e.target.closest('.task-item');
+  if(taskEl) {
     _wasDragging = false;
-    const draggedId = e.target.dataset.id;
+    const draggedId = taskEl.dataset.id;
     if (selectedTaskIds.size > 1 && selectedTaskIds.has(draggedId)) {
       _wasDragging = true;
       e.dataTransfer.setData('text/plain', '__multi__');
@@ -1864,7 +1926,7 @@ document.addEventListener('dragstart', (e) => {
       });
     } else {
       e.dataTransfer.setData('text/plain', draggedId);
-      e.target.classList.add('dragging');
+      taskEl.classList.add('dragging');
     }
   }
 });
@@ -2612,23 +2674,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ✅ ONLY APPLY HORIZONTAL SCROLL ON BOARD (NOT INSIDE TASK COLUMNS)
 const board = document.querySelector('.board-scroll');
-
-board.addEventListener('wheel', function(e) {
-
-  const isInsideColumn = e.target.closest(
-    '.task-main, .task-change, .task-update, .task-other, .completed-section'
-  );
-
-  // ✅ If mouse is inside any column → allow normal vertical scroll
-  if (isInsideColumn) return;
-
-  // ✅ Otherwise → do horizontal scroll
-  e.preventDefault();
-  board.scrollLeft += e.deltaY;
-
-}, { passive: false });
 </script>
 <!-- Multi-select bar -->
 <div id="multi-select-bar" style="display:none;">
