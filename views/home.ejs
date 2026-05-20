@@ -2382,11 +2382,13 @@ function handleCtxAction(action) {
         });
         const data = await res.json();
 
-        if (data.success) {
-          clearSelection();
-          await refreshTasksUI();
-          showToast('Dates updated');
-        }
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0F8989;color:white;padding:8px 20px;border-radius:100px;font-size:12px;font-weight:700;z-index:99999;pointer-events:none;opacity:1;transition:opacity 0.4s;';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2000);
+}
       },
       onClose: function() {
         // If user dismissed without picking, clean up

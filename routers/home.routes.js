@@ -403,10 +403,22 @@ router.post('/delete-task/:id', async (req, res) => {
 });
 router.post('/delete-completed-tasks', async (req, res) => {
     try {
+        const role    = req.session.role;
         const adminId = req.session.adminId;
-        await con.query("DELETE FROM tasks WHERE admin_id=? AND status='COMPLETED'", [adminId]);
+        const userId  = req.session.userId;
+
+        let query, params;
+        if (role === 'admin') {
+            query  = "DELETE FROM tasks WHERE admin_id=? AND assigned_to=0 AND status='COMPLETED'";
+            params = [adminId];
+        } else {
+            query  = "DELETE FROM tasks WHERE admin_id=? AND assigned_to=? AND status='COMPLETED'";
+            params = [adminId, userId];
+        }
+
+        await con.query(query, params);
         req.io.emit('update_tasks');
-        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
+        notifyMobile();
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
