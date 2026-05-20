@@ -1850,10 +1850,14 @@ container.addEventListener('drop', async (e) => {
     });
 }
 
+let _wasDragging = false;
+
 document.addEventListener('dragstart', (e) => {
   if(e.target.classList.contains('task-item')) {
+    _wasDragging = false;
     const draggedId = e.target.dataset.id;
     if (selectedTaskIds.size > 1 && selectedTaskIds.has(draggedId)) {
+      _wasDragging = true;
       e.dataTransfer.setData('text/plain', '__multi__');
       document.querySelectorAll('.task-item').forEach(el => {
         if (selectedTaskIds.has(el.dataset.id)) el.classList.add('dragging');
@@ -1867,6 +1871,8 @@ document.addEventListener('dragstart', (e) => {
 document.addEventListener('dragend', (e) => {
   if(e.target.classList.contains('task-item')) {
     document.querySelectorAll('.task-item.dragging').forEach(el => el.classList.remove('dragging'));
+    // ✅ Reset flag after short delay so click handler can check it
+    setTimeout(() => { _wasDragging = false; }, 100);
   }
 });
 
@@ -2054,10 +2060,12 @@ function attachMultiSelectToTask(div, taskId) {
       return;
     }
 
-    // Plain left-click
+// Plain left-click
     if (selectedTaskIds.size > 0) {
       e.stopPropagation();
       if (selectedTaskIds.has(String(taskId))) {
+        // ✅ If this task is selected and a drag just happened, don't deselect
+        if (_wasDragging) return;
         selectedTaskIds.delete(String(taskId));
         updateSelectionUI();
       } else {
