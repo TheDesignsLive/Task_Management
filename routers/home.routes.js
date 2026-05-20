@@ -234,69 +234,69 @@ router.post('/update-task-status', async (req, res) => {
         const completedAt = status === 'COMPLETED' ? new Date() : null;
         await con.query("UPDATE tasks SET status=?, completed_at=? WHERE id=?", [status, completedAt, id]);
 
-        // ── Repeat logic: spawn next task when completing a repeating task ──
-        if (status === 'COMPLETED') {
-            const [rows] = await con.query("SELECT * FROM tasks WHERE id=?", [id]);
-            if (rows.length > 0) {
-                const task = rows[0];
-                const repeatType = task.repeat_type;
+        // // ── Repeat logic: spawn next task when completing a repeating task ──
+        // if (status === 'COMPLETED') {
+        //     const [rows] = await con.query("SELECT * FROM tasks WHERE id=?", [id]);
+        //     if (rows.length > 0) {
+        //         const task = rows[0];
+        //         const repeatType = task.repeat_type;
 
             
-                // NEW — replace with exact mobile logic:
-                if (repeatType && repeatType !== 'none') {
-                    // Calculate next due date — same logic as mobile
-                    let baseDate = task.due_date
-                        ? new Date(task.due_date)
-                        : new Date();
+        //         // NEW — replace with exact mobile logic:
+        //         if (repeatType && repeatType !== 'none') {
+        //             // Calculate next due date — same logic as mobile
+        //             let baseDate = task.due_date
+        //                 ? new Date(task.due_date)
+        //                 : new Date();
 
-                    // If base date is in the past, start from today
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (baseDate < today) baseDate = today;
+        //             // If base date is in the past, start from today
+        //             const today = new Date();
+        //             today.setHours(0, 0, 0, 0);
+        //             if (baseDate < today) baseDate = today;
 
-                    let nextDate = new Date(baseDate);
+        //             let nextDate = new Date(baseDate);
 
-                    if (repeatType === 'daily') {
-                        nextDate.setDate(nextDate.getDate() + 1);
-                    } else if (repeatType === 'weekly') {
-                        nextDate.setDate(nextDate.getDate() + 7);
-                    } else if (repeatType === 'monthly') {
-                        nextDate.setMonth(nextDate.getMonth() + 1);
-                    }
+        //             if (repeatType === 'daily') {
+        //                 nextDate.setDate(nextDate.getDate() + 1);
+        //             } else if (repeatType === 'weekly') {
+        //                 nextDate.setDate(nextDate.getDate() + 7);
+        //             } else if (repeatType === 'monthly') {
+        //                 nextDate.setMonth(nextDate.getMonth() + 1);
+        //             }
 
-                    const nextDateStr = nextDate.toISOString().split('T')[0];
+        //             const nextDateStr = nextDate.toISOString().split('T')[0];
 
-                    // Insert next task — no duplicate check, same as mobile
-                    await con.query(
-                        `INSERT INTO tasks 
-                        (admin_id, title, description, priority, due_date, status, section,
-                        assigned_by, assigned_to, who_assigned, repeat_type)
-                        VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?)`,
-                        [
-                            task.admin_id,
-                            task.title,
-                            task.description,
-                            task.priority,
-                            nextDateStr,
-                           'TASK',
-                            task.assigned_by,
-                            task.assigned_to,
-                            task.who_assigned,
-                            repeatType,
-                        ]
-                    );
+        //             // Insert next task — no duplicate check, same as mobile
+        //             await con.query(
+        //                 `INSERT INTO tasks 
+        //                 (admin_id, title, description, priority, due_date, status, section,
+        //                 assigned_by, assigned_to, who_assigned, repeat_type)
+        //                 VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?)`,
+        //                 [
+        //                     task.admin_id,
+        //                     task.title,
+        //                     task.description,
+        //                     task.priority,
+        //                     nextDateStr,
+        //                    'TASK',
+        //                     task.assigned_by,
+        //                     task.assigned_to,
+        //                     task.who_assigned,
+        //                     repeatType,
+        //                 ]
+        //             );
 
-                    // Update template last_spawned (non-critical)
-                    await con.query(
-                        "UPDATE task_templates SET last_spawned=? WHERE id=?",
-                        [nextDateStr, id]
-                    ).catch(() => {});
+        //             // Update template last_spawned (non-critical)
+        //             await con.query(
+        //                 "UPDATE task_templates SET last_spawned=? WHERE id=?",
+        //                 [nextDateStr, id]
+        //             ).catch(() => {});
 
-                    // ✅ DO NOT clear repeat_type — mobile doesn't clear it either
-                }
-            }
-        }
-        // ── End repeat logic ──
+        //             // ✅ DO NOT clear repeat_type — mobile doesn't clear it either
+        //         }
+        //     }
+        // }
+        // // ── End repeat logic ──
 
         req.io.emit('update_tasks');
         notifyMobile();

@@ -987,6 +987,11 @@ function showSkeletons() {
 
 async function refreshTasksUI() {
   if (_refreshPending) return;
+
+  // ✅ If any edit box is open, skip this refresh to avoid destroying user's work
+  const anyEditOpen = document.querySelector('.edit-box[style*="flex"]');
+  if (anyEditOpen) return;
+
   _refreshPending = true;
   try {
     const res = await fetch('/api/get-all-tasks');
@@ -1308,14 +1313,31 @@ div.querySelector('.save-btn').addEventListener('click', async (e) => {
     let due_date = div.querySelector('.edit-date').value.trim();
     if (due_date === "") due_date = null;
 
-    await fetch('/edit-task-details', {
+    // ✅ Close edit box immediately — don't wait for server
+    div.querySelector('.edit-box').style.display = 'none';
+    if (task.status !== 'COMPLETED') div.draggable = true;
+
+    // ✅ Update local state instantly so UI reflects change without waiting
+    const localTask = currentTasks.find(t => t.id == task.id);
+    if (localTask) {
+      localTask.title = title;
+      localTask.description = description;
+      localTask.priority = priority;
+      localTask.due_date = due_date;
+    }
+    renderAllSections(currentTasks);
+
+    // ✅ Fire-and-forget — socket will sync other users
+    _selfUpdating = true;
+    fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date, assigned_to })
+    }).then(() => {
+      setTimeout(() => { _selfUpdating = false; }, 2000);
+    }).catch(() => {
+      _selfUpdating = false;
     });
-    div.querySelector('.edit-box').style.display = 'none';
-    if (task.status !== 'COMPLETED') div.draggable = true;
-    await refreshTasksUI();
   });
 
 const infoIcon = div.querySelector('.info-icon');
@@ -1330,14 +1352,16 @@ if(infoIcon){
 div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const taskIdStr = String(task.id);
     if (_checkboxInFlight.has(taskIdStr)) {
-      e.target.checked = !e.target.checked; // revert accidental double-click
+      e.target.checked = !e.target.checked;
       return;
     }
     _checkboxInFlight.add(taskIdStr);
 
-    const status = e.target.checked ? 'COMPLETED' : 'OPEN';
-    const section = e.target.checked ? 'COMPLETED' : 'TASK';
+    const isChecked = e.target.checked;
+    const status = isChecked ? 'COMPLETED' : 'OPEN';
+    const section = isChecked ? 'COMPLETED' : 'TASK';
 
+    // ✅ INSTANT visual feedback — move card immediately, no wait
     const localTask = currentTasks.find(t => t.id == task.id);
     if (localTask) {
       localTask.status = status;
@@ -1346,7 +1370,27 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     }
     renderAllSections(currentTasks);
 
-    await updateTaskStatus(task.id, status, section);
+    // ✅ Fire-and-forget — do NOT await, do NOT refreshTasksUI after
+    // Socket will trigger refresh for OTHER users; this user already sees the update
+    _selfUpdating = true;
+    fetch('/update-task-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: task.id, status, section })
+    }).then(() => {
+      _checkboxInFlight.delete(taskIdStr);
+      setTimeout(() => { _selfUpdating = false; }, 2000);
+    }).catch(() => {
+      // On error: revert local state and re-render
+      _checkboxInFlight.delete(taskIdStr);
+      _selfUpdating = false;
+      if (localTask) {
+        localTask.status = isChecked ? 'OPEN' : 'COMPLETED';
+        localTask.section = isChecked ? 'TASK' : 'COMPLETED';
+        localTask.completed_at = null;
+      }
+      renderAllSections(currentTasks);
+    });
   });
 
   // ── Multi-select attach ──
@@ -1855,11 +1899,21 @@ document.addEventListener("click", function(e) {
   }
 });
 
-document.getElementById("confirmSingleDelete").addEventListener("click", async () => {
+document.getElementById("confirmSingleDelete").addEventListener("click", () => {
   if (taskToDeleteId) {
-    document.getElementById("singleDeleteModal").style.display = "none"; // Close immediately
-    await fetch(`/delete-task/${taskToDeleteId}`, { method: "POST" });
+    document.getElementById("singleDeleteModal").style.display = "none";
+
+    // ✅ Remove from local state instantly
+    const idToDelete = taskToDeleteId;
     taskToDeleteId = null;
+    currentTasks = currentTasks.filter(t => String(t.id) !== String(idToDelete));
+    renderAllSections(currentTasks);
+
+    // ✅ Fire-and-forget
+    _selfUpdating = true;
+    fetch(`/delete-task/${idToDelete}`, { method: 'POST' })
+      .then(() => { setTimeout(() => { _selfUpdating = false; }, 2000); })
+      .catch(() => { _selfUpdating = false; refreshTasksUI(); });
   }
 });
 
