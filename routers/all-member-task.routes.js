@@ -161,7 +161,8 @@ let taskQuery = `
                 LEFT JOIN users u2 ON t.assigned_by = u2.id
                 LEFT JOIN roles r2 ON u2.role_id = r2.id
                 LEFT JOIN admins a ON t.admin_id = a.id
-                WHERE t.admin_id = ?
+                        WHERE t.admin_id = ?
+        AND (t.assigned_to = 0 OR u1.id IS NOT NULL)
             `;
 
             let params = [adminId];
