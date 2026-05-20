@@ -146,14 +146,13 @@ let taskQuery = `
                     WHEN t.status = 'COMPLETED' THEN 'COMPLETED'
                     ELSE t.section
                 END AS section,
-                CASE 
-                    WHEN t.assigned_to = 0 THEN CONCAT(COALESCE(a.name, 'Admin'), ' (Admin)')
-                    WHEN r1.control_type = 'OWNER' THEN CONCAT(u1.name, ' (Admin)')
-                    ELSE COALESCE(u1.name, 'Unknown')
+           CASE 
+                    WHEN t.assigned_to = 0 THEN COALESCE(a.name, 'Admin')
+                    ELSE COALESCE(u1.name, 'Deleted User')
                 END AS assigned_to_name,
                 CASE 
-                    WHEN t.who_assigned = 'admin' THEN CONCAT(COALESCE(a.name, 'Admin'), ' (Admin)')
-                    WHEN t.who_assigned = 'owner' OR r2.control_type = 'OWNER' THEN CONCAT(u2.name, ' (Admin)')
+                    WHEN t.who_assigned = 'admin' THEN COALESCE(a.name, 'Admin')
+                    WHEN t.who_assigned = 'owner' OR r2.control_type = 'OWNER' THEN COALESCE(u2.name, 'Unknown')
                     ELSE COALESCE(u2.name, 'Unknown')
                 END AS assigned_by_name
                 FROM tasks t
