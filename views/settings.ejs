@@ -276,12 +276,10 @@ button:hover{background:#0b7373;}
     <div id="export-step2" style="display:none;">
       <p style="font-size:13px;color:#555;text-align:center;">Filter by date or export all?</p>
       <button type="button" class="export-pick-btn" onclick="loadExportPreview('')">📋 All Tasks</button>
-      <label class="export-pick-btn" style="cursor:pointer;position:relative;">
+      <button type="button" id="exportDateBtn" class="export-pick-btn">
         📅 <span id="exportDateLabel">Pick a Date</span>
-        <input type="date" id="exportDateInput"
-          style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;"
-          onchange="loadExportPreview(this.value)">
-      </label>
+      </button>
+      <input type="text" id="exportDateInput" style="display:none;">
       <button type="button" onclick="exportStep(1)"
         style="background:#f5f5f5;color:#555;border:none;padding:8px;border-radius:6px;cursor:pointer;width:100%;margin-top:4px;">
         ← Back
@@ -725,6 +723,38 @@ _updateNotifBadge();
 // ===== EXPORT TASKS =====
 let exportState = { section: '', date: '', tasks: [] };
 
+// ✅ INITIALIZE FLATPICKR FOR EXPORT PROMPT
+document.addEventListener('DOMContentLoaded', () => {
+  const dateBtn = document.getElementById('exportDateBtn');
+  const dateInput = document.getElementById('exportDateInput');
+  
+  if (dateInput) {
+    window._fpExport = flatpickr(dateInput, {
+      dateFormat: 'Y-m-d',
+      appendTo: document.body,
+      disableMobile: true,
+      onOpen: function(selectedDates, dateStr, instance) {
+        const rect = dateBtn.getBoundingClientRect();
+        const cal = instance.calendarContainer;
+        cal.style.position = 'fixed';
+        cal.style.top = (rect.bottom + 6) + 'px';
+        cal.style.left = Math.min(rect.left, window.innerWidth - 290) + 'px';
+        cal.style.zIndex = '10000';
+        cal.style.transform = 'none';
+      },
+      onChange: function(selectedDates, dateStr) {
+        if (!dateStr) return;
+        loadExportPreview(dateStr);
+      }
+    });
+
+    dateBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window._fpExport.open();
+    });
+  }
+});
+
 const EXPORT_SECTIONS = [
   { key: 'TASK',      label: 'Task' },
   { key: 'CHANGES',   label: '<%= label_changes %>' },
@@ -757,6 +787,7 @@ function exportStep(n) {
     document.getElementById('exportDateInput').value = '';
     document.getElementById('exportDateLabel').innerText = 'Pick a Date';
     exportState.date = '';
+    if (window._fpExport) window._fpExport.clear(); // Reset custom calendar value cleanly
   }
 }
 
