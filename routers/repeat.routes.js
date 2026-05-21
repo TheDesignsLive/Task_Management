@@ -55,9 +55,33 @@ router.post('/set-repeat', async (req, res) => {
             ]
         );
 
-        req.io.emit('update_tasks');
-        notifyMobile();
-        return res.json({ success: true });
+        // ✅ CREATE CLONE TASK (IMPORTANT FIX)
+if (repeat_type !== 'none') {
+    let nextDate = new Date(task.due_date || new Date());
+
+    if (repeat_type === 'daily') nextDate.setDate(nextDate.getDate() + 1);
+    if (repeat_type === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
+    if (repeat_type === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+
+    const nextDateStr = nextDate.toISOString().split('T')[0];
+
+    await con.query(
+        `INSERT INTO tasks 
+        (title, description, priority, due_date, status, section, assigned_by, assigned_to, who_assigned, admin_id)
+        VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?)`,
+        [
+            task.title,
+            task.description,
+            task.priority,
+            nextDateStr,
+            task.section,
+            task.assigned_by,
+            task.assigned_to,
+            task.who_assigned,
+            task.admin_id
+        ]
+    );
+}
     } catch (err) {
         console.error('set-repeat error:', err);
         return res.status(500).json({ success: false });
