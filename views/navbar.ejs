@@ -1142,42 +1142,47 @@ let _alarmTickInterval = null;
 // Web Audio API se beep sound — koi file download nahi chahiye
 function playAlarmSound() {
   try {
+    // Standard contextual layer check initialization
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Polyphonic tone generator wrapper handling layered nodes safely
+    function playTone(freq, start, duration, type = 'sine', volume = 0.4) {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-    function beep(freq, start, dur, type = 'square') {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
-      o.connect(g);
-      g.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
 
-      o.type = type; // 🔥 better than sine
-      o.frequency.value = freq;
+      const startTime = ctx.currentTime + start;
+      
+      // ✅ Smooth Exponential Decay Envelope for crystal clear digital bells
+      gainNode.gain.setValueAtTime(0.001, startTime);
+      gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.03);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
-      // volume envelope (smooth but strong)
-      g.gain.setValueAtTime(0.001, ctx.currentTime + start);
-      g.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + start + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-
-      o.start(ctx.currentTime + start);
-      o.stop(ctx.currentTime + start + dur + 0.05);
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.05);
     }
 
-    // 🔔 PATTERN (alarm style - rising urgency)
-    beep(700, 0,    0.15);
-    beep(900, 0.2,  0.15);
-    beep(1100,0.4,  0.2);
+    // 🔔 PREMIUM DIGITAL CHIME TUNING MAP (Acoustically engineered pattern)
+    // Part 1: High-fidelity entry notes chime link
+    playTone(523.25, 0.0, 0.4, 'sine', 0.45);     // C5 note
+    playTone(659.25, 0.08, 0.4, 'triangle', 0.35); // E5 note overlay
+    playTone(783.99, 0.16, 0.5, 'sine', 0.4);      // G5 note chime anchor
+    playTone(1046.50, 0.24, 0.8, 'sine', 0.3);     // C6 crystalline peak finish
 
-    beep(700, 0.8,  0.15);
-    beep(900, 1.0,  0.15);
-    beep(1200,1.2,  0.25);
-
-    beep(800, 1.7,  0.2);
-    beep(1000,1.95, 0.2);
-    beep(1300,2.2,  0.35);
+    // Part 2: Soft harmonic back-echo tracking (Delayed response sequence)
+    setTimeout(() => {
+      if (ctx.state === 'closed') return;
+      playTone(783.99, 0.0, 0.3, 'sine', 0.25);   // G5 soft echo
+      playTone(1046.50, 0.08, 0.6, 'sine', 0.2);  // C6 decay tail wrapper
+    }, 450);
 
   } catch(e) {
-    console.warn('[Alarm] Audio error:', e);
+    console.warn('[Alarm Core] Synthesis context fail:', e.message);
   }
 }
 function showAlarmPanel() {
