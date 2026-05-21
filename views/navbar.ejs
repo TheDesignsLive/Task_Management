@@ -1234,6 +1234,9 @@ function startAlarm() {
 
   _alarmEndTime = Date.now() + totalSeconds * 1000;
 
+  // ✅ localStorage mein save karo — page switch ke baad bhi chalega
+  localStorage.setItem('tms_alarm_end', _alarmEndTime);
+
   // Show countdown
   document.getElementById('alarmCountdown').style.display = 'block';
   document.getElementById('alarmCancelBtn').style.display = 'block';
@@ -1259,6 +1262,7 @@ function startAlarm() {
 
 function triggerAlarm() {
   playAlarmSound();
+  localStorage.removeItem('tms_alarm_end');
   document.getElementById('alarmDot').style.display = 'none';
   document.getElementById('alarmCountdown').style.display = 'none';
   document.getElementById('alarmStartBtn').textContent = 'Start';
@@ -1282,6 +1286,7 @@ function triggerAlarm() {
 function cancelAlarm(silent) {
   if (_alarmTickInterval) { clearInterval(_alarmTickInterval); _alarmTickInterval = null; }
   _alarmEndTime = null;
+  localStorage.removeItem('tms_alarm_end');
   document.getElementById('alarmDot').style.display = 'none';
   document.getElementById('alarmCountdown').style.display = 'none';
   document.getElementById('alarmCountdown').style.color = '#facc15';
@@ -1294,6 +1299,43 @@ function cancelAlarm(silent) {
     document.getElementById('alarmSS').value = '';
   }
 }
+
+// ✅ Page load par localStorage se alarm restore karo
+(function restoreAlarm() {
+  const saved = localStorage.getItem('tms_alarm_end');
+  if (!saved) return;
+
+  const endTime = parseInt(saved);
+  const remaining = Math.round((endTime - Date.now()) / 1000);
+
+  if (remaining <= 0) {
+    // Time already over — trigger karo
+    localStorage.removeItem('tms_alarm_end');
+    setTimeout(triggerAlarm, 500); // DOM ready hone ke baad
+    return;
+  }
+
+  // Alarm resume karo
+  _alarmEndTime = endTime;
+  document.getElementById('alarmDot').style.display = 'block';
+  document.getElementById('alarmCountdown').style.display = 'block';
+  document.getElementById('alarmCancelBtn').style.display = 'block';
+  document.getElementById('alarmStartBtn').textContent = 'Running…';
+  document.getElementById('alarmStartBtn').disabled = true;
+
+  _alarmTickInterval = setInterval(() => {
+    const rem = Math.max(0, Math.round((_alarmEndTime - Date.now()) / 1000));
+    const rh = Math.floor(rem / 3600);
+    const rm = Math.floor((rem % 3600) / 60);
+    const rs = rem % 60;
+    document.getElementById('alarmCountdown').textContent =
+      String(rh).padStart(2,'0') + ':' + String(rm).padStart(2,'0') + ':' + String(rs).padStart(2,'0');
+    if (rem <= 0) {
+      clearInterval(_alarmTickInterval);
+      triggerAlarm();
+    }
+  }, 500);
+})();
 </script>
 
 <!-- Notification permission banner -->
