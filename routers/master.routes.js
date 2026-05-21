@@ -274,27 +274,83 @@ await beamsClient.publishToInterests(interests, {
 });
 
 // ==============================
-// UPDATE TASK STATUS
+// UPDATE TASK STATUS & CLONE REPEATABLE TEMPLATE
 // ==============================
 router.post('/update-task-status', async (req, res) => {
-  if (!req.session.role) return res.redirect('/');
+  if (!req.session.role) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
   try {
     let { id, status, section } = req.body;
-    if (!status || status === null) status = 'OPEN';
-    if (!section || section === null) section = 'TASK';
+    if (!status) status = 'OPEN';
+    if (!section) section = 'TASK';
 
-const completedAt = status === 'COMPLETED' ? new Date() : null;
+    const completedAt = status === 'COMPLETED' ? new Date() : null;
+
+    // 1. Update the status of the current task
     await db.execute(
       `UPDATE tasks SET status = ?, section = ?, completed_at = ? WHERE id = ?`,
       [status, section, completedAt, id]
     );
 
+    // 2. ✅ IF TASK IS COMPLETED -> Check if it has a repetition template to spawn a clone
+    if (status === 'COMPLETED') {
+      const [templates] = await con.execute('SELECT * FROM task_templates WHERE id = ?', [id]);
+      
+      if (templates.length > 0) {
+        const template = templates[0];
+        const now = new Date();
+        let nextDueDate = new Date();
+
+        // Calculate next date based on frequency type
+        if (template.repeat_type === 'daily') {
+          nextDueDate.setDate(now.getDate() + 1);
+        } else if (template.repeat_type === 'weekly') {
+          nextDueDate.setDate(now.getDate() + 7);
+        } else if (template.repeat_type === 'monthly') {
+          nextDueDate.setMonth(now.getMonth() + 1);
+        }
+
+        const finalNextDate = nextDueDate.toISOString().slice(0, 10) + " 00:00:00";
+
+        // Determine correct landing section for the clone card
+        let targetSection = 'TASK';
+        if (template.who_assigned === 'admin' && parseInt(template.assigned_to) !== 0) targetSection = 'OTHERS';
+        if (template.who_assigned !== 'admin' && parseInt(template.assigned_to) !== parseInt(template.assigned_by)) targetSection = 'OTHERS';
+
+        // Insert the newly generated clone card into tasks table
+        const [newIndex] = await con.execute(
+          `INSERT INTO tasks (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, repeat_type, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN')`,
+          [
+            template.admin_id,
+            template.title,
+            template.description,
+            template.priority,
+            finalNextDate,
+            template.assigned_to,
+            template.assigned_by,
+            template.who_assigned,
+            targetSection,
+            template.repeat_type
+          ]
+        );
+
+        // Update template references: update last_spawned and re-link id to the fresh task id
+        await con.execute(
+          'UPDATE task_templates SET id = ?, last_spawned = NOW() WHERE id = ?',
+          [newIndex.insertId, id]
+        );
+
+        // Backward update the parent task's repeat_type to 'none' since its slot is forwarded
+        await con.execute('UPDATE tasks SET repeat_type = "none" WHERE id = ?', [id]);
+      }
+    }
+
     req.io.emit('update_tasks');
     notifyMobile();
     res.json({ success: true, status, section });
   } catch (err) {
-    console.error(err);
+    console.error('Error in update-task-status with repetition loop:', err);
     res.status(500).json({ success: false, error: 'Database error' });
   }
 });
