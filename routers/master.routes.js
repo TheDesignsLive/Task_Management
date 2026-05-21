@@ -316,23 +316,22 @@ router.post('/update-task-status', async (req, res) => {
           const nextDateStr = nextDate.toISOString().split('T')[0];
 
           await con.query(
-            `INSERT INTO tasks 
-             (admin_id, title, description, priority, due_date, status, section,
-              assigned_by, assigned_to, who_assigned, repeat_type)
-             VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?)`,
-            [
-              task.admin_id,
-              task.title,
-              task.description,
-              task.priority,
-              nextDateStr,
-              'TASK',
-              task.assigned_by,
-              task.assigned_to,
-              task.who_assigned,
-              repeatType,
-            ]
-          );
+  `INSERT INTO tasks 
+   (admin_id, title, description, priority, due_date, status, section,
+    assigned_by, assigned_to, who_assigned, repeat_type)
+   VALUES (?, ?, ?, ?, ?, 'OPEN', 'TASK', ?, ?, ?, ?)`,
+  [
+    task.admin_id,
+    task.title,
+    task.description,
+    task.priority,
+    nextDateStr,
+    task.assigned_by,
+    task.assigned_to,
+    task.who_assigned,
+    repeatType,
+  ]
+);
 
           await con.query(
             'UPDATE task_templates SET last_spawned=? WHERE id=?',
