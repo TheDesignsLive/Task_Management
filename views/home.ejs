@@ -2868,10 +2868,11 @@ const board = document.querySelector('.board-scroll');
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
     socket.on('update_tasks', () => {
-      if (_selfUpdating) return;
+      // ✅ FIX: _selfUpdating filter hata diya taaki state clone bante hi UI auto-refresh ho jaye
       refreshTasksUI();
     });
 </script>
