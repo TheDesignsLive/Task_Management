@@ -537,6 +537,22 @@ select::-ms-expand { display: none; }
   font-weight: 700;
 }
 
+.alarm-preset {
+  padding: 5px 10px;
+  background: rgba(15,157,154,0.15);
+  border: 1px solid rgba(15,157,154,0.4);
+  border-radius: 20px;
+  color: #0f9d9a;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: Arial, sans-serif;
+}
+.alarm-preset:hover {
+  background: rgba(15,157,154,0.35);
+}
+
 </style>
 
 <div class="navbar">
@@ -613,6 +629,104 @@ select::-ms-expand { display: none; }
 
   </div>
 </div>
+  </div>
+
+  <!-- ── ALARM BUTTON ── -->
+  <button type="button" id="alarmBtn" title="Set Alarm" style="
+    width:34px; height:34px; min-width:34px;
+    border:1px solid rgba(255,255,255,0.4);
+    border-radius:50%; background:rgba(255,255,255,0.15);
+    display:inline-flex; align-items:center; justify-content:center;
+    cursor:pointer; color:#fff; flex-shrink:0; position:relative;
+    transition:all 0.2s;
+  ">
+    <i class="fa-regular fa-clock" style="font-size:14px;"></i>
+    <span id="alarmDot" style="
+      display:none; position:absolute; top:2px; right:2px;
+      width:7px; height:7px; border-radius:50%;
+      background:#facc15; border:1px solid #fff;
+    "></span>
+  </button>
+
+  <!-- ── ALARM PANEL ── -->
+  <div id="alarmPanel" style="
+    display:none; position:fixed;
+    top:60px; right:80px;
+    background:#1a3a3a; border:1px solid #0f9d9a;
+    border-radius:16px; padding:18px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    z-index:99999; width:260px;
+    font-family:Arial,sans-serif; color:#fff;
+  ">
+    <div style="font-size:13px; font-weight:700; color:#0f9d9a; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+      <span>⏰ Set Alarm</span>
+      <button onclick="closeAlarmPanel()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:16px;padding:0;">✕</button>
+    </div>
+
+    <!-- Quick presets -->
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;">
+      <button class="alarm-preset" onclick="setAlarmPreset(5)">5 min</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(10)">10 min</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(20)">20 min</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(30)">30 min</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(60)">1 hr</button>
+    </div>
+
+    <!-- Manual input: HH MM SS -->
+    <div style="font-size:11px; color:#aaa; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Enter manually</div>
+    <div style="display:flex; gap:6px; align-items:center; margin-bottom:14px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+        <input id="alarmHH" type="number" min="0" max="23" placeholder="00" style="
+          width:52px; text-align:center; padding:6px 4px;
+          background:#2a4a4a; border:1px solid #0f9d9a;
+          border-radius:8px; color:#fff; font-size:15px;
+          font-weight:700; outline:none;
+        "/>
+        <span style="font-size:9px; color:#aaa;">HH</span>
+      </div>
+      <span style="font-size:18px; color:#0f9d9a; font-weight:700; margin-bottom:12px;">:</span>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+        <input id="alarmMM" type="number" min="0" max="59" placeholder="00" style="
+          width:52px; text-align:center; padding:6px 4px;
+          background:#2a4a4a; border:1px solid #0f9d9a;
+          border-radius:8px; color:#fff; font-size:15px;
+          font-weight:700; outline:none;
+        "/>
+        <span style="font-size:9px; color:#aaa;">MM</span>
+      </div>
+      <span style="font-size:18px; color:#0f9d9a; font-weight:700; margin-bottom:12px;">:</span>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+        <input id="alarmSS" type="number" min="0" max="59" placeholder="00" style="
+          width:52px; text-align:center; padding:6px 4px;
+          background:#2a4a4a; border:1px solid #0f9d9a;
+          border-radius:8px; color:#fff; font-size:15px;
+          font-weight:700; outline:none;
+        "/>
+        <span style="font-size:9px; color:#aaa;">SS</span>
+      </div>
+    </div>
+
+    <!-- Countdown display -->
+    <div id="alarmCountdown" style="
+      text-align:center; font-size:22px; font-weight:800;
+      color:#facc15; letter-spacing:2px; margin-bottom:12px;
+      display:none; font-variant-numeric:tabular-nums;
+    ">00:00:00</div>
+
+    <!-- Buttons -->
+    <div style="display:flex; gap:8px;">
+      <button id="alarmStartBtn" onclick="startAlarm()" style="
+        flex:1; padding:9px; background:#0f9d9a;
+        border:none; border-radius:10px; color:#fff;
+        font-size:13px; font-weight:700; cursor:pointer;
+      ">Start</button>
+      <button id="alarmCancelBtn" onclick="cancelAlarm()" style="
+        flex:1; padding:9px; background:rgba(239,68,68,0.15);
+        border:1px solid rgba(239,68,68,0.4); border-radius:10px;
+        color:#ef4444; font-size:13px; font-weight:700;
+        cursor:pointer; display:none;
+      ">Cancel</button>
+    </div>
   </div>
 
   <div class="user-display" id="navWelcomeText">
@@ -997,7 +1111,153 @@ prioritySelected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></
     
 </script>
 
+<script>
+// ── ALARM SYSTEM ──────────────────────────────────────────────────────────────
+let _alarmTimer = null;
+let _alarmEndTime = null;
+let _alarmTickInterval = null;
 
+// Web Audio API se beep sound — koi file download nahi chahiye
+function playAlarmSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(freq, start, dur) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.001, ctx.currentTime + start);
+      g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      o.start(ctx.currentTime + start);
+      o.stop(ctx.currentTime + start + dur + 0.05);
+    }
+    // 3 beeps pattern
+    beep(880, 0,    0.18);
+    beep(880, 0.25, 0.18);
+    beep(1050, 0.5, 0.35);
+    beep(880, 1.0,  0.18);
+    beep(880, 1.25, 0.18);
+    beep(1050, 1.5, 0.35);
+    beep(880, 2.0,  0.18);
+    beep(880, 2.25, 0.18);
+    beep(1050, 2.5, 0.5);
+  } catch(e) {
+    console.warn('[Alarm] Audio error:', e);
+  }
+}
+
+function showAlarmPanel() {
+  document.getElementById('alarmPanel').style.display = 'block';
+}
+function closeAlarmPanel() {
+  document.getElementById('alarmPanel').style.display = 'none';
+}
+
+document.getElementById('alarmBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('alarmPanel');
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+});
+
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('alarmPanel');
+  const btn = document.getElementById('alarmBtn');
+  if (!panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+});
+
+function setAlarmPreset(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  document.getElementById('alarmHH').value = h > 0 ? h : '';
+  document.getElementById('alarmMM').value = m > 0 ? m : '';
+  document.getElementById('alarmSS').value = '';
+}
+
+function startAlarm() {
+  const hh = parseInt(document.getElementById('alarmHH').value) || 0;
+  const mm = parseInt(document.getElementById('alarmMM').value) || 0;
+  const ss = parseInt(document.getElementById('alarmSS').value) || 0;
+  const totalSeconds = hh * 3600 + mm * 60 + ss;
+
+  if (totalSeconds <= 0) {
+    alert('Please enter a valid time.');
+    return;
+  }
+  if (totalSeconds > 86400) {
+    alert('Maximum 24 hours allowed.');
+    return;
+  }
+
+  // Cancel existing
+  cancelAlarm(true);
+
+  _alarmEndTime = Date.now() + totalSeconds * 1000;
+
+  // Show countdown
+  document.getElementById('alarmCountdown').style.display = 'block';
+  document.getElementById('alarmCancelBtn').style.display = 'block';
+  document.getElementById('alarmDot').style.display = 'block';
+  document.getElementById('alarmStartBtn').textContent = 'Running…';
+  document.getElementById('alarmStartBtn').disabled = true;
+
+  // Tick every second
+  _alarmTickInterval = setInterval(() => {
+    const remaining = Math.max(0, Math.round((_alarmEndTime - Date.now()) / 1000));
+    const rh = Math.floor(remaining / 3600);
+    const rm = Math.floor((remaining % 3600) / 60);
+    const rs = remaining % 60;
+    document.getElementById('alarmCountdown').textContent =
+      String(rh).padStart(2,'0') + ':' + String(rm).padStart(2,'0') + ':' + String(rs).padStart(2,'0');
+
+    if (remaining <= 0) {
+      clearInterval(_alarmTickInterval);
+      triggerAlarm();
+    }
+  }, 500);
+}
+
+function triggerAlarm() {
+  playAlarmSound();
+  document.getElementById('alarmDot').style.display = 'none';
+  document.getElementById('alarmCountdown').style.display = 'none';
+  document.getElementById('alarmStartBtn').textContent = 'Start';
+  document.getElementById('alarmStartBtn').disabled = false;
+  document.getElementById('alarmCancelBtn').style.display = 'none';
+  document.getElementById('alarmPanel').style.display = 'block';
+  document.getElementById('alarmCountdown').textContent = '⏰ Time Up!';
+  document.getElementById('alarmCountdown').style.display = 'block';
+  document.getElementById('alarmCountdown').style.color = '#ef4444';
+  // Reset after 5 seconds
+  setTimeout(() => {
+    document.getElementById('alarmCountdown').style.display = 'none';
+    document.getElementById('alarmCountdown').style.color = '#facc15';
+    document.getElementById('alarmCountdown').textContent = '00:00:00';
+    document.getElementById('alarmHH').value = '';
+    document.getElementById('alarmMM').value = '';
+    document.getElementById('alarmSS').value = '';
+  }, 5000);
+}
+
+function cancelAlarm(silent) {
+  if (_alarmTickInterval) { clearInterval(_alarmTickInterval); _alarmTickInterval = null; }
+  _alarmEndTime = null;
+  document.getElementById('alarmDot').style.display = 'none';
+  document.getElementById('alarmCountdown').style.display = 'none';
+  document.getElementById('alarmCountdown').style.color = '#facc15';
+  document.getElementById('alarmStartBtn').textContent = 'Start';
+  document.getElementById('alarmStartBtn').disabled = false;
+  document.getElementById('alarmCancelBtn').style.display = 'none';
+  if (!silent) {
+    document.getElementById('alarmHH').value = '';
+    document.getElementById('alarmMM').value = '';
+    document.getElementById('alarmSS').value = '';
+  }
+}
+</script>
 
 <!-- Notification permission banner -->
 <div id="notif-banner" style="
