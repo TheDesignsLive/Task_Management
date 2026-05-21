@@ -76,7 +76,15 @@ button:hover{background:#0b7373;}
 .btn-cancel:hover { background-color: #e2e2e2; }
 
 #pwdError, #matchError { color: #d9534f; font-size: 11px; margin-top: 4px; display: none; text-align: left; line-height: 1.4; }
-
+.export-pick-btn {
+  display: block; position: relative; background: #f5f5f5;
+  border: 1px solid #d6e3df; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 10px; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: #333;
+  width: 100%; box-sizing: border-box; text-align: left;
+}
+.export-pick-btn:hover { background: #e8f5f5; }
+.exp-card { border-left: 3px solid #ccc; background: #f9f9f9; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
 .dropdown-selected {
   background: #fff;
   border: 1px solid #d6e3df;
@@ -111,6 +119,10 @@ button:hover{background:#0b7373;}
       <div class="settings-item" onclick="openNotifDialog()" id="notifSettingItem">
   Notifications 
   <span id="notifStatusBadge" style="font-size:11px;margin-left:6px;padding:2px 8px;border-radius:10px;background:#e6f7f5;color:#0f9d9a;">checking...</span>
+</div>
+<div class="settings-item" onclick="openExportDialog()">
+  Export Tasks
+  <span style="font-size:11px;color:#aaa;margin-left:6px;">Download as Excel or CSV</span>
 </div>
 <div class="settings-item danger" onclick="openDeleteDialog()">Delete Profile</div>
         <div class="settings-item danger" onclick="openLogoutModal()">Logout</div>
@@ -248,7 +260,54 @@ button:hover{background:#0b7373;}
     </button>
   </div>
 </div>
+<!-- ── EXPORT TASKS DIALOG ── -->
+<div id="exportDialog" class="dialog-overlay">
+  <div class="dialog-box" style="max-width:420px;max-height:80vh;overflow-y:auto;text-align:left;">
+    <span class="close-btn" onclick="closeExportDialog()">✖</span>
+    <h3 style="margin-top:0;text-align:center;">📤 Export Tasks</h3>
 
+    <!-- Step 1: Section -->
+    <div id="export-step1">
+      <p style="font-size:13px;color:#555;text-align:center;">Which section do you want to export?</p>
+      <div id="exportSectionBtns"></div>
+    </div>
+
+    <!-- Step 2: Date -->
+    <div id="export-step2" style="display:none;">
+      <p style="font-size:13px;color:#555;text-align:center;">Filter by date or export all?</p>
+      <button type="button" class="export-pick-btn" onclick="loadExportPreview('')">📋 All Tasks</button>
+      <label class="export-pick-btn" style="cursor:pointer;position:relative;">
+        📅 <span id="exportDateLabel">Pick a Date</span>
+        <input type="date" id="exportDateInput"
+          style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;"
+          onchange="loadExportPreview(this.value)">
+      </label>
+      <button type="button" onclick="exportStep(1)"
+        style="background:#f5f5f5;color:#555;border:none;padding:8px;border-radius:6px;cursor:pointer;width:100%;margin-top:4px;">
+        ← Back
+      </button>
+    </div>
+
+    <!-- Step 3: Preview + Download -->
+    <div id="export-step3" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span id="exportCount" style="font-size:12px;color:#888;">0 tasks</span>
+        <button type="button" onclick="exportStep(2)"
+          style="background:none;border:none;color:#095959;font-size:12px;cursor:pointer;font-weight:bold;">← Back</button>
+      </div>
+      <div id="exportLoading" style="text-align:center;padding:20px;color:#888;display:none;">Loading…</div>
+      <div id="exportPreviewList" style="max-height:35vh;overflow-y:auto;margin-bottom:12px;"></div>
+      <button type="button" id="exportExcelBtn" onclick="doExportExcel()"
+        style="background:#095959;color:#fff;border:none;padding:10px;border-radius:6px;cursor:pointer;width:100%;font-weight:bold;margin-bottom:8px;">
+        ⬇ Export Excel
+      </button>
+      <button type="button" id="exportCsvBtn" onclick="doExportCsv()"
+        style="background:#fff;color:#095959;border:1px solid #095959;padding:10px;border-radius:6px;cursor:pointer;width:100%;font-weight:bold;">
+        ⬇ Export CSV
+      </button>
+    </div>
+  </div>
+</div>
 <div class="dialog-overlay" id="customAlertModal">
   <div class="modal-content" style="text-align: center;">
     <i id="customAlertIcon" class="fa-solid fa-circle-check" style="font-size: 40px; margin-bottom: 10px;"></i>
@@ -662,5 +721,147 @@ async function handleNotifAction() {
 _updateNotifBadge();
 </script>
 
+<script>
+// ===== EXPORT TASKS =====
+let exportState = { section: '', date: '', tasks: [] };
+
+const EXPORT_SECTIONS = [
+  { key: 'TASK',      label: 'Task' },
+  { key: 'CHANGES',   label: '<%= label_changes %>' },
+  { key: 'UPDATE',    label: '<%= label_update %>' },
+  { key: 'OTHERS',    label: 'Others' },
+  { key: 'COMPLETED', label: 'Completed' },
+];
+
+function openExportDialog() {
+  exportStep(1);
+  const container = document.getElementById('exportSectionBtns');
+  container.innerHTML = '';
+  EXPORT_SECTIONS.forEach(sec => {
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'export-pick-btn';
+    btn.innerHTML = sec.label + ' <span style="float:right;color:#aaa;">›</span>';
+    btn.onclick = () => { exportState.section = sec.key; exportStep(2); };
+    container.appendChild(btn);
+  });
+  document.getElementById('exportDialog').style.display = 'flex';
+}
+
+function closeExportDialog() { document.getElementById('exportDialog').style.display = 'none'; }
+
+function exportStep(n) {
+  document.getElementById('export-step1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('export-step2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('export-step3').style.display = n === 3 ? 'block' : 'none';
+  if (n === 2) {
+    document.getElementById('exportDateInput').value = '';
+    document.getElementById('exportDateLabel').innerText = 'Pick a Date';
+    exportState.date = '';
+  }
+}
+
+async function loadExportPreview(date) {
+  exportState.date = date;
+  if (date) document.getElementById('exportDateLabel').innerText = 'Selected: ' + date;
+  exportStep(3);
+  document.getElementById('exportLoading').style.display = 'block';
+  document.getElementById('exportPreviewList').innerHTML = '';
+  document.getElementById('exportExcelBtn').disabled = true;
+  document.getElementById('exportCsvBtn').disabled = true;
+
+  try {
+    let url = `/task-export?section=${exportState.section}`;
+    if (date) url += `&date=${date}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    exportState.tasks = data.tasks || [];
+  } catch { exportState.tasks = []; }
+
+  document.getElementById('exportLoading').style.display = 'none';
+  document.getElementById('exportCount').innerText = exportState.tasks.length + ' tasks found';
+
+  const list = document.getElementById('exportPreviewList');
+  const pColors = { HIGH: '#ef4444', MEDIUM: '#eab308', LOW: '#3b82f6' };
+
+  if (exportState.tasks.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No tasks found</div>';
+  } else {
+    exportState.tasks.forEach(t => {
+      const p = (t.priority || 'LOW').toUpperCase();
+      const div = document.createElement('div'); div.className = 'exp-card';
+      div.style.borderLeftColor = pColors[p] || '#ccc';
+      div.innerHTML = `
+        <div style="font-weight:600;color:#1a1a1a;font-size:13px;margin-bottom:3px;">${t.title || ''}</div>
+        <div style="font-size:11px;color:#888;display:flex;gap:10px;">
+          <span>📅 ${t.due_date || 'No date'}</span>
+          <span style="color:${pColors[p]};font-weight:700;">${p}</span>
+          ${t.assigned_by_name ? `<span>👤 ${t.assigned_by_name}</span>` : ''}
+        </div>`;
+      list.appendChild(div);
+    });
+  }
+  document.getElementById('exportExcelBtn').disabled = exportState.tasks.length === 0;
+  document.getElementById('exportCsvBtn').disabled = exportState.tasks.length === 0;
+}
+
+async function doExportExcel() {
+  const filename = `tasks-${exportState.section}-${exportState.date || 'all'}`;
+  if (!window.ExcelJS) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+      s.onload = res; s.onerror = rej; document.head.appendChild(s);
+    });
+  }
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Tasks');
+  ws.columns = [
+    { key: 'title', width: 32 }, { key: 'desc', width: 42 },
+    { key: 'priority', width: 12 }, { key: 'due', width: 16 },
+    { key: 'created', width: 16 }, { key: 'by', width: 24 }, { key: 'status', width: 12 },
+  ];
+  const hr = ws.addRow(['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status']);
+  hr.height = 22;
+  hr.eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F8989' } };
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+  const pc = { HIGH: { bg: 'FFCCCC', font: 'C0392B' }, MEDIUM: { bg: 'FFF9C4', font: 'B8860B' }, LOW: { bg: 'CCE5FF', font: '1A5276' } };
+  exportState.tasks.forEach(t => {
+    const p = (t.priority || 'LOW').toUpperCase();
+    const c = pc[p] || pc.LOW;
+    const row = ws.addRow([t.title||'', t.description||'', p, t.due_date||'', t.created_at||'', t.assigned_by_name||(t.is_self?'Self':''), t.status||'']);
+    row.height = 20;
+    row.eachCell({ includeEmpty: true }, (cell, col) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + c.bg } };
+      cell.font = { size: 11, color: { argb: col === 3 ? 'FF' + c.font : 'FF1A1A1A' }, bold: col === 3 };
+      cell.alignment = { vertical: 'middle', horizontal: col === 3 ? 'center' : 'left', wrapText: col === 2 };
+    });
+  });
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename + '.xlsx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function doExportCsv() {
+  const header = ['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status'];
+  const rows = exportState.tasks.map(t => [
+    `"${(t.title||'').replace(/"/g,'""')}"`,
+    `"${(t.description||'').replace(/"/g,'""')}"`,
+    t.priority||'', t.due_date||'', t.created_at||'',
+    `"${((t.assigned_by_name||(t.is_self?'Self':''))||'').replace(/"/g,'""')}"`,
+    t.status||''
+  ]);
+  const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `tasks-${exportState.section}-${exportState.date||'all'}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+</script>
 </body>
 </html>
