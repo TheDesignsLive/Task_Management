@@ -294,10 +294,12 @@ router.post('/update-task-status', async (req, res) => {
     if (status === 'COMPLETED') {
       const [rows] = await con.query('SELECT * FROM tasks WHERE id=?', [id]);
       if (rows.length > 0) {
-        const task = rows[0];
-        const repeatType = task.repeat_type;
+  const task = rows[0];
+  const repeatType = task.repeat_type;
 
-        if (repeatType && repeatType !== 'none') {
+  console.log('[Repeat Debug] task id:', id, '| repeat_type:', repeatType, '| due_date:', task.due_date);
+
+  if (repeatType && repeatType !== 'none') {
           let baseDate = task.due_date ? new Date(task.due_date) : new Date();
 
           const today = new Date();
