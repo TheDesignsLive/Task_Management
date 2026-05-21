@@ -1140,21 +1140,44 @@ let _alarmEndTime = null;
 let _alarmTickInterval = null;
 
 // Web Audio API se beep sound — koi file download nahi chahiye
-let alarmAudio;
-
 function playAlarmSound() {
   try {
-    alarmAudio = new Audio('/sounds/alarm_sound.mp3'); // 📁 public/sounds/
-    alarmAudio.loop = true; // 🔁 repeat karega
-    alarmAudio.play();
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function beep(freq, start, dur, type = 'square') {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      o.type = type; // 🔥 better than sine
+      o.frequency.value = freq;
+
+      // volume envelope (smooth but strong)
+      g.gain.setValueAtTime(0.001, ctx.currentTime + start);
+      g.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+
+      o.start(ctx.currentTime + start);
+      o.stop(ctx.currentTime + start + dur + 0.05);
+    }
+
+    // 🔔 PATTERN (alarm style - rising urgency)
+    beep(700, 0,    0.15);
+    beep(900, 0.2,  0.15);
+    beep(1100,0.4,  0.2);
+
+    beep(700, 0.8,  0.15);
+    beep(900, 1.0,  0.15);
+    beep(1200,1.2,  0.25);
+
+    beep(800, 1.7,  0.2);
+    beep(1000,1.95, 0.2);
+    beep(1300,2.2,  0.35);
+
   } catch(e) {
     console.warn('[Alarm] Audio error:', e);
-  }
-}
-function stopAlarmSound() {
-  if (alarmAudio) {
-    alarmAudio.pause();
-    alarmAudio.currentTime = 0;
   }
 }
 function showAlarmPanel() {
@@ -1271,7 +1294,6 @@ function triggerAlarm() {
 }
 
 function cancelAlarm(silent) {
-  stopAlarmSound();
   if (_alarmTickInterval) { clearInterval(_alarmTickInterval); _alarmTickInterval = null; }
   _alarmEndTime = null;
   localStorage.removeItem('tms_alarm_end');
