@@ -8,6 +8,7 @@
 <link rel="icon" type="image/svg" href="/images/tms.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
 /* ===== PREVENT FULL PAGE SCROLL ===== */
@@ -994,16 +995,21 @@ body.no-select { user-select: none; -webkit-user-select: none; }
         <div class="task-other" id="other-section"></div>
       </div>
 
-      <div class="completed-wrapper">
-<div class="completed-header">
+     <div class="completed-wrapper">
+        <div class="completed-header">
           Completed Tasks
           <div style="display:flex;align-items:center;gap:6px;">
- <div id="completed-filter-chip" style="display:none;align-items:center;gap:4px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:2px 5px 2px 7px;cursor:default;">
+            <div id="completed-filter-chip" style="display:none;align-items:center;gap:4px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:2px 5px 2px 7px;cursor:default;">
               <span id="completed-date-label" style="font-size:9px;color:rgba(255,255,255,0.85);white-space:nowrap;font-weight:500;letter-spacing:0.3px;"></span>
               <span id="completed-filter-clear" title="Clear filter" style="font-size:8px;color:rgba(255,255,255,0.6);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;transition:color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">✕</span>
             </div>
             <svg id="completed-filter-icon" viewBox="0 0 24 24" width="13" height="13" style="cursor:pointer;fill:#CDF4F4;opacity:0.6;flex-shrink:0;" title="Filter by date">
               <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6l-6.8 8.7V19a1 1 0 0 1-.5.87l-3 1.73A1 1 0 0 1 9 20.73V13.3L2.2 4.6A1 1 0 0 1 3 4z"/>
+            </svg>
+            <svg id="export-completed-btn" viewBox="0 0 24 24" width="14" height="14" style="cursor:pointer;fill:none;stroke:#CDF4F4;opacity:0.6;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-left:2px;" title="Export Excel">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
             <svg id="delete-completed" viewBox="0 0 24 24" width="20" height="20">
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -2037,6 +2043,142 @@ const filterChip = document.getElementById('completed-filter-chip');
     e.stopPropagation();
     clearCompletedFilter();
   });
+
+  // ✅ ADDED: EXCEL EXPORT ENGINE WITH ABSOLUTE CONVERSION RULES (MATCHES MOBILE WORKFLOW)
+  const exportBtn = document.getElementById('export-completed-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      let completedTasks = currentTasks.filter(t => t.status === 'COMPLETED');
+
+      // Sync active dynamic layout filter boundary checks
+      if (completedDateFilter) {
+        completedTasks = completedTasks.filter(t => {
+          if (!t.due_date) return false;
+          return t.due_date.split('T')[0] === completedDateFilter;
+        });
+      }
+
+      if (completedTasks.length === 0) {
+        alert("No completed tasks found to export in this filter view.");
+        return;
+      }
+
+      // Sort by complete timeline sequence parameters
+      completedTasks.sort((a, b) => {
+        const ta = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+        const tb = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+        return ta - tb;
+      });
+
+      // Rock-solid safe date parsing architecture
+      function formatExcelDate(val) {
+        if (!val) return '';
+        let d;
+        if (val instanceof Date) {
+          d = val;
+        } else {
+          const str = String(val).trim();
+          const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (!match) return '';
+          d = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+        }
+        if (isNaN(d.getTime())) return '';
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      }
+
+      // Create Array of Arrays structure matching native specifications sheet metrics
+      const aoa = [
+        ['Task Title', 'Description', 'Assigned By', 'Date', 'Priority'],
+        ...completedTasks.map(t => [
+          t.title || '',
+          t.description || '',
+          t.assigned_by_name || 'Myself',
+          formatExcelDate(t.due_date),
+          (t.priority || 'LOW').charAt(0).toUpperCase() + (t.priority || 'LOW').slice(1).toLowerCase(),
+        ])
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Explicit grid scaling layout columns width sets
+      ws['!cols'] = [
+        { wch: 32 }, // Task Title
+        { wch: 40 }, // Description
+        { wch: 22 }, // Assigned By
+        { wch: 16 }, // Date
+        { wch: 10 }, // Priority
+      ];
+
+      ws['!rows'] = aoa.map(() => ({ hpt: 20 }));
+
+      // SheetJS background palette layouts declarations
+      const priorityFills = {
+        HIGH:   { patternType: 'solid', fgColor: { rgb: 'FFCCCC' }, bgColor: { rgb: 'FFCCCC' } },
+        MEDIUM: { patternType: 'solid', fgColor: { rgb: 'FFF9C4' }, bgColor: { rgb: 'FFF9C4' } },
+        LOW:    { patternType: 'solid', fgColor: { rgb: 'CCE5FF' }, bgColor: { rgb: 'CCE5FF' } },
+      };
+
+      const priorityFonts = {
+        HIGH:   { bold: true, color: { rgb: 'C0392B' }, sz: 11 },
+        MEDIUM: { bold: true, color: { rgb: 'B8860B' }, sz: 11 },
+        LOW:    { bold: true, color: { rgb: '1A5276' }, sz: 11 },
+      };
+
+      // Table Header row configuration map styling
+      ['A1','B1','C1','D1','E1'].forEach(addr => {
+        if (!ws[addr]) return;
+        ws[addr].s = {
+          fill: { patternType: 'solid', fgColor: { rgb: '0F8989' }, bgColor: { rgb: '0F8989' } },
+          font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: false },
+          border: { bottom: { style: 'thin', color: { rgb: '097070' } } },
+        };
+      });
+
+      // Inject structured cell loops styling for cells output tracking
+      completedTasks.forEach((t, i) => {
+        const rowNum = i + 2;
+        const priority = (t.priority || 'LOW').toUpperCase();
+        const fill = priorityFills[priority] || priorityFills.LOW;
+        const font = priorityFonts[priority] || priorityFonts.LOW;
+        const cols = ['A', 'B', 'C', 'D', 'E'];
+
+        cols.forEach(col => {
+          const addr = `${col}${rowNum}`;
+          if (!ws[addr]) ws[addr] = { v: '', t: 's' };
+          ws[addr].s = {
+            fill,
+            font: col === 'E' ? font : { sz: 11, color: { rgb: '1A1A1A' } },
+            alignment: {
+              vertical: 'center',
+              horizontal: col === 'E' ? 'center' : 'left',
+              wrapText: col === 'B',
+            },
+          };
+        });
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Completed Tasks');
+
+      const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+      const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = completedDateFilter
+        ? `completed-tasks-${completedDateFilter}.xlsx`
+        : `completed-tasks-${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
 });
 
 let taskToDeleteId = null;
