@@ -431,8 +431,9 @@ app.get('/', (req, res) => {
 
 app.use('/', authRoutes);
 app.use('/', logoutRoutes);
-app.use('/', homeroutes);
 app.use('/',ma)
+app.use('/', homeroutes);
+
 
 
 
