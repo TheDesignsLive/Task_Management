@@ -737,7 +737,7 @@ select::-ms-expand { display: none; }
 
     <!-- Buttons -->
     <div style="display:flex; gap:8px;">
-      <button id="alarmStartBtn" onclick="startAlarm()" style="
+      <button id="alarmStartBtn" onclick="handleAlarmButton()" style="
         flex:1; padding:9px; background:#0f9d9a;
         border:none; border-radius:10px; color:#fff;
         font-size:13px; font-weight:700; cursor:pointer;
@@ -1138,46 +1138,31 @@ prioritySelected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></
 let _alarmTimer = null;
 let _alarmEndTime = null;
 let _alarmTickInterval = null;
+function handleAlarmButton() {
+  const btn = document.getElementById('alarmStartBtn');
 
+  if (btn.textContent === 'Stop') {
+    cancelAlarm(); // 🔴 STOP SOUND
+  } else {
+    startAlarm();  // 🟢 START ALARM
+  }
+}
 // Web Audio API se beep sound — koi file download nahi chahiye
+let alarmAudio;
+
 function playAlarmSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function beep(freq, start, dur, type = 'square') {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-
-      o.connect(g);
-      g.connect(ctx.destination);
-
-      o.type = type; // 🔥 better than sine
-      o.frequency.value = freq;
-
-      // volume envelope (smooth but strong)
-      g.gain.setValueAtTime(0.001, ctx.currentTime + start);
-      g.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + start + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-
-      o.start(ctx.currentTime + start);
-      o.stop(ctx.currentTime + start + dur + 0.05);
-    }
-
-    // 🔔 PATTERN (alarm style - rising urgency)
-    beep(700, 0,    0.15);
-    beep(900, 0.2,  0.15);
-    beep(1100,0.4,  0.2);
-
-    beep(700, 0.8,  0.15);
-    beep(900, 1.0,  0.15);
-    beep(1200,1.2,  0.25);
-
-    beep(800, 1.7,  0.2);
-    beep(1000,1.95, 0.2);
-    beep(1300,2.2,  0.35);
-
+    alarmAudio = new Audio('/sounds/alarm_sound.mp3'); // 📁 public/sounds/
+    alarmAudio.loop = true; // 🔁 repeat karega
+    alarmAudio.play();
   } catch(e) {
     console.warn('[Alarm] Audio error:', e);
+  }
+}
+function stopAlarmSound() {
+  if (alarmAudio) {
+    alarmAudio.pause();
+    alarmAudio.currentTime = 0;
   }
 }
 function showAlarmPanel() {
@@ -1275,10 +1260,12 @@ function triggerAlarm() {
   localStorage.removeItem('tms_alarm_end');
   document.getElementById('alarmDot').style.display = 'none';
   document.getElementById('alarmCountdown').style.display = 'none';
-  document.getElementById('alarmStartBtn').textContent = 'Start';
-  document.getElementById('alarmStartBtn').disabled = false;
-  document.getElementById('alarmCancelBtn').style.display = 'none';
-  document.getElementById('alarmPanel').style.display = 'block';
+ const _startBtn = document.getElementById('alarmStartBtn');
+_startBtn.textContent = 'Stop';
+_startBtn.style.background = '#ef4444';
+_startBtn.disabled = false;
+document.getElementById('alarmCancelBtn').style.display = 'none';
+document.getElementById('alarmPanel').style.display = 'block';
   document.getElementById('alarmCountdown').textContent = '⏰ Time Up!';
   document.getElementById('alarmCountdown').style.display = 'block';
   document.getElementById('alarmCountdown').style.color = '#ef4444';
@@ -1290,19 +1277,24 @@ function triggerAlarm() {
     document.getElementById('alarmHH').value = '';
     document.getElementById('alarmMM').value = '';
     document.getElementById('alarmSS').value = '';
-  }, 5000);
+  }, 1000*60);
 }
 
 function cancelAlarm(silent) {
+  stopAlarmSound();
+ const startBtn = document.getElementById('alarmStartBtn');
+startBtn.textContent = 'Start';
+startBtn.style.background = '#0f9d9a';
   if (_alarmTickInterval) { clearInterval(_alarmTickInterval); _alarmTickInterval = null; }
   _alarmEndTime = null;
   localStorage.removeItem('tms_alarm_end');
   document.getElementById('alarmDot').style.display = 'none';
   document.getElementById('alarmCountdown').style.display = 'none';
   document.getElementById('alarmCountdown').style.color = '#facc15';
-  document.getElementById('alarmStartBtn').textContent = 'Start';
-  document.getElementById('alarmStartBtn').disabled = false;
-  document.getElementById('alarmCancelBtn').style.display = 'none';
+ startBtn.textContent = 'Start';
+startBtn.style.background = '#0f9d9a';
+startBtn.disabled = false;
+document.getElementById('alarmCancelBtn').style.display = 'none';
   if (!silent) {
     document.getElementById('alarmHH').value = '';
     document.getElementById('alarmMM').value = '';
