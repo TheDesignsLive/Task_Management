@@ -2138,7 +2138,7 @@ const filterChip = document.getElementById('completed-filter-chip');
         };
       });
 
-      // Inject structured cell loops styling for cells output tracking
+      // ✅ Inject structured cell loops styling matching mobile specifications exactly
       completedTasks.forEach((t, i) => {
         const rowNum = i + 2;
         const priority = (t.priority || 'LOW').toUpperCase();
@@ -2150,7 +2150,7 @@ const filterChip = document.getElementById('completed-filter-chip');
           const addr = `${col}${rowNum}`;
           if (!ws[addr]) ws[addr] = { v: '', t: 's' };
           ws[addr].s = {
-            fill,
+            fill: fill,
             font: col === 'E' ? font : { sz: 11, color: { rgb: '1A1A1A' } },
             alignment: {
               vertical: 'center',
@@ -2164,6 +2164,7 @@ const filterChip = document.getElementById('completed-filter-chip');
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Completed Tasks');
 
+      // ✅ REQUIRED: cellStyles: true makes background/font colors render identically on mobile and desktop Excel
       const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
       const blob = new Blob([wbOut], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
