@@ -1151,6 +1151,12 @@ function playAlarmSound() {
     console.warn('[Alarm] Audio error:', e);
   }
 }
+function stopAlarmSound() {
+  if (alarmAudio) {
+    alarmAudio.pause();
+    alarmAudio.currentTime = 0;
+  }
+}
 function showAlarmPanel() {
   document.getElementById('alarmPanel').style.display = 'block';
 }
@@ -1265,6 +1271,7 @@ function triggerAlarm() {
 }
 
 function cancelAlarm(silent) {
+  stopAlarmSound();
   if (_alarmTickInterval) { clearInterval(_alarmTickInterval); _alarmTickInterval = null; }
   _alarmEndTime = null;
   localStorage.removeItem('tms_alarm_end');
