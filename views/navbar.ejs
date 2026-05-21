@@ -553,6 +553,28 @@ select::-ms-expand { display: none; }
   background: rgba(15,157,154,0.35);
 }
 
+/* Alarm input — number spinner hide karo, focus style fix karo */
+#alarmHH, #alarmMM, #alarmSS {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+#alarmHH::-webkit-inner-spin-button,
+#alarmHH::-webkit-outer-spin-button,
+#alarmMM::-webkit-inner-spin-button,
+#alarmMM::-webkit-outer-spin-button,
+#alarmSS::-webkit-inner-spin-button,
+#alarmSS::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+#alarmHH:focus, #alarmMM:focus, #alarmSS:focus {
+  outline: none !important;
+  border-color: #14b8a6 !important;
+  box-shadow: 0 0 0 2px rgba(20,184,166,0.25) !important;
+  background: #2a4a4a !important;
+  color: #fff !important;
+}
+
 </style>
 
 <div class="navbar">
@@ -664,12 +686,12 @@ select::-ms-expand { display: none; }
     </div>
 
     <!-- Quick presets -->
-    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;">
-      <button class="alarm-preset" onclick="setAlarmPreset(5)">5 min</button>
-      <button class="alarm-preset" onclick="setAlarmPreset(10)">10 min</button>
-      <button class="alarm-preset" onclick="setAlarmPreset(20)">20 min</button>
-      <button class="alarm-preset" onclick="setAlarmPreset(30)">30 min</button>
-      <button class="alarm-preset" onclick="setAlarmPreset(60)">1 hr</button>
+    <div style="display:flex; flex-wrap:nowrap; gap:5px; margin-bottom:14px; overflow-x:auto;">
+      <button class="alarm-preset" onclick="setAlarmPreset(5)">5m</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(10)">10m</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(20)">20m</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(30)">30m</button>
+      <button class="alarm-preset" onclick="setAlarmPreset(60)">1hr</button>
     </div>
 
     <!-- Manual input: HH MM SS -->
@@ -1170,11 +1192,26 @@ document.addEventListener('click', function(e) {
 });
 
 function setAlarmPreset(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  document.getElementById('alarmHH').value = h > 0 ? h : '';
-  document.getElementById('alarmMM').value = m > 0 ? m : '';
-  document.getElementById('alarmSS').value = '';
+  // Current values padhho
+  let curHH = parseInt(document.getElementById('alarmHH').value) || 0;
+  let curMM = parseInt(document.getElementById('alarmMM').value) || 0;
+  let curSS = parseInt(document.getElementById('alarmSS').value) || 0;
+
+  // Current total seconds + preset minutes add karo
+  let totalSeconds = curHH * 3600 + curMM * 60 + curSS + minutes * 60;
+
+  // Max 24 hours cap
+  if (totalSeconds > 86400) totalSeconds = 86400;
+
+  // Split back to HH MM SS
+  const newHH = Math.floor(totalSeconds / 3600);
+  const newMM = Math.floor((totalSeconds % 3600) / 60);
+  const newSS = totalSeconds % 60;
+
+  document.getElementById('alarmHH').value = newHH > 0 ? newHH : '';
+  // MM: 0-59 allowed, SS: 0-59 allowed
+  document.getElementById('alarmMM').value = newMM > 0 ? newMM : '';
+  document.getElementById('alarmSS').value = newSS > 0 ? newSS : '';
 }
 
 function startAlarm() {
