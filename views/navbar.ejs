@@ -653,15 +653,16 @@ select::-ms-expand { display: none; }
 
   <!-- ── POMODORO NAVBAR COUNTDOWN ── -->
   <div id="navAlarmCountdown" style="
-    display:none;
-    background:rgba(255,255,255,0.18);
-    border:1px solid rgba(255,255,255,0.4);
-    border-radius:20px; padding:4px 12px;
-    font-size:13px; font-weight:800;
-    color:#fff; letter-spacing:1px;
-    white-space:nowrap; flex-shrink:0;
-    font-variant-numeric:tabular-nums;
-  ">🍅 00:00</div>
+  display:block;
+  font-size:32px;
+  font-weight:900;
+  color:#ffffff;
+  letter-spacing:2px;
+  white-space:nowrap;
+  flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+  margin:0 10px;
+">00:00</div>
 
   <!-- ── ALARM BUTTON ── -->
   <button type="button" id="alarmBtn" title="Set Alarm" style="
@@ -683,7 +684,8 @@ select::-ms-expand { display: none; }
   <!-- ── ALARM PANEL ── -->
   <div id="alarmPanel" style="
     display:none; position:fixed;
-    top:60px; right:80px;
+    top:70px;
+right:20px;
     background:#1a3a3a; border:1px solid #0f9d9a;
     border-radius:16px; padding:18px;
     box-shadow:0 12px 40px rgba(0,0,0,0.5);
@@ -747,13 +749,13 @@ select::-ms-expand { display: none; }
         border:1px solid rgba(250,204,21,0.4); border-radius:10px;
         color:#facc15; font-size:13px; font-weight:700;
         cursor:pointer; display:none;
-      ">Reset</button>
+      ">Pause</button>
       <button id="alarmCancelBtn" onclick="cancelAlarm()" style="
         flex:1; padding:9px; background:rgba(239,68,68,0.15);
         border:1px solid rgba(239,68,68,0.4); border-radius:10px;
         color:#ef4444; font-size:13px; font-weight:700;
         cursor:pointer; display:none;
-      ">Cancel</button>
+      ">Reset</button>
     </div>
   </div>
 
@@ -1144,7 +1146,8 @@ prioritySelected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></
 let _alarmEndTime = null;
 let _alarmTickInterval = null;
 let _alarmTotalSeconds = 0; // reset ke liye original time store
-
+let _alarmPaused = false;
+let _alarmRemaining = 0;
 let alarmAudio;
 function playAlarmSound() {
   try {
@@ -1187,7 +1190,14 @@ function closeAlarmPanel() { document.getElementById('alarmPanel').style.display
 
 document.getElementById('alarmBtn').addEventListener('click', function(e) {
   e.stopPropagation();
+
   const panel = document.getElementById('alarmPanel');
+  const btn = document.getElementById('alarmBtn');
+  const rect = btn.getBoundingClientRect();
+
+  panel.style.top = (rect.bottom + 10) + "px";
+  panel.style.left = (rect.left - 200) + "px"; // adjust width
+
   panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 });
 document.addEventListener('click', function(e) {
@@ -1232,7 +1242,7 @@ function _startTick() {
     const rs = remaining % 60;
     const txt = String(rm).padStart(2,'0') + ':' + String(rs).padStart(2,'0');
     document.getElementById('alarmCountdown').textContent = txt;
-    document.getElementById('navAlarmCountdown').textContent = '🍅 ' + txt;
+    document.getElementById('navAlarmCountdown').textContent = txt;
     if (remaining <= 0) { clearInterval(_alarmTickInterval); triggerAlarm(); }
   }, 500);
 }
@@ -1243,6 +1253,12 @@ function startAlarm() {
   const totalSeconds = mm * 60 + ss;
   if (totalSeconds <= 0) { alert('Please enter a valid time.'); return; }
 
+  // 🔥 FIX 2: Clear any stale paused state before starting fresh
+  _alarmPaused = false;
+  _alarmRemaining = 0;
+  localStorage.removeItem('tms_alarm_paused');
+  localStorage.removeItem('tms_alarm_remaining');
+
   _alarmTotalSeconds = totalSeconds;
   _alarmEndTime = Date.now() + totalSeconds * 1000;
   localStorage.setItem('tms_alarm_end', _alarmEndTime);
@@ -1251,16 +1267,64 @@ function startAlarm() {
   document.getElementById('alarmCountdown').style.display = 'block';
   document.getElementById('alarmCancelBtn').style.display = 'block';
   document.getElementById('alarmResetBtn').style.display = 'block';
+  document.getElementById('alarmResetBtn').innerText = 'Pause';       // 🔥 ensure correct label
   document.getElementById('alarmStartBtn').style.display = 'none';
+  document.getElementById('alarmStartBtn').setAttribute('onclick', 'startAlarm()'); // 🔥 reset onclick
   document.getElementById('alarmDot').style.display = 'block';
   document.getElementById('navAlarmCountdown').style.display = 'block';
   _startTick();
 }
+function resumeAlarm() {
+  if (!_alarmPaused || _alarmRemaining <= 0) return;
 
-function resetAlarm() {
-  if (!_alarmTotalSeconds) return;
-  _alarmEndTime = Date.now() + _alarmTotalSeconds * 1000;
+  _alarmEndTime = Date.now() + _alarmRemaining * 1000;
+  _alarmPaused = false;
+
   localStorage.setItem('tms_alarm_end', _alarmEndTime);
+  localStorage.removeItem('tms_alarm_paused');
+  localStorage.removeItem('tms_alarm_remaining');
+
+  _startTick();
+
+  document.getElementById('alarmStartBtn').innerText = 'Start';
+  document.getElementById('alarmStartBtn').style.display = 'none';
+  document.getElementById('alarmResetBtn').style.display = 'block';
+  document.getElementById('alarmCancelBtn').style.display = 'block';
+}
+function resetAlarm() {
+  if (!_alarmEndTime) return;
+
+  if (!_alarmPaused) {
+    // PAUSE
+    _alarmRemaining = Math.max(0, Math.round((_alarmEndTime - Date.now()) / 1000));
+    clearInterval(_alarmTickInterval);
+    _alarmPaused = true;
+
+    localStorage.setItem('tms_alarm_paused', '1');
+    localStorage.setItem('tms_alarm_remaining', _alarmRemaining);
+
+    document.getElementById('alarmStartBtn').style.display = 'block';
+    document.getElementById('alarmStartBtn').innerText = 'Resume';
+    document.getElementById('alarmStartBtn').setAttribute('onclick', 'resumeAlarm()'); // 🔥
+    document.getElementById('alarmResetBtn').style.display = 'none';
+    document.getElementById('alarmCancelBtn').style.display = 'block'; // 🔥 keep Reset visible 
+
+  } else {
+    // RESUME (inline path — only if not restored from localStorage)
+    _alarmEndTime = Date.now() + _alarmRemaining * 1000;
+    _alarmPaused = false;
+
+    localStorage.setItem('tms_alarm_end', _alarmEndTime);
+    localStorage.removeItem('tms_alarm_paused');
+    localStorage.removeItem('tms_alarm_remaining');
+    _startTick();
+
+    document.getElementById('alarmStartBtn').innerText = 'Start';
+    document.getElementById('alarmStartBtn').setAttribute('onclick', 'startAlarm()'); // 🔥
+    document.getElementById('alarmStartBtn').style.display = 'none';
+    document.getElementById('alarmResetBtn').style.display = 'block';
+    document.getElementById('alarmCancelBtn').style.display = 'block';
+  }
 }
 
 function triggerAlarm() {
@@ -1270,10 +1334,10 @@ function triggerAlarm() {
   document.getElementById('alarmDot').style.display = 'none';
   document.getElementById('alarmCountdown').textContent = '🍅 Time Up!';
   document.getElementById('alarmCountdown').style.color = '#ef4444';
-  document.getElementById('navAlarmCountdown').textContent = '🍅 Done!';
-  document.getElementById('alarmCancelBtn').style.display = 'block';
-  document.getElementById('alarmResetBtn').style.display = 'none';
-  document.getElementById('alarmStartBtn').style.display = 'none';
+  document.getElementById('navAlarmCountdown').textContent = '00:00';
+  document.getElementById('alarmCancelBtn').style.display = 'block'; // RESET
+document.getElementById('alarmResetBtn').style.display = 'block';  // PAUSE
+document.getElementById('alarmStartBtn').style.display = 'none';
   // 5 sec baad auto reset
   setTimeout(() => {
     cancelAlarm(true);
@@ -1286,14 +1350,18 @@ function cancelAlarm(silent) {
   _alarmTotalSeconds = 0;
   localStorage.removeItem('tms_alarm_end');
   localStorage.removeItem('tms_alarm_total');
+  localStorage.removeItem('tms_alarm_paused');
+  localStorage.removeItem('tms_alarm_remaining');
   document.getElementById('alarmDot').style.display = 'none';
   document.getElementById('alarmCountdown').style.display = 'none';
   document.getElementById('alarmCountdown').style.color = '#facc15';
   document.getElementById('alarmCountdown').textContent = '00:00';
+  document.getElementById('navAlarmCountdown').textContent = '00:00';
+  document.getElementById('alarmStartBtn').innerText = 'Start';
+  document.getElementById('alarmStartBtn').setAttribute('onclick', 'startAlarm()'); // 🔥 reset onclick
   document.getElementById('alarmStartBtn').style.display = 'block';
   document.getElementById('alarmResetBtn').style.display = 'none';
   document.getElementById('alarmCancelBtn').style.display = 'none';
-  document.getElementById('navAlarmCountdown').style.display = 'none';
   if (!silent) {
     document.getElementById('alarmMM').value = '';
     document.getElementById('alarmSS').value = '';
@@ -1302,8 +1370,43 @@ function cancelAlarm(silent) {
 
 // Page load par restore karo
 (function restoreAlarm() {
+  // 🔥 Always reset Start button text first
+  document.getElementById('alarmStartBtn').innerText = 'Start';
+
   const saved = localStorage.getItem('tms_alarm_end');
   const savedTotal = localStorage.getItem('tms_alarm_total');
+  const wasPaused = localStorage.getItem('tms_alarm_paused') === '1';
+  const savedRemaining = parseInt(localStorage.getItem('tms_alarm_remaining')) || 0;
+
+  // 🔥 Restore PAUSED state
+if (wasPaused && savedRemaining > 0) {
+    _alarmPaused = true;
+    _alarmRemaining = savedRemaining;
+    _alarmEndTime = Date.now() + savedRemaining * 1000;
+
+    const rm = Math.floor(savedRemaining / 60);
+    const rs = savedRemaining % 60;
+    const txt = String(rm).padStart(2,'0') + ':' + String(rs).padStart(2,'0');
+    document.getElementById('alarmCountdown').textContent = txt;
+    document.getElementById('alarmCountdown').style.display = 'block';
+    document.getElementById('navAlarmCountdown').textContent = txt;
+    document.getElementById('alarmDot').style.display = 'block';
+
+    // 🔥 FIX 1: Fill input boxes with ORIGINAL set time (not paused remaining)
+    const savedTotalSeconds = parseInt(localStorage.getItem('tms_alarm_total')) || savedRemaining;
+    const tm = Math.floor(savedTotalSeconds / 60);
+    const ts = savedTotalSeconds % 60;
+    document.getElementById('alarmMM').value = String(tm).padStart(2,'0');
+    document.getElementById('alarmSS').value = String(ts).padStart(2,'0');
+
+    document.getElementById('alarmStartBtn').style.display = 'block';
+    document.getElementById('alarmStartBtn').innerText = 'Resume';
+    document.getElementById('alarmStartBtn').setAttribute('onclick', 'resumeAlarm()');
+    document.getElementById('alarmResetBtn').style.display = 'none';
+    document.getElementById('alarmCancelBtn').style.display = 'block';
+    return;
+  }
+
   if (!saved) return;
   const endTime = parseInt(saved);
   const remaining = Math.round((endTime - Date.now()) / 1000);
