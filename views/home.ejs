@@ -1465,16 +1465,19 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
 
     // ✅ Fire-and-forget — do NOT await, do NOT refreshTasksUI after
     // Socket will trigger refresh for OTHER users; this user already sees the update
-    _selfUpdating = true;
+_selfUpdating = true;
     fetch('/update-task-status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, status, section })
-    }).then(() => {
+    }).then(async () => {
       _checkboxInFlight.delete(taskIdStr);
-      setTimeout(() => { _selfUpdating = false; }, 2000);
+      _selfUpdating = false;
+      // If marking complete, always refresh to pick up any new repeat task
+      if (status === 'COMPLETED') {
+        await refreshTasksUI();
+      }
     }).catch(() => {
-      // On error: revert local state and re-render
       _checkboxInFlight.delete(taskIdStr);
       _selfUpdating = false;
       if (localTask) {
