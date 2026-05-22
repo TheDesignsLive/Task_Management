@@ -1546,8 +1546,8 @@ function renderAllSections(taskList) {
 sectionTasks['COMPLETED']
     .filter(task => {
       if (!completedDateFilter) return true;
-      if (!task.due_date) return false;
-      return task.due_date.split('T')[0] === completedDateFilter;
+      if (!task.completed_at) return false;
+      return task.completed_at.split('T')[0] === completedDateFilter;
     })
     .sort((a, b) => {
       // ✅ ASC: oldest completed_at first, newest last
@@ -2061,10 +2061,10 @@ const filterChip = document.getElementById('completed-filter-chip');
       let completedTasks = currentTasks.filter(t => t.status === 'COMPLETED');
 
       // Sync active dynamic layout filter boundary checks
-      if (completedDateFilter) {
+if (completedDateFilter) {
         completedTasks = completedTasks.filter(t => {
-          if (!t.due_date) return false;
-          return t.due_date.split('T')[0] === completedDateFilter;
+          if (!t.completed_at) return false;
+          return t.completed_at.split('T')[0] === completedDateFilter;
         });
       }
 
