@@ -1188,6 +1188,27 @@ function playAlarmSound() {
 
 function closeAlarmPanel() { document.getElementById('alarmPanel').style.display = 'none'; }
 
+// 🔥 MM input: Enter → move to SS box
+document.getElementById('alarmMM').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('alarmSS').focus();
+    document.getElementById('alarmSS').select();
+  }
+});
+
+// 🔥 SS input: Enter → start or resume timer
+document.getElementById('alarmSS').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (_alarmPaused) {
+      resumeAlarm();
+    } else {
+      startAlarm();
+    }
+  }
+});
+
 document.getElementById('alarmBtn').addEventListener('click', function(e) {
   e.stopPropagation();
 
@@ -1335,9 +1356,34 @@ function triggerAlarm() {
   document.getElementById('alarmCountdown').textContent = '🍅 Time Up!';
   document.getElementById('alarmCountdown').style.color = '#ef4444';
   document.getElementById('navAlarmCountdown').textContent = '00:00';
-  document.getElementById('alarmCancelBtn').style.display = 'block'; // RESET
-document.getElementById('alarmResetBtn').style.display = 'block';  // PAUSE
-document.getElementById('alarmStartBtn').style.display = 'none';
+  document.getElementById('alarmCancelBtn').style.display = 'block';
+  document.getElementById('alarmResetBtn').style.display = 'block';
+  document.getElementById('alarmStartBtn').style.display = 'none';
+
+  // 🔥 SEND PUSH NOTIFICATION when timer ends
+  try {
+    const role    = '<%= session.role %>';
+    const adminId = '<%= session.adminId || "" %>';
+    const userId  = '<%= session.userId  || "" %>';
+
+    let interest = '';
+    if (role === 'admin') {
+      interest = `admin-user-${adminId}`;
+    } else {
+      // user or owner
+      interest = `user-${userId}`;
+    }
+
+    fetch('/send-pomodoro-done', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ interest })
+    }).catch(err => console.warn('[Pomodoro] Push notify failed:', err));
+
+  } catch(e) {
+    console.warn('[Pomodoro] Push error:', e);
+  }
+
   // 5 sec baad auto reset
   setTimeout(() => {
     cancelAlarm(true);
