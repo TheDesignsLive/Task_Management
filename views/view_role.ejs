@@ -371,10 +371,21 @@ table tr:hover td {
       <label style="display: block; font-weight: bold; margin-bottom: 5px;">Control Type</label>
       <select name="control_type" required>
         <option value="">Select Control Type</option>
-        <option value="OWNER">OWNER</option>
-        <option value="ADMIN">ADMIN</option>
-        <option value="PARTIAL">PARTIAL</option>
-        <option value="NONE">NONE</option>
+        <% if (session.role === 'admin' || session.role === 'owner') { %>
+          <option value="OWNER">OWNER</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="PARTIAL">PARTIAL</option>
+          <option value="NONE">NONE</option>
+        <% } else if (session.control_type === 'ADMIN') { %>
+          <option value="ADMIN">ADMIN</option>
+          <option value="PARTIAL">PARTIAL</option>
+          <option value="NONE">NONE</option>
+        <% } else if (session.control_type === 'PARTIAL') { %>
+          <option value="PARTIAL">PARTIAL</option>
+          <option value="NONE">NONE</option>
+        <% } else { %>
+          <option value="NONE">NONE</option>
+        <% } %>
       </select>
 
       <label style="display: block; font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Assign Team</label>
@@ -412,10 +423,21 @@ table tr:hover td {
 
       <label style="display: block; font-weight: bold; margin-bottom: 5px;">Control Type</label>
       <select name="control_type" id="edit_control_type" required>
-           <option value="OWNER">OWNER</option>
-        <option value="ADMIN">ADMIN</option>
-        <option value="PARTIAL">PARTIAL</option>
-        <option value="NONE">NONE</option>
+        <% if (session.role === 'admin' || session.role === 'owner') { %>
+          <option value="OWNER">OWNER</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="PARTIAL">PARTIAL</option>
+          <option value="NONE">NONE</option>
+        <% } else if (session.control_type === 'ADMIN') { %>
+          <option value="ADMIN">ADMIN</option>
+          <option value="PARTIAL">PARTIAL</option>
+          <option value="NONE">NONE</option>
+        <% } else if (session.control_type === 'PARTIAL') { %>
+          <option value="PARTIAL">PARTIAL</option>
+          <option value="NONE">NONE</option>
+        <% } else { %>
+          <option value="NONE">NONE</option>
+        <% } %>
       </select>
 
       <label style="display: block; font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Assign to Team (Optional)</label>
