@@ -540,7 +540,7 @@ router.post('/send-pomodoro-done', async (req, res) => {
       web: {
         notification: {
           title: '🍅 Pomodoro Done!',
-          body: 'Your timer has ended. Time for a break!',
+          body: 'Your timer has ended !',
           icon: 'https://tms.thedesigns.live/images/tms_logo.jpeg',
           deep_link: 'https://tms.thedesigns.live',
         }
