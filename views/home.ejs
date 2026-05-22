@@ -2909,22 +2909,26 @@ document.addEventListener('DOMContentLoaded', () => {
 const board = document.querySelector('.board-scroll');
 
 // ✅ FIX: Forward horizontal scroll from inner columns to board-scroll
-// Needed on Hostinger where wheel events don't bubble through sticky/overflow containers
+// Supports: Shift+wheel, trackpad 2-finger horizontal, horizontal wheel
 (function() {
   const innerCols = document.querySelectorAll(
     '.task-change, .task-update, .task-other, .completed-section, .right-section, .top-columns'
   );
   innerCols.forEach(col => {
     col.addEventListener('wheel', function(e) {
-      // If scrolling is mostly horizontal, or if the column has no vertical overflow to consume
-      const isVertical = Math.abs(e.deltaY) > Math.abs(e.deltaX);
-      const canScrollVertically = col.scrollHeight > col.clientHeight;
+      const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      const isShiftWheel = e.shiftKey && e.deltaY !== 0;
 
-      if (!isVertical || !canScrollVertically) {
-        // Forward to board-scroll for horizontal scrolling
+      if (isHorizontal) {
+        // 2-finger trackpad horizontal swipe
         e.preventDefault();
-        board.scrollLeft += e.deltaY || e.deltaX;
+        board.scrollLeft += e.deltaX;
+      } else if (isShiftWheel) {
+        // Shift + mouse wheel → horizontal scroll
+        e.preventDefault();
+        board.scrollLeft += e.deltaY;
       }
+      // Plain vertical scroll → do nothing, let column scroll vertically normally
     }, { passive: false });
   });
 })();
