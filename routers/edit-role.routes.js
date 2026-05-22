@@ -13,7 +13,7 @@ router.post("/edit-role/:id", async (req, res) => {
         if (!role_name || !control_type) {
             return res.json({ success: false, message: 'All fields required' });
         }
-        // Block privilege escalation — user cannot assign higher control type than their own
+     
         const sRole = req.session.role;
         const sCT   = req.session.control_type;
         const allowed = (sRole === 'admin' || sRole === 'owner')
