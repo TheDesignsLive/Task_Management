@@ -969,19 +969,27 @@ function toggleCustomMenu(event, id) {
     if (activeAssignMenu && activeAssignMenu !== menu) activeAssignMenu.style.display = 'none';
     if (activeMenu) { activeMenu.style.display = 'none'; activeMenu = null; }
     
-    if(menu.style.display === 'block') {
+    if (menu.style.display === 'block') {
         menu.style.display = 'none';
         activeAssignMenu = null;
     } else {
-        menu.style.display = 'block';
-        
-        // Break out of overflow boundaries
         const rect = btn.getBoundingClientRect();
         menu.style.position = 'fixed';
-        menu.style.top = rect.bottom + 'px';
         menu.style.left = rect.left + 'px';
         menu.style.zIndex = '99999';
-        
+
+        // Measure menu height before positioning
+        menu.style.top = '-9999px';
+        menu.style.display = 'block';
+        const menuH = menu.offsetHeight || 150;
+        const spaceBelow = window.innerHeight - rect.bottom;
+
+        if (spaceBelow < menuH + 8) {
+            menu.style.top = (rect.top - menuH - 4) + 'px';
+        } else {
+            menu.style.top = rect.bottom + 'px';
+        }
+
         activeAssignMenu = menu;
     }
 }
