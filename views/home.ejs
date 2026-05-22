@@ -1625,23 +1625,35 @@ function enableDateDragForAllSections() {
 
       const due_date = `${parts[0]}-${parts[1]}-${parts[2]}`;
 
+// REPLACE THIS: instant local update then fire-and-forget
       if (draggingId === '__multi__') {
         const ids = [...selectedTaskIds];
         if (!ids.length) return;
-        await fetch('/api/bulk-update-date', {
+        ids.forEach(id => {
+          const localTask = currentTasks.find(t => String(t.id) === String(id));
+          if (localTask) localTask.due_date = due_date;
+        });
+        renderAllSections(currentTasks);
+        _selfUpdating = true;
+        fetch('/api/bulk-update-date', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids, due_date })
-        });
+        }).then(() => setTimeout(() => { _selfUpdating = false; }, 2000))
+          .catch(() => { _selfUpdating = false; refreshTasksUI(); });
       } else {
-        await fetch('/update-task-date', {
+        const localTask = currentTasks.find(t => String(t.id) === String(draggingId));
+        if (localTask) localTask.due_date = due_date;
+        renderAllSections(currentTasks);
+        _selfUpdating = true;
+        fetch('/update-task-date', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: draggingId, due_date })
-        });
+        }).then(() => setTimeout(() => { _selfUpdating = false; }, 2000))
+          .catch(() => { _selfUpdating = false; refreshTasksUI(); });
       }
-
-      await refreshTasksUI();
+      // removed: await refreshTasksUI() — instant local update replaces it
     });
 
   });
@@ -1698,14 +1710,15 @@ document.addEventListener('dragstart', (e) => {
     _draggingId = e.target.dataset.id;
   }
 });
+// REPLACE THIS: also clear _lastDragState cache on all containers at end of drag
 document.addEventListener('dragend', () => {
   _draggingId = null;
-  // Clean up all invalid overlays.
   document.querySelectorAll('.drop-invalid-overlay').forEach(el => el.remove());
   Object.keys(containers).forEach(id => {
     const c = document.getElementById(id);
     if (c) {
       c.classList.remove('drop-active', 'drop-invalid');
+      c._lastDragState = null; // ✅ reset cache so next drag starts fresh
     }
   });
 });
@@ -1713,49 +1726,60 @@ document.addEventListener('dragend', () => {
  Object.keys(containers).forEach(containerId => {
     const container = document.getElementById(containerId);
 
+// REPLACE THIS: dragover fires 30-60x/sec — track last state to skip redundant DOM work
+let _lastAllowedState = null; // null | true | false | 'same'
+
 container.addEventListener('dragover', e => {
+  e.preventDefault();
+  if (!_draggingId) return;
+
+  const allowed = isDropAllowed(_draggingId, containerId);
+  const stateKey = allowed === null ? 'same' : (allowed ? 'allowed' : 'denied');
+
+  // ✅ Skip all DOM work if state hasn't changed since last dragover on this container
+  if (container._lastDragState === stateKey) return;
+  container._lastDragState = stateKey;
+
+  if (stateKey === 'same') {
+    container.classList.remove('drop-active', 'drop-invalid');
+    const ex = container.querySelector('.drop-invalid-overlay');
+    if (ex) ex.remove();
+  } else if (stateKey === 'allowed') {
+    container.classList.add('drop-active');
+    container.classList.remove('drop-invalid');
+    const ex = container.querySelector('.drop-invalid-overlay');
+    if (ex) ex.remove();
+  } else {
+    container.classList.remove('drop-active');
+    container.classList.add('drop-invalid');
+    if (!container.querySelector('.drop-invalid-overlay')) {
+      const ov = document.createElement('div');
+      ov.className = 'drop-invalid-overlay';
+      ov.innerHTML = '🚫';
+      container.appendChild(ov);
+    }
+  }
+});
+
+// REPLACE THIS: also reset _lastDragState so dragover re-evaluates after re-entry
+container.addEventListener('dragleave', (e) => {
+  const related = e.relatedTarget;
+  if (related && container.contains(related)) return;
+  container._lastDragState = null; // ✅ reset cache on leave
+  container.classList.remove('drop-active', 'drop-invalid');
+  const overlay = container.querySelector('.drop-invalid-overlay');
+  if (overlay) overlay.remove();
+});
+
+// REPLACE THIS: was two separate drop listeners causing double-fire
+    container.addEventListener('drop', async (e) => {
       e.preventDefault();
-      if (!_draggingId) return;
-      const allowed = isDropAllowed(_draggingId, containerId);
-      if (allowed === null) {
-        // Same section — no highlight at all
-        container.classList.remove('drop-active', 'drop-invalid');
-        const existing = container.querySelector('.drop-invalid-overlay');
-        if (existing) existing.remove();
-      } else if (allowed) {
-        container.classList.add('drop-active');
-        container.classList.remove('drop-invalid');
-        const existing = container.querySelector('.drop-invalid-overlay');
-        if (existing) existing.remove();
-      } else {
-        container.classList.remove('drop-active');
-        container.classList.add('drop-invalid');
-        if (!container.querySelector('.drop-invalid-overlay')) {
-          const overlay = document.createElement('div');
-          overlay.className = 'drop-invalid-overlay';
-          overlay.innerHTML = '🚫';
-          container.appendChild(overlay);
-        }
-      }
-    });
-
-    container.addEventListener('dragleave', (e) => {
-      // Only remove if truly leaving the container (not entering a child)
-      if (!container.contains(e.relatedTarget)) {
-        container.classList.remove('drop-active', 'drop-invalid');
-        const overlay = container.querySelector('.drop-invalid-overlay');
-        if (overlay) overlay.remove();
-      }
-    });
-
-    container.addEventListener('drop', (e) => {
+      // cleanup always runs first, in the same handler
       container.classList.remove('drop-active', 'drop-invalid');
       const overlay = container.querySelector('.drop-invalid-overlay');
       if (overlay) overlay.remove();
-    });
 
-container.addEventListener('drop', async (e) => {
-  e.preventDefault();
+      // ... rest of drop logic (unchanged)
 
   const draggingId = e.dataTransfer.getData('text/plain');
   if (!draggingId) return;
@@ -1816,22 +1840,36 @@ container.addEventListener('drop', async (e) => {
 
     if (!allowedIds.length) return;
 
-    await fetch('/api/bulk-update-section', {
+// REPLACE THIS: instant local update, no await on refreshTasksUI during drag
+    allowedIds.forEach(id => {
+      const localTask = currentTasks.find(t => String(t.id) === String(id));
+      if (localTask) {
+        localTask.section = targetSection;
+        if (due_date !== undefined && due_date !== null) localTask.due_date = due_date;
+      }
+    });
+    clearSelection();
+    renderAllSections(currentTasks); // instant, no server wait
+
+    _selfUpdating = true;
+    fetch('/api/bulk-update-section', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: allowedIds, section: targetSection })
+    }).then(() => {
+      if (due_date !== undefined && due_date !== null) {
+        return fetch('/api/bulk-update-date', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: allowedIds, due_date })
+        });
+      }
+    }).then(() => {
+      setTimeout(() => { _selfUpdating = false; }, 2000);
+    }).catch(() => {
+      _selfUpdating = false;
+      refreshTasksUI(); // revert on error
     });
-
-    if (due_date !== undefined && due_date !== null) {
-      await fetch('/api/bulk-update-date', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: allowedIds, due_date })
-      });
-    }
-
-    clearSelection();
-    await refreshTasksUI();
     return;
   }
 
@@ -1884,21 +1922,34 @@ container.addEventListener('drop', async (e) => {
     }
   }
 
-  await fetch('/update-task-section', {
+// REPLACE THIS: fire-and-forget + instant local state update, no await on UI
+  const localTask = currentTasks.find(t => String(t.id) === String(draggingId));
+  if (localTask) {
+    localTask.section = targetSection;
+    if (due_date !== undefined && due_date !== null) localTask.due_date = due_date;
+  }
+  renderAllSections(currentTasks); // instant UI, no server wait
+
+  _selfUpdating = true;
+  fetch('/update-task-section', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: draggingId, section: targetSection })
+  }).then(() => {
+    if (due_date !== undefined && due_date !== null) {
+      return fetch('/update-task-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: draggingId, due_date })
+      });
+    }
+  }).then(() => {
+    setTimeout(() => { _selfUpdating = false; }, 2000);
+  }).catch(() => {
+    _selfUpdating = false;
+    refreshTasksUI(); // revert on error
   });
-  await refreshTasksUI();
-
-  if (due_date !== undefined) {
-    await fetch('/update-task-date', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: draggingId, due_date })
-    });
-  }
-});
+  });
   });
   }
 
@@ -1950,31 +2001,48 @@ container.addEventListener('drop', async (e) => {
     });
 }
 
+// REPLACE THIS: _wasDragging reset moved to dragend only, set true immediately on dragstart
+// Also: dataTransfer effectAllowed set for better browser compatibility
 let _wasDragging = false;
+let _dragStarted = false; // guards against phantom dragstart on click
 
 document.addEventListener('dragstart', (e) => {
   const taskEl = e.target.closest('.task-item');
-  if(taskEl) {
-    _wasDragging = false;
-    const draggedId = taskEl.dataset.id;
-    if (selectedTaskIds.size > 1 && selectedTaskIds.has(draggedId)) {
-      _wasDragging = true;
-      e.dataTransfer.setData('text/plain', '__multi__');
-      document.querySelectorAll('.task-item').forEach(el => {
-        if (selectedTaskIds.has(el.dataset.id)) el.classList.add('dragging');
-      });
-    } else {
-      e.dataTransfer.setData('text/plain', draggedId);
-      taskEl.classList.add('dragging');
-    }
+  if (!taskEl) return;
+
+  // Some browsers fire dragstart on non-draggable elements — guard it
+  if (taskEl.draggable === false || taskEl.getAttribute('draggable') === 'false') {
+    e.preventDefault();
+    return;
+  }
+
+  _dragStarted = true;
+  _wasDragging = true; // set immediately, not after delay
+  e.dataTransfer.effectAllowed = 'move'; // tells browser this is a move, not copy
+
+  const draggedId = taskEl.dataset.id;
+  if (selectedTaskIds.size > 1 && selectedTaskIds.has(draggedId)) {
+    e.dataTransfer.setData('text/plain', '__multi__');
+    document.querySelectorAll('.task-item').forEach(el => {
+      if (selectedTaskIds.has(el.dataset.id)) el.classList.add('dragging');
+    });
+  } else {
+    e.dataTransfer.setData('text/plain', draggedId);
+    taskEl.classList.add('dragging');
   }
 });
+
 document.addEventListener('dragend', (e) => {
-  if(e.target.classList.contains('task-item')) {
-    document.querySelectorAll('.task-item.dragging').forEach(el => el.classList.remove('dragging'));
-    // ✅ Reset flag after short delay so click handler can check it
-    setTimeout(() => { _wasDragging = false; }, 100);
-  }
+  _dragStarted = false;
+  document.querySelectorAll('.task-item.dragging').forEach(el => el.classList.remove('dragging'));
+  // Cleanup all drop states in case drop event didn't fire (e.g. dropped outside)
+  document.querySelectorAll('.drop-invalid-overlay').forEach(el => el.remove());
+  Object.keys({ 'task-section': 1, 'change-section': 1, 'update-section': 1, 'other-section': 1 }).forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.classList.remove('drop-active', 'drop-invalid');
+  });
+  // Delay reset so click handler on dragend can still read _wasDragging = true
+  setTimeout(() => { _wasDragging = false; }, 150);
 });
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -2704,46 +2772,62 @@ function showToast(msg) {
     return;
   }
 
+// REPLACE THIS: instant local update before server, no await refreshTasksUI
   if (action.startsWith('date-')) {
     hideContextMenu();
     const due_date = getTargetDate(action);
     if (!due_date) return;
 
+    // ✅ Instant optimistic update
+    ids.forEach(id => {
+      const localTask = currentTasks.find(t => String(t.id) === String(id));
+      if (localTask) localTask.due_date = due_date;
+    });
+    clearSelection();
+    renderAllSections(currentTasks);
+    showToast('Dates updated');
+
+    _selfUpdating = true;
     fetch('/api/bulk-update-date', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids, due_date })
     })
-    .then(r => r.json())
-    .then(async data => {
-      if (data.success) {
-        clearSelection();
-        await refreshTasksUI();
-        showToast('Dates updated');
-      }
-    })
-    .catch(err => console.error('bulk-update-date error:', err));
+    .then(() => { setTimeout(() => { _selfUpdating = false; }, 2000); })
+    .catch(err => {
+      _selfUpdating = false;
+      console.error('bulk-update-date error:', err);
+      refreshTasksUI(); // revert on error
+    });
     return;
   }
 
-  // PRIORITY ACTIONS
+// REPLACE THIS: instant local update before server, no await refreshTasksUI
   if (action.startsWith('priority-')) {
     hideContextMenu();
     const priority = action.replace('priority-', '');
+
+    // ✅ Instant optimistic update
+    ids.forEach(id => {
+      const localTask = currentTasks.find(t => String(t.id) === String(id));
+      if (localTask) localTask.priority = priority.toUpperCase();
+    });
+    clearSelection();
+    renderAllSections(currentTasks);
+    showToast('Priority updated');
+
+    _selfUpdating = true;
     fetch('/api/bulk-update-priority', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids, priority })
     })
-    .then(r => r.json())
-    .then(async data => {
-      if (data.success) {
-        clearSelection();
-        await refreshTasksUI();
-        showToast('Priority updated');
-      }
-    })
-    .catch(err => console.error('bulk-update-priority error:', err));
+    .then(() => { setTimeout(() => { _selfUpdating = false; }, 2000); })
+    .catch(err => {
+      _selfUpdating = false;
+      console.error('bulk-update-priority error:', err);
+      refreshTasksUI(); // revert on error
+    });
     return;
   }
 }
@@ -2825,19 +2909,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Section move
 document.addEventListener('DOMContentLoaded', () => {
+// REPLACE THIS: instant local update, no await on refreshTasksUI
   document.querySelectorAll('#task-context-menu .ctx-item[data-action^="section-"]').forEach(item => {
-    item.addEventListener('click', async (e) => {
+    item.addEventListener('click', (e) => {
       e.stopPropagation();
       hideContextMenu();
       const section = item.dataset.action.replace('section-', '');
       const ids = [...selectedTaskIds];
       if (!ids.length) return;
-      await fetch('/api/bulk-update-section', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, section })
+
+      // ✅ Instant optimistic update
+      ids.forEach(id => {
+        const localTask = currentTasks.find(t => String(t.id) === String(id));
+        if (localTask) localTask.section = section;
       });
       clearSelection();
-      await refreshTasksUI();
+      renderAllSections(currentTasks);
+
+      _selfUpdating = true;
+      fetch('/api/bulk-update-section', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, section })
+      })
+      .then(() => { setTimeout(() => { _selfUpdating = false; }, 2000); })
+      .catch(() => { _selfUpdating = false; refreshTasksUI(); });
     });
   });
 });
@@ -2861,21 +2956,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //
 // ── Mark as Done ──
-  document.querySelector('.ctx-done-btn').addEventListener('click', async (e) => {
+// REPLACE THIS: instant local update, fire-and-forget server calls
+  document.querySelector('.ctx-done-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     hideContextMenu();
     const ids = [...selectedTaskIds];
     if (!ids.length) return;
-    await Promise.all(ids.map(id =>
+
+    // ✅ Instant optimistic update
+    ids.forEach(id => {
+      const localTask = currentTasks.find(t => String(t.id) === String(id));
+      if (localTask) {
+        localTask.status = 'COMPLETED';
+        localTask.section = 'COMPLETED';
+        localTask.completed_at = new Date().toISOString();
+      }
+    });
+    clearSelection();
+    renderAllSections(currentTasks);
+    showToast('Tasks marked as done');
+
+    _selfUpdating = true;
+    Promise.all(ids.map(id =>
       fetch('/update-task-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status: 'COMPLETED', section: 'COMPLETED' })
       })
-    ));
-    clearSelection();
-    await refreshTasksUI();
-    showToast('Tasks marked as done');
+    ))
+    .then(() => { setTimeout(() => { _selfUpdating = false; }, 2000); })
+    .catch(() => { _selfUpdating = false; refreshTasksUI(); });
   });
   //
 
@@ -3046,11 +3156,13 @@ const board = document.querySelector('.board-scroll');
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io();
-    socket.on('update_tasks', () => {
-      // ✅ FIX: _selfUpdating filter hata diya taaki state clone bante hi UI auto-refresh ho jaye
-      refreshTasksUI();
-    });
+// REPLACE THIS: _selfUpdating was being set but never checked here
+// This caused socket to overwrite your optimistic UI immediately after drag
+const socket = io();
+socket.on('update_tasks', () => {
+  if (_selfUpdating) return; // ✅ skip if WE triggered this update — optimistic UI already correct
+  refreshTasksUI();
+});
 </script>
 </body>
 </html>
