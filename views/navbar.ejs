@@ -1149,21 +1149,38 @@ let alarmAudio;
 function playAlarmSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(freq, start, dur) {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.type = 'sine'; o.frequency.value = freq;
-      g.gain.setValueAtTime(0.001, ctx.currentTime + start);
-      g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + start + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-      o.start(ctx.currentTime + start);
-      o.stop(ctx.currentTime + start + dur + 0.05);
+
+    function tone(freq, start, duration) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      // Smooth digital tone
+      osc.type = "triangle";   // 🔥 softer than sine
+      osc.frequency.value = freq;
+
+      // Soft fade-in / fade-out (gadget feel)
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + duration);
+
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + duration + 0.05);
     }
-    beep(880,0,0.18); beep(880,0.25,0.18); beep(1050,0.5,0.35);
-    beep(880,1.0,0.18); beep(880,1.25,0.18); beep(1050,1.5,0.35);
-    beep(880,2.0,0.18); beep(880,2.25,0.18); beep(1050,2.5,0.5);
-  } catch(e) { console.warn('[Alarm] Audio error:', e); }
+
+    // 🔥 Pattern like cube clock (looping soft pulses)
+    let t = 0;
+    for (let i = 0; i < 6; i++) {
+      tone(900, t, 0.25);
+      tone(700, t + 0.25, 0.25);
+      t += 0.6;
+    }
+
+  } catch (e) {
+    console.warn('[Alarm] Audio error:', e);
+  }
 }
 
 function closeAlarmPanel() { document.getElementById('alarmPanel').style.display = 'none'; }
