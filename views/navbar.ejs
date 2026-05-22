@@ -710,7 +710,7 @@ right:20px;
     <div style="font-size:11px; color:#aaa; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Enter manually</div>
     <div style="display:flex; gap:6px; align-items:center; margin-bottom:14px; justify-content:center;">
       <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
-        <input id="alarmMM" type="number" min="0" max="99" placeholder="00" style="
+        <input id="alarmMM" type="number" min="0" max="99" placeholder="00" maxlength="2" oninput="this.value=this.value.slice(0,2)" style="
           width:62px; text-align:center; padding:6px 4px;
           background:#2a4a4a; border:1px solid #0f9d9a;
           border-radius:8px; color:#fff; font-size:15px;
@@ -720,7 +720,7 @@ right:20px;
       </div>
       <span style="font-size:18px; color:#0f9d9a; font-weight:700; margin-bottom:12px;">:</span>
       <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
-        <input id="alarmSS" type="number" min="0" max="59" placeholder="00" style="
+        <input id="alarmSS" type="number" min="0" max="59" placeholder="00" maxlength="2" oninput="this.value=this.value.slice(0,2)" style="
           width:62px; text-align:center; padding:6px 4px;
           background:#2a4a4a; border:1px solid #0f9d9a;
           border-radius:8px; color:#fff; font-size:15px;
