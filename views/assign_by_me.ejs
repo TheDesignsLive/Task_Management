@@ -28,25 +28,25 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .task-item { font-size: 13px; padding: 6px; margin: 6px 0; background-color: #444; color: #fff; border-radius: 4px; transition: background 0.2s; }
 .task-item:hover { background-color: #555; }
 .completed-task { opacity: 0.6; background-color: #2E2D2D; }
-.task-row { display: flex; align-items: center; gap: 10px; position: relative; }
-.task-title { flex: 1.2; min-width: 0; word-break: break-word; }
-.task-desc { flex: 1.5; min-width: 0; word-break: break-word; font-size: 11px; opacity: 0.8; }
-.task-sec-val { flex: 0 0 60px; font-size: 10px; font-weight: bold; text-align: center; background: #ddd; border-radius: 4px; padding: 2px 6px; color: #333; white-space: nowrap; width: 60px; overflow: hidden; text-overflow: ellipsis; align-self: center; }
-.task-assign { flex: 0 0 110px; min-width: 0; text-align: center; align-self: center; display: flex; align-items: center; justify-content: center; }
-.task-date { flex: 0 0 auto; font-size: 10px; opacity: 0.7; text-align: right; white-space: nowrap; }
+.task-row { display: flex; align-items: center; gap: 10px; position: relative; min-height: 28px; flex-wrap: nowrap; }
+.task-title { flex: 1; min-width: 0; word-break: break-word; align-self: center; line-height: 1.3; font-size: 13px; }
+.task-desc { flex: 1.5; min-width: 0; word-break: break-word; font-size: 11px; opacity: 0.8; align-self: center; }
+.task-sec-val { flex: 0 0 55px; font-size: 10px; font-weight: bold; text-align: center; background: #ddd; border-radius: 4px; padding: 0 4px; color: #333; white-space: nowrap; width: 55px; overflow: hidden; text-overflow: ellipsis; align-self: center; height: 20px; line-height: 20px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; flex-shrink: 0; }
+.task-assign { flex: 0 0 115px; min-width: 0; text-align: center; align-self: center; display: flex; align-items: center; justify-content: center; height: 20px; box-sizing: border-box; flex-shrink: 0; }
+.task-date { flex: 0 0 38px; font-size: 10px; opacity: 0.7; text-align: right; white-space: nowrap; align-self: center; line-height: 20px; height: 20px; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; cursor: pointer; }
 .task-date.past-date { color: #e24c4c !important; opacity: 1; }
-.task-info-icon { flex-shrink: 0; cursor: pointer; color: #aaa; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; vertical-align: middle; align-self: center; }
+.task-info-icon { flex-shrink: 0; cursor: pointer; color: #aaa; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; align-self: center; margin: 0; padding: 0; }
 .task-info-icon:hover { color: white; stroke: white; }
 .desc-tooltip { display: none; }
 .task-item.abm-expanded .abm-task-details { display: block !important; }
-.task-checkbox { width: 12px; height: 12px; appearance: none; border: 2px solid white; border-radius: 3px; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; }
+.task-checkbox { width: 12px; height: 12px; appearance: none; border: 2px solid white; border-radius: 3px; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; align-self: center; margin-top: 0; }
 .task-checkbox:checked::after { content: "✔"; position: absolute; top: 0; left: 1px; font-size: 7px; color: white; }
 .priority-HIGH { border-color: #ff4d4d; }
 .priority-MEDIUM { border-color: #ffd633; }
 .priority-LOW { border-color: #4da6ff; }
 
 #delete-completed { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; transition: transform 0.2s, fill 0.2s; fill: #e74c3c; }
-.dots-btn { cursor: pointer; padding: 0 5px; color: #959494; font-size: 14px; margin-left: 5px; }
+.dots-btn { cursor: pointer; padding: 0 4px; color: #959494; font-size: 14px; margin-left: 0; align-self: center; display: flex; align-items: center; justify-content: center; height: 20px; width: 18px; flex-shrink: 0; }
 .task-options-menu { display: none; position: absolute; right: 25px; top: 25px; background: white; color: #333; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; min-width: 100px; }
 .task-options-menu div { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .modal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
@@ -87,7 +87,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
   color: white; 
   border: 1px solid #666; 
   border-radius: 16px; 
-  padding: 3px 10px 3px 8px; 
+  padding: 0 10px 0 8px; 
   cursor: pointer; 
   font-size: 11px; 
   width: 100%; 
@@ -99,6 +99,8 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis;
+  height: 20px;
+  line-height: 20px;
 }
 
 .assign-by-me-page .custom-select-btn::after { 
@@ -882,7 +884,7 @@ item.innerHTML = `
                         <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
                         <div class="task-title">${task.title}</div>
                         <div class="task-sec-val">${task.section === 'CHANGES' ? LABEL_CHANGES : task.section === 'UPDATE' ? LABEL_UPDATE : (task.section || 'TASK')}</div>
-                        <div class="task-assign"><span style="font-size: 11px;" title="${task.assigned_to}">${truncateName(task.assigned_to, 10)}</span></div>
+<div class="task-assign"><span style="font-size: 11px; height: 20px; line-height: 20px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="${task.assigned_to}">${truncateName(task.assigned_to, 13)}</span></div>
 <svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="visibility:${hasDesc ? 'visible' : 'hidden'}; pointer-events:${hasDesc ? 'auto' : 'none'};"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>
                         <div class="task-date">${formatDate(task.due_date)}</div>
                         <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
