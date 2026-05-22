@@ -41,6 +41,7 @@ const memberRequest = require('./routers/memberRequest.routes');
 const AssignByMe = require('./routers/assign_by_me.routes');
 const profile = require('./routers/profile.routes');
 const settings = require('./routers/settings.routes');
+const taskExport = require('./routers/task_export.routes');
 const forgotPasswordRoutes = require('./routers/forgot-password.routes');
 const SentMailRoutes = require('./routers/sent-mail.routes');
 const changePassword = require("./routers/change-password.routes");
@@ -430,8 +431,9 @@ app.get('/', (req, res) => {
 
 app.use('/', authRoutes);
 app.use('/', logoutRoutes);
-app.use('/', homeroutes);
 app.use('/',ma)
+app.use('/', homeroutes);
+
 
 
 
@@ -456,6 +458,7 @@ app.use('/assign_by_me', AssignByMe);
 app.use('/', notification);
 app.use('/profile', profile);
 app.use('/settings', settings);
+app.use('/', taskExport);
 app.use('/',allMemberTask);
 
 // Repeat tasks

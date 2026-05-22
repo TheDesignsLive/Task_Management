@@ -284,11 +284,65 @@ router.post('/update-task-status', async (req, res) => {
     if (!status || status === null) status = 'OPEN';
     if (!section || section === null) section = 'TASK';
 
-const completedAt = status === 'COMPLETED' ? new Date() : null;
+    const completedAt = status === 'COMPLETED' ? new Date() : null;
     await db.execute(
       `UPDATE tasks SET status = ?, section = ?, completed_at = ? WHERE id = ?`,
       [status, section, completedAt, id]
     );
+
+    // ── Repeat logic: spawn next task when completing a repeating task ──
+    if (status === 'COMPLETED') {
+      const [rows] = await con.query('SELECT * FROM tasks WHERE id=?', [id]);
+      if (rows.length > 0) {
+  const task = rows[0];
+  const repeatType = task.repeat_type;
+
+  console.log('[Repeat Debug] task id:', id, '| repeat_type:', repeatType, '| due_date:', task.due_date);
+
+  if (repeatType && repeatType !== 'none') {
+          let baseDate = task.due_date ? new Date(task.due_date) : new Date();
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (baseDate < today) baseDate = today;
+
+          let nextDate = new Date(baseDate);
+          if (repeatType === 'daily') {
+            nextDate.setDate(nextDate.getDate() + 1);
+          } else if (repeatType === 'weekly') {
+            nextDate.setDate(nextDate.getDate() + 7);
+          } else if (repeatType === 'monthly') {
+            nextDate.setMonth(nextDate.getMonth() + 1);
+          }
+
+          const nextDateStr = nextDate.toISOString().split('T')[0];
+
+          await con.query(
+  `INSERT INTO tasks 
+   (admin_id, title, description, priority, due_date, status, section,
+    assigned_by, assigned_to, who_assigned, repeat_type)
+   VALUES (?, ?, ?, ?, ?, 'OPEN', 'TASK', ?, ?, ?, ?)`,
+  [
+    task.admin_id,
+    task.title,
+    task.description,
+    task.priority,
+    nextDateStr,
+    task.assigned_by,
+    task.assigned_to,
+    task.who_assigned,
+    repeatType,
+  ]
+);
+
+          await con.query(
+            'UPDATE task_templates SET last_spawned=? WHERE id=?',
+            [nextDateStr, id]
+          ).catch(() => {});
+        }
+      }
+    }
+    // ── End repeat logic ──
 
     req.io.emit('update_tasks');
     notifyMobile();
