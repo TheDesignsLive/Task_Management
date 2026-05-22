@@ -1359,16 +1359,24 @@ const editOpt = div.querySelector('.edit-opt');
       document.getElementById('repeat-modal-close').addEventListener('click', () => overlay.remove());
       overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
 
- overlay.querySelectorAll('[data-repeat-val]').forEach(btn => {
+overlay.querySelectorAll('[data-repeat-val]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const newRepeat = btn.dataset.repeatVal;
           overlay.remove();
-          await fetch('/api/repeat/set-repeat', {
+
+          // ✅ Update local state instantly — no wait for server
+          const localTask = currentTasks.find(t => t.id == task.id);
+          if (localTask) {
+            localTask.repeat_type = newRepeat;
+          }
+          renderAllSections(currentTasks);
+
+          // ✅ Fire-and-forget — socket will sync other users
+          fetch('/api/repeat/set-repeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ task_id: task.id, repeat_type: newRepeat })
           });
-          await refreshTasksUI();
         });
       });
     });

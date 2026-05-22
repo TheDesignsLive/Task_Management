@@ -40,7 +40,7 @@ tasks = [...taskRows, ...otherTaskRows];
             // ✅ FIXED (removed 'OTHERS' hardcode)
 const [adminTasksRows] = await con.query(
     `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-            t.assigned_by, t.assigned_to, t.who_assigned, t.admin_id,
+            t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type, t.admin_id,
             a.name AS assigned_by_name 
      FROM tasks t 
      JOIN admins a ON t.assigned_by = a.id 
@@ -60,7 +60,7 @@ const [userOwnTasksRows] = await con.query(
 
 const [userToOthersTasksRows] = await con.query(
     `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.status, t.section,
-            t.assigned_by, t.assigned_to, t.who_assigned, t.admin_id,
+            t.assigned_by, t.assigned_to, t.who_assigned, t.repeat_type, t.admin_id,
             u.name AS assigned_by_name 
      FROM tasks t 
      JOIN users u ON t.assigned_by = u.id 
