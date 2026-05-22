@@ -26,7 +26,13 @@ router.get('/task-export', async (req, res) => {
                     WHEN t.who_assigned = 'admin' AND t.assigned_to = 0 THEN 1
                     WHEN t.who_assigned != 'admin' AND t.assigned_by = t.assigned_to THEN 1
                     ELSE 0
-                END AS is_self
+                END AS is_self,
+                CASE t.section
+                    WHEN 'TASK' THEN 'Task'
+                    WHEN 'OTHERS' THEN 'Others'
+                    WHEN 'COMPLETED' THEN 'Completed'
+                    ELSE t.section
+                END AS section_label
             FROM tasks t
             LEFT JOIN admins a ON t.assigned_by = a.id AND t.who_assigned = 'admin'
             LEFT JOIN users u2 ON t.assigned_by = u2.id AND t.who_assigned != 'admin'
@@ -41,7 +47,9 @@ router.get('/task-export', async (req, res) => {
             params.push(userId);
         }
 
-        if (section === 'COMPLETED') {
+        if (section === 'ALL') {
+            // Koi section filter nahi — sab aayega
+        } else if (section === 'COMPLETED') {
             query += ` AND t.status = 'COMPLETED'`;
         } else {
             query += ` AND t.status != 'COMPLETED' AND t.section = ?`;

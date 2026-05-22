@@ -767,6 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const EXPORT_SECTIONS = [
+  { key: 'ALL',       label: '📦 All Sections' },
   { key: 'TASK',      label: 'Task' },
   { key: 'CHANGES',   label: '<%= label_changes %>' },
   { key: 'UPDATE',    label: '<%= label_update %>' },
@@ -837,6 +838,7 @@ async function loadExportPreview(date) {
         <div style="font-size:11px;color:#888;display:flex;gap:10px;">
           <span>📅 ${t.due_date || 'No date'}</span>
           <span style="color:${pColors[p]};font-weight:700;">${p}</span>
+          ${t.section_label ? `<span style="color:#0f9d9a;">📂 ${t.section_label}</span>` : ''}
           ${t.assigned_by_name ? `<span>👤 ${t.assigned_by_name}</span>` : ''}
         </div>`;
       list.appendChild(div);
@@ -861,8 +863,9 @@ async function doExportExcel() {
     { key: 'title', width: 32 }, { key: 'desc', width: 42 },
     { key: 'priority', width: 12 }, { key: 'due', width: 16 },
     { key: 'created', width: 16 }, { key: 'by', width: 24 }, { key: 'status', width: 12 },
+    { key: 'section', width: 14 },
   ];
-  const hr = ws.addRow(['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status']);
+  const hr = ws.addRow(['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status', 'Section']);
   hr.height = 22;
   hr.eachCell(cell => {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F8989' } };
@@ -873,7 +876,7 @@ async function doExportExcel() {
   exportState.tasks.forEach(t => {
     const p = (t.priority || 'LOW').toUpperCase();
     const c = pc[p] || pc.LOW;
-    const row = ws.addRow([t.title||'', t.description||'', p, t.due_date||'', t.created_at||'', t.assigned_by_name||(t.is_self?'Self':''), t.status||'']);
+    const row = ws.addRow([t.title||'', t.description||'', p, t.due_date||'', t.created_at||'', t.assigned_by_name||(t.is_self?'Self':''), t.status||'', t.section_label||t.section||'']);
     row.height = 20;
     row.eachCell({ includeEmpty: true }, (cell, col) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + c.bg } };
@@ -889,13 +892,14 @@ async function doExportExcel() {
 }
 
 function doExportCsv() {
-  const header = ['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status'];
+  const header = ['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status', 'Section'];
   const rows = exportState.tasks.map(t => [
     `"${(t.title||'').replace(/"/g,'""')}"`,
     `"${(t.description||'').replace(/"/g,'""')}"`,
     t.priority||'', t.due_date||'', t.created_at||'',
     `"${((t.assigned_by_name||(t.is_self?'Self':''))||'').replace(/"/g,'""')}"`,
-    t.status||''
+    t.status||'',
+    t.section_label||t.section||''
   ]);
   const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
