@@ -45,7 +45,7 @@ const taskExport = require('./routers/task_export.routes');
 const forgotPasswordRoutes = require('./routers/forgot-password.routes');
 const SentMailRoutes = require('./routers/sent-mail.routes');
 const changePassword = require("./routers/change-password.routes");
-
+const pomodoroRoutes = require('./routers/pomodoro');
 const allMemberTask=require('./routers/all-member-task.routes');
 
 const ma=require('./routers/master.routes');
@@ -445,7 +445,7 @@ app.use('/', addmemberRoutes); //edit,delete,suspend
 app.use('/', memberRequest);
 
 app.use('/', viewTeamsRoutes);
-
+app.use('/', pomodoroRoutes);
 // Roles Management
 app.use('/', viewrole);
 // app.use('/add-role', addrole);
