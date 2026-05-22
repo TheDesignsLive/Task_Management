@@ -877,7 +877,7 @@ completedTasks.forEach(task => {
 
         const hasDesc = task.description && task.description !== '' && task.description !== 'null';
 
-        item.innerHTML = `
+item.innerHTML = `
                <div class="task-row" ondblclick="openEdit('${task.id}')">
                         <input type="checkbox" class="task-checkbox priority-${task.priority}" checked onchange="toggleCheckboxStatus('${task.id}', this)">
                         <div class="task-title">${task.title}</div>
@@ -890,7 +890,29 @@ completedTasks.forEach(task => {
                 <div onclick="openEdit('${task.id}')">Edit</div>
                 <div class="delete-opt" style="color:red" onclick="openSingleDelete('${task.id}')">Delete</div>
             </div>
-        </div>`;
+        </div>
+<!-- DESC EXPAND -->
+<div class="abm-task-details" style="display:none; padding: 6px 4px 2px 22px; font-size:11px; color:#ccc; border-top:1px solid #555; margin-top:4px; line-height:1.5;">${task.description || ''}</div>
+<!-- EDIT BOX -->
+<div class="edit-box" id="edit-${task.id}">
+    <input type="text" class="edit-title" id="title-${task.id}" value="${task.title}" placeholder="Title">
+    <textarea class="edit-desc" id="desc-${task.id}" placeholder="Description">${task.description || ''}</textarea>
+    <div class="edit-row">
+        <select class="edit-priority" id="priority-${task.id}">
+            <option value="HIGH" ${task.priority==='HIGH'?'selected':''}>High</option>
+            <option value="MEDIUM" ${task.priority==='MEDIUM'?'selected':''}>Medium</option>
+            <option value="LOW" ${task.priority==='LOW'?'selected':''}>Low</option>
+        </select>
+        <div class="date-wrapper">
+            <input type="text" class="edit-date" id="date-${task.id}" value="${task.due_date ? formatInputDate(task.due_date) : ''}" placeholder="Select date">
+            <span class="calendar-icon" onclick="openCalendar('date-${task.id}')">📅</span>
+        </div>
+    </div>
+    <div class="edit-actions">
+        <button class="save-btn" onclick="saveEdit('${task.id}')">Save</button>
+        <button class="cancel-btn" onclick="closeEdit('${task.id}')">Cancel</button>
+    </div>
+</div>`;
         compContainer.appendChild(item);
         attachABMMultiSelect(item, task.id);
     });
@@ -908,20 +930,34 @@ function toggleMenu(event, id) {
     if (activeMenu && activeMenu !== menu) activeMenu.style.display = 'none';
     if (activeAssignMenu) { activeAssignMenu.style.display = 'none'; activeAssignMenu = null; }
     
-    if(menu.style.display === 'block') {
+    if (menu.style.display === 'block') {
         menu.style.display = 'none';
         activeMenu = null;
     } else {
+        // Move menu to body to fully escape overflow:hidden columns
+        if (menu.parentNode !== document.body) {
+            document.body.appendChild(menu);
+        }
+
+        menu.style.visibility = 'hidden';
         menu.style.display = 'block';
-        
-        // Break out of overflow boundaries
-        const rect = btn.getBoundingClientRect();
         menu.style.position = 'fixed';
-        menu.style.top = rect.bottom + 'px';
         menu.style.left = 'auto';
+        menu.style.zIndex = '999999';
+
+        const rect = btn.getBoundingClientRect();
+        const menuH = menu.offsetHeight || 70;
+        const spaceBelow = window.innerHeight - rect.bottom;
+
         menu.style.right = (window.innerWidth - rect.right) + 'px';
-        menu.style.zIndex = '99999';
-        
+
+        if (spaceBelow < menuH + 8) {
+            menu.style.top = (rect.top - menuH - 4) + 'px';
+        } else {
+            menu.style.top = (rect.bottom + 4) + 'px';
+        }
+
+        menu.style.visibility = 'visible';
         activeMenu = menu;
     }
 }
