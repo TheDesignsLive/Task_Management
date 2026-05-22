@@ -2907,6 +2907,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const board = document.querySelector('.board-scroll');
+
+// ✅ FIX: Forward horizontal scroll from inner columns to board-scroll
+// Needed on Hostinger where wheel events don't bubble through sticky/overflow containers
+(function() {
+  const innerCols = document.querySelectorAll(
+    '.task-change, .task-update, .task-other, .completed-section, .right-section, .top-columns'
+  );
+  innerCols.forEach(col => {
+    col.addEventListener('wheel', function(e) {
+      // If scrolling is mostly horizontal, or if the column has no vertical overflow to consume
+      const isVertical = Math.abs(e.deltaY) > Math.abs(e.deltaX);
+      const canScrollVertically = col.scrollHeight > col.clientHeight;
+
+      if (!isVertical || !canScrollVertically) {
+        // Forward to board-scroll for horizontal scrolling
+        e.preventDefault();
+        board.scrollLeft += e.deltaY || e.deltaX;
+      }
+    }, { passive: false });
+  });
+})();
 </script>
 <!-- Multi-select bar -->
 <div id="multi-select-bar" style="display:none;">
