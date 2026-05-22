@@ -830,7 +830,7 @@ openTasks.forEach(task => {
             <div class="task-assign">
                 ${buildCustomDropdown(task.id, task.assignee_id, task.assigned_to)}
             </div>
-    ${hasDesc ? `<svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>` : ''}
+<svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="visibility:${hasDesc ? 'visible' : 'hidden'}; pointer-events:${hasDesc ? 'auto' : 'none'};"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>
             <div class="${dateClass}" onclick="quickEditDate('${task.id}', '${task.due_date || ''}')">
                 ${dateLabel}
             </div>
@@ -883,7 +883,7 @@ completedTasks.forEach(task => {
                         <div class="task-title">${task.title}</div>
                         <div class="task-sec-val">${task.section === 'CHANGES' ? LABEL_CHANGES : task.section === 'UPDATE' ? LABEL_UPDATE : (task.section || 'TASK')}</div>
                         <div class="task-assign"><span style="font-size: 11px;" title="${task.assigned_to}">${truncateName(task.assigned_to, 10)}</span></div>
-         ${hasDesc ? `<svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>` : ''}
+<svg class="task-info-icon" onclick="event.stopPropagation(); this.closest('.task-item').classList.toggle('abm-expanded')" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="visibility:${hasDesc ? 'visible' : 'hidden'}; pointer-events:${hasDesc ? 'auto' : 'none'};"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line></svg>
                         <div class="task-date">${formatDate(task.due_date)}</div>
                         <div class="dots-btn" onclick="toggleMenu(event, '${task.id}')"><i class="fa-solid fa-ellipsis-vertical"></i></div>
                     <div class="task-options-menu" id="menu-${task.id}">
