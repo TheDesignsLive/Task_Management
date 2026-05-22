@@ -10,7 +10,6 @@ router.post("/edit-role/:id", async (req, res) => {
         const roleId = req.params.id;
         const role_name = req.body.role_name ? req.body.role_name.trim() : "";
         const control_type = req.body.control_type;
-
         if (!role_name || !control_type) {
             return res.json({ success: false, message: 'All fields required' });
         }
