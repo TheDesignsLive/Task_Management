@@ -64,25 +64,6 @@ const senderUniqueId = req.session.role === 'admin'
 
     const finalDate = date || new Date().toISOString().slice(0, 10) + " 00:00:00";
 
-// 🔒 SECURITY CHECK — ensure same company user only
-if (
-  assignedTo !== "all" &&
-  typeof assignedTo !== "string" &&   // skip team_X
-  parseInt(assignedTo) !== 0
-) {
-  const [checkUser] = await con.execute(
-    "SELECT id FROM users WHERE id = ? AND admin_id = ?",
-    [assignedTo, admin_id]
-  );
-
-  if (checkUser.length === 0) {
-    return res.status(403).json({
-      success: false,
-      message: "Unauthorized assignment (cross-company blocked)"
-    });
-  }
-}
-
     let sectionValue = 'TASK';
     if (req.session.role === 'admin' && parseInt(finalAssignedTo) !== 0) sectionValue = 'OTHERS';
     if (req.session.role !== 'admin' && parseInt(finalAssignedTo) !== parseInt(req.session.userId)) sectionValue = 'OTHERS';
@@ -97,6 +78,15 @@ if (
     // ═══════════════════════════════════════════════
     if (typeof assignedTo === "string" && assignedTo.startsWith("team_")) {
       const teamId = assignedTo.split("_")[1];
+
+      // ✅ Verify team belongs to this company
+      const [teamCheck] = await con.execute(
+        'SELECT id FROM teams WHERE id=? AND admin_id=?',
+        [teamId, admin_id]
+      );
+      if (!teamCheck.length) {
+        return res.status(403).json({ success: false, message: 'Invalid team: does not belong to your company.' });
+      }
 
       const [users] = await con.execute(`
         SELECT u.id 
@@ -156,10 +146,7 @@ await beamsClient.publishToInterests(interests, {
     // CASE 2 — ALL MEMBERS  (assignedTo = "all")
     // ═══════════════════════════════════════════════
     if (assignedTo === "all") {
-      const [users] = await con.execute(
-  "SELECT id FROM users WHERE admin_id=? AND id IS NOT NULL",
-  [admin_id]
-);
+      const [users] = await con.execute("SELECT id FROM users WHERE admin_id=?", [admin_id]);
       const notifyIds = [];
 
       // ✅ FAST: all inserts run at same time
@@ -235,6 +222,18 @@ await beamsClient.publishToInterests(interests, {
     // ═══════════════════════════════════════════════
     // CASE 3 — NORMAL SINGLE INSERT
     // ═══════════════════════════════════════════════
+
+    // ✅ Verify assigned user belongs to this company (finalAssignedTo=0 means admin, skip check)
+    if (parseInt(finalAssignedTo) !== 0) {
+      const [userCheck] = await con.execute(
+        'SELECT id FROM users WHERE id=? AND admin_id=?',
+        [finalAssignedTo, admin_id]
+      );
+      if (!userCheck.length) {
+        return res.status(403).json({ success: false, message: 'Invalid user: does not belong to your company.' });
+      }
+    }
+
     await con.execute(
       `INSERT INTO tasks
        (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
