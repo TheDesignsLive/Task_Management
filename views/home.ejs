@@ -1479,6 +1479,23 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = isChecked ? 'COMPLETED' : 'OPEN';
     const section = isChecked ? 'COMPLETED' : 'TASK';
 
+    // ✅ If unchecking a repeat task, delete the cloned next task before restoring
+    if (!isChecked && task.repeat_type && task.repeat_type !== 'none') {
+      try {
+        await fetch('/api/delete-repeat-clone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: task.title,
+            assigned_to: task.assigned_to,
+            assigned_by: task.assigned_by,
+            repeat_type: task.repeat_type,
+            original_date: task.due_date ? task.due_date.split('T')[0] : null
+          })
+        });
+      } catch(err) { /* silent fail */ }
+    }
+
     // ✅ INSTANT visual feedback — move card immediately, no wait
     const localTask = currentTasks.find(t => t.id == task.id);
     if (localTask) {

@@ -482,6 +482,31 @@ router.post('/api/bulk-delete', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
+// ── Delete repeat clone when unchecking a completed repeat task ──
+router.post('/api/delete-repeat-clone', async (req, res) => {
+  if (!req.session.role) return res.status(401).json({ success: false });
+  try {
+    const { title, assigned_to, assigned_by, repeat_type, original_date } = req.body;
+    const adminId = req.session.adminId;
+
+    // Find and delete the cloned task that was spawned (status=OPEN, same title/assignee/repeat, date > original)
+    await con.query(
+      `DELETE FROM tasks 
+       WHERE admin_id=? AND title=? AND assigned_to=? AND assigned_by=? 
+       AND repeat_type=? AND status='OPEN' 
+       AND due_date > ?
+       ORDER BY due_date ASC
+       LIMIT 1`,
+      [adminId, title, assigned_to, assigned_by, repeat_type, original_date || '2000-01-01']
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('delete-repeat-clone error:', err);
+    res.status(500).json({ success: false });
+  }
+});
+
 // ── Dynamic section labels for context menu ──
 router.get('/api/section-labels', async (req, res) => {
   if (!req.session.role) return res.status(401).json({ success: false });
