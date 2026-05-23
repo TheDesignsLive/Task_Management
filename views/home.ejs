@@ -38,10 +38,12 @@ html, body {
 
 /* Content wrapper */
 .content-wrapper {
-  display: flex;
   flex: 1;
-  height: auto;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
   align-items: stretch;
+  min-height: 0;
 }
 
 /* Right section */
@@ -50,23 +52,16 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-x: visible; 
-  overflow-y: auto;   /* ✅ ALLOW vertical scroll */
   min-height: 0;
 }
 
 /* Top columns (task containers) */
 .top-columns {
-  display: flex;
   flex: 1;
-  min-width: 1086px;
+  display: flex;
   align-items: stretch;
-  gap: 1px; 
-  flex-wrap: nowrap; 
-  overflow-x: visible; 
-    height: 100%;       /* ✅ IMPORTANT */
-  overflow: hidden;
   min-height: 0;
+  height: 100%;
 }
 
 /* Allow scroll on hover if content overflows */
@@ -139,6 +134,8 @@ html, body {
   width: 1px;
   background-color: #7C7B7B;
   height: 100%;
+  align-self: stretch;
+  flex-shrink: 0;
 }
 
 /* ===== RIGHT SIDE ===== */
@@ -415,16 +412,18 @@ html, body {
 .board-scroll {
   width: 100%;
   height: 100%;
-  overflow-x: auto;   /* ✅ must be auto */
-  overflow-y: hidden;
-    display: flex;
+  overflow: hidden;
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 .board-container {
   width: 100%;
-  min-width: max-content;
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .sub-header > div {
@@ -518,8 +517,31 @@ html, body {
   display: flex;
   flex: 1 1 0;
   align-items: stretch;
+  height: calc(100% - 8px);
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.right-section {
+  display: flex;
+  flex-direction: row;
   height: 100%;
-    min-height: 0;   /* 🔥 VERY IMPORTANT */
+  min-height: 0;
+  flex-shrink: 0;
+  flex: none;
+  width: max-content;
+}
+
+.completed-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  max-width: 300px;
+  width: 300px;
+  height: 100%;
+  flex: none;
+  flex-shrink: 0;
 }
 
 .board-container {
@@ -535,7 +557,7 @@ html, body {
 /* scrollbar size - thin for vertical column scrollbars */
 ::-webkit-scrollbar{
   width:2px;
-  height:0px;
+  height:8px;
 }
 
 /* scrollbar track */
@@ -604,23 +626,23 @@ html, body {
   scrollbar-color: #555 transparent;
 }
 
-/* show thin horizontal scrollbar on board only. */
-.board-scroll::-webkit-scrollbar {
-  height: 4px;
+/* show thin horizontal scrollbar on content-wrapper only. */
+.content-wrapper::-webkit-scrollbar {
+  height: 8px;
 }
-.board-scroll::-webkit-scrollbar-track {
-  background: transparent;
+.content-wrapper::-webkit-scrollbar-track {
+  background: #2E2D2D;
 }
-.board-scroll::-webkit-scrollbar-thumb {
+.content-wrapper::-webkit-scrollbar-thumb {
   background: #555;
   border-radius: 10px;
 }
-.board-scroll::-webkit-scrollbar-thumb:hover {
+.content-wrapper::-webkit-scrollbar-thumb:hover {
   background: #888;
 }
-.board-scroll {
+.content-wrapper {
   scrollbar-width: thin;
-  scrollbar-color: #555 transparent;
+  scrollbar-color: #555 #2E2D2D;
 }
 
 
@@ -632,23 +654,26 @@ html, body {
   background:#3C3A3A;
   display:flex;
   flex-direction:column;
-  flex:1.5;
-  min-width:400px;
+  flex-shrink: 0;
+  width:400px;
 }
 
 /* other columns normal */
 .column-wrapper{
   display:flex;
   flex-direction:column;
-  flex:1;
-  min-width:250px;
+  flex-shrink: 0;
+  width:300px;
 }
 .completed-wrapper{
   display:flex;
   flex-direction:column;
-  min-width:250px;
-  height: 100%;   
-  flex: 1;        /* ✅ FIX: Allows completed column to stretch avoiding dark gaps. */
+  min-width:300px;
+  width:300px;
+  max-width:300px;
+  height: 100%;
+  flex:none;
+  flex-shrink:0;
 }
 .drop-active {
   background: rgba(15,137,137,0.07) !important;
@@ -2647,7 +2672,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Click on empty board area clears selection
-document.querySelector('.board-scroll').addEventListener('click', (e) => {
+document.querySelector('.content-wrapper').addEventListener('click', (e) => {
   if (e.target.closest('#multi-select-bar')) return;
   if (!e.target.closest('.task-item') && !e.target.closest('#task-context-menu')) {
     clearSelection();
@@ -3019,13 +3044,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-const board = document.querySelector('.board-scroll');
+const board = document.querySelector('.content-wrapper');
 
-// ✅ FIX: Forward horizontal scroll from inner columns to board-scroll
+// ✅ FIX: Forward horizontal scroll from inner columns to content-wrapper
 // Supports: Shift+wheel, trackpad 2-finger horizontal, horizontal wheel
 (function() {
-  // Attach to the entire board so horizontal scroll works wherever the cursor is
-  board.addEventListener('wheel', function(e) {
+  // Attach to layout so horizontal scroll works wherever cursor is on screen
+  document.querySelector('.layout').addEventListener('wheel', function(e) {
     const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
     const isShiftWheel = e.shiftKey && e.deltaY !== 0;
 
@@ -3034,14 +3059,13 @@ const board = document.querySelector('.board-scroll');
       e.preventDefault();
       board.scrollLeft += e.deltaX;
     } else if (isShiftWheel) {
-      // Shift + mouse wheel → horizontal scroll
+      // Shift + mouse wheel → horizontal scroll anywhere on screen
       e.preventDefault();
       board.scrollLeft += e.deltaY;
     }
-    // Plain vertical scroll → bubble up to whichever column is under cursor
   }, { passive: false });
 
-  // Also keep inner column vertical scrolling working independently
+  // Keep inner column vertical scrolling working independently
   const innerCols = document.querySelectorAll(
     '.task-main, .task-change, .task-update, .task-other, .completed-section'
   );
@@ -3051,10 +3075,9 @@ const board = document.querySelector('.board-scroll');
       const isShiftWheel = e.shiftKey && e.deltaY !== 0;
 
       if (isHorizontal || isShiftWheel) {
-        // Let board-level handler take it
         return;
       }
-      // Plain vertical scroll — handle within this column, stop it reaching board
+      // Plain vertical scroll — handle within column only
       e.stopPropagation();
     }, { passive: true });
   });
