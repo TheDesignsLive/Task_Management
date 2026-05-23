@@ -3024,25 +3024,39 @@ const board = document.querySelector('.board-scroll');
 // ✅ FIX: Forward horizontal scroll from inner columns to board-scroll
 // Supports: Shift+wheel, trackpad 2-finger horizontal, horizontal wheel
 (function() {
+  // Attach to the entire board so horizontal scroll works wherever the cursor is
+  board.addEventListener('wheel', function(e) {
+    const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    const isShiftWheel = e.shiftKey && e.deltaY !== 0;
+
+    if (isHorizontal) {
+      // 2-finger trackpad horizontal swipe
+      e.preventDefault();
+      board.scrollLeft += e.deltaX;
+    } else if (isShiftWheel) {
+      // Shift + mouse wheel → horizontal scroll
+      e.preventDefault();
+      board.scrollLeft += e.deltaY;
+    }
+    // Plain vertical scroll → bubble up to whichever column is under cursor
+  }, { passive: false });
+
+  // Also keep inner column vertical scrolling working independently
   const innerCols = document.querySelectorAll(
-    '.task-change, .task-update, .task-other, .completed-section, .right-section, .top-columns'
+    '.task-main, .task-change, .task-update, .task-other, .completed-section'
   );
   innerCols.forEach(col => {
     col.addEventListener('wheel', function(e) {
       const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
       const isShiftWheel = e.shiftKey && e.deltaY !== 0;
 
-      if (isHorizontal) {
-        // 2-finger trackpad horizontal swipe
-        e.preventDefault();
-        board.scrollLeft += e.deltaX;
-      } else if (isShiftWheel) {
-        // Shift + mouse wheel → horizontal scroll
-        e.preventDefault();
-        board.scrollLeft += e.deltaY;
+      if (isHorizontal || isShiftWheel) {
+        // Let board-level handler take it
+        return;
       }
-      // Plain vertical scroll → do nothing, let column scroll vertically normally
-    }, { passive: false });
+      // Plain vertical scroll — handle within this column, stop it reaching board
+      e.stopPropagation();
+    }, { passive: true });
   });
 })();
 </script>
