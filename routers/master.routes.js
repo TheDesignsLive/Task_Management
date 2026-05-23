@@ -64,6 +64,25 @@ const senderUniqueId = req.session.role === 'admin'
 
     const finalDate = date || new Date().toISOString().slice(0, 10) + " 00:00:00";
 
+// 🔒 SECURITY CHECK — ensure same company user only
+if (
+  assignedTo !== "all" &&
+  typeof assignedTo !== "string" &&   // skip team_X
+  parseInt(assignedTo) !== 0
+) {
+  const [checkUser] = await con.execute(
+    "SELECT id FROM users WHERE id = ? AND admin_id = ?",
+    [assignedTo, admin_id]
+  );
+
+  if (checkUser.length === 0) {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized assignment (cross-company blocked)"
+    });
+  }
+}
+
     let sectionValue = 'TASK';
     if (req.session.role === 'admin' && parseInt(finalAssignedTo) !== 0) sectionValue = 'OTHERS';
     if (req.session.role !== 'admin' && parseInt(finalAssignedTo) !== parseInt(req.session.userId)) sectionValue = 'OTHERS';
@@ -137,7 +156,10 @@ await beamsClient.publishToInterests(interests, {
     // CASE 2 — ALL MEMBERS  (assignedTo = "all")
     // ═══════════════════════════════════════════════
     if (assignedTo === "all") {
-      const [users] = await con.execute("SELECT id FROM users WHERE admin_id=?", [admin_id]);
+      const [users] = await con.execute(
+  "SELECT id FROM users WHERE admin_id=? AND id IS NOT NULL",
+  [admin_id]
+);
       const notifyIds = [];
 
       // ✅ FAST: all inserts run at same time
