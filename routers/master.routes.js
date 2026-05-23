@@ -152,35 +152,40 @@ await beamsClient.publishToInterests(interests, {
       // ✅ FAST: all inserts run at same time
 const insertPromises = users
         .filter(user => {
-          const isSelf = (req.session.role === 'admin')
-            ? (user.id === req.session.adminId)
-            : (user.id === req.session.userId);
-          return !isSelf;
+          // Always exclude the person who is assigning — they should NOT receive their own "all" task
+          if (req.session.role === 'admin') {
+            return true; // admin assigns to all users, no user matches admin's ID
+          }
+          return user.id !== req.session.userId; // user excludes themselves
         })
         .map(user => {
           // ✅ Only add each userId ONCE — prevents duplicate notifications
           const beamsId = toBeamsId(user.id);
           if (!notifyIds.includes(beamsId)) notifyIds.push(beamsId);
+          // ✅ Creator's own task goes to TASK section, everyone else gets OTHERS
+          const isSelfUser = (req.session.role !== 'admin') && (user.id === req.session.userId);
+          const sectionForUser = isSelfUser ? 'TASK' : 'OTHERS';
           return con.execute(
             `INSERT INTO tasks
              (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OTHERS', 'OPEN')`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN')`,
             [admin_id, title || 'No Title', description || null,
-             (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned]
+             (priority || 'LOW').toUpperCase(), finalDate, user.id, assigned_by, who_assigned, sectionForUser]
           );
         });
 
-      // Also insert for admin (assigned_to = 0)
-      insertPromises.push(
-        con.execute(
-          `INSERT INTO tasks
-           (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
-           VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'OTHERS', 'OPEN')`,
-          [admin_id, title || 'No Title', description || null,
-           (priority || 'LOW').toUpperCase(), finalDate, assigned_by, who_assigned]
-        )
-      );
+// Also insert for admin (assigned_to = 0) — only if admin is NOT the one assigning
       if (req.session.role !== 'admin') {
+        const adminSectionForAll = 'OTHERS';
+        insertPromises.push(
+          con.execute(
+            `INSERT INTO tasks
+             (admin_id, title, description, priority, due_date, assigned_to, assigned_by, who_assigned, section, status)
+             VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, 'OPEN')`,
+            [admin_id, title || 'No Title', description || null,
+             (priority || 'LOW').toUpperCase(), finalDate, assigned_by, who_assigned, adminSectionForAll]
+          )
+        );
         notifyIds.push(adminBeamsId());
       }
 
