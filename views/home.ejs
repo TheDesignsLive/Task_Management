@@ -1500,7 +1500,7 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
     const status = isChecked ? 'COMPLETED' : 'OPEN';
     const section = isChecked ? 'COMPLETED' : 'TASK';
 
-    // ✅ If unchecking a repeat task, delete the cloned next task before restoring
+// ✅ If unchecking a repeat task, delete the cloned next task before restoring
     if (!isChecked && task.repeat_type && task.repeat_type !== 'none') {
       try {
         await fetch('/api/delete-repeat-clone', {
@@ -1513,6 +1513,24 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
             repeat_type: task.repeat_type,
             original_date: task.due_date ? task.due_date.split('T')[0] : null
           })
+        });
+        // ✅ Also remove the clone from local currentTasks so it disappears instantly
+        // The clone has same title/assigned_to/assigned_by/repeat_type, status=OPEN,
+        // and due_date > original task's due_date
+        const originalDate = task.due_date ? task.due_date.split('T')[0] : null;
+        currentTasks = currentTasks.filter(t => {
+          if (String(t.id) === String(task.id)) return true; // keep the original
+          if (t.title !== task.title) return true;
+          if (String(t.assigned_to) !== String(task.assigned_to)) return true;
+          if (String(t.assigned_by) !== String(task.assigned_by)) return true;
+          if (t.repeat_type !== task.repeat_type) return true;
+          if (t.status !== 'OPEN') return true;
+          // ✅ Remove if same task identity + OPEN + date after original
+          if (originalDate && t.due_date) {
+            const cloneDate = t.due_date.split('T')[0];
+            if (cloneDate > originalDate) return false; // this is the clone — remove it
+          }
+          return true;
         });
       } catch(err) { /* silent fail */ }
     }
@@ -1528,20 +1546,21 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
 // ✅ Fire-and-forget — do NOT await, do NOT refreshTasksUI after
     // Socket will trigger refresh for OTHER users; this user already sees the update
 _selfUpdating = true;
-    fetch('/update-task-status', {
+fetch('/update-task-status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, status, section })
     }).then(async () => {
       _checkboxInFlight.delete(taskIdStr);
-      _selfUpdating = false;
-      // If marking complete, refresh to pick up new repeat task spawned by server
-      // If unchecking, do NOT refresh — delete-repeat-clone already ran above,
-      // local state is correct, refresh would cause duplicate flash
       if (status === 'COMPLETED') {
+        // Refresh to pick up new repeat task spawned by server
+        _selfUpdating = false;
         await refreshTasksUI();
+      } else {
+        // ✅ OPEN (uncheck): keep _selfUpdating=true for 3s so socket-triggered
+        // refreshTasksUI() is blocked — prevents duplicate clone flash
+        setTimeout(() => { _selfUpdating = false; }, 3000);
       }
-      // ✅ For OPEN (uncheck): local state is already correct, no refresh needed
     }).catch(() => {
       _checkboxInFlight.delete(taskIdStr);
       _selfUpdating = false;
