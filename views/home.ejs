@@ -1445,14 +1445,35 @@ div.querySelector('.save-btn').addEventListener('click', async (e) => {
     }
     renderAllSections(currentTasks);
 
-    // ✅ Fire-and-forget — socket will sync other users
+// ✅ Fire-and-forget — socket will sync other users
     _selfUpdating = true;
     fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date, assigned_to })
-    }).then(() => {
-      setTimeout(() => { _selfUpdating = false; }, 2000);
+    }).then(async () => {
+      // ✅ Fetch fresh data but ONLY update safe fields — never touch section
+      try {
+        const res = await fetch('/api/get-all-tasks');
+        const data = await res.json();
+        if (data.success) {
+          data.tasks.forEach(ft => {
+            const lt = currentTasks.find(t => String(t.id) === String(ft.id));
+            if (lt) {
+              // ✅ Only sync fields that edit-task-details can change
+              // section is deliberately NOT updated here
+              lt.title = ft.title;
+              lt.description = ft.description;
+              lt.priority = ft.priority;
+              lt.due_date = ft.due_date;
+              lt.assigned_to = ft.assigned_to;
+              lt.assigned_by_name = ft.assigned_by_name;
+            }
+          });
+          renderAllSections(currentTasks);
+        }
+      } catch(e) { /* silent */ }
+      _selfUpdating = false;
     }).catch(() => {
       _selfUpdating = false;
     });
@@ -1504,8 +1525,7 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
       localTask.completed_at = status === 'COMPLETED' ? new Date().toISOString() : null;
     }
     renderAllSections(currentTasks);
-
-    // ✅ Fire-and-forget — do NOT await, do NOT refreshTasksUI after
+// ✅ Fire-and-forget — do NOT await, do NOT refreshTasksUI after
     // Socket will trigger refresh for OTHER users; this user already sees the update
 _selfUpdating = true;
     fetch('/update-task-status', {
@@ -1515,10 +1535,13 @@ _selfUpdating = true;
     }).then(async () => {
       _checkboxInFlight.delete(taskIdStr);
       _selfUpdating = false;
-      // If marking complete, always refresh to pick up any new repeat task
+      // If marking complete, refresh to pick up new repeat task spawned by server
+      // If unchecking, do NOT refresh — delete-repeat-clone already ran above,
+      // local state is correct, refresh would cause duplicate flash
       if (status === 'COMPLETED') {
         await refreshTasksUI();
       }
+      // ✅ For OPEN (uncheck): local state is already correct, no refresh needed
     }).catch(() => {
       _checkboxInFlight.delete(taskIdStr);
       _selfUpdating = false;

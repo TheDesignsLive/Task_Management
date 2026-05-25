@@ -438,11 +438,11 @@ router.post('/edit-task-details', async (req, res) => {
 
     const finalDesc = (description === "" || description === null) ? null : description;
 
-    await db.execute(
+await db.execute(
       `UPDATE tasks 
-       SET title = ?, description = ?, priority = ?, due_date = ?, assigned_to = ?, section = IF(status='COMPLETED', section, ?) 
+       SET title = ?, description = ?, priority = ?, due_date = ?, assigned_to = ?
        WHERE id = ?`,
-      [title, finalDesc, priority.toUpperCase(), due_date, finalAssignedTo, newSection, id]
+      [title, finalDesc, priority.toUpperCase(), due_date, finalAssignedTo, id]
     );
 
     req.io.emit('update_tasks');
