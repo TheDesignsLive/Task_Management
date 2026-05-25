@@ -9,12 +9,14 @@ router.get("/backup/download", async (req, res) => {
     try {
 
         // ✅ ALWAYS EXPORTS FROM HOSTINGER — even when running locally
+const isLocal = !process.env.DB_HOST || process.env.DB_HOST === "localhost";
+
         const result = await mysqldump({
             connection: {
-                host:     "srv832.hstgr.io",
-                user:     "u213405511_dilip",
-                password: "Dilip@8133",
-                database: "u213405511_tmsDB",
+                host:     process.env.DB_HOST     || "localhost",
+                user:     process.env.DB_USER     || "root",
+                password: process.env.DB_PASS     || "",
+                database: process.env.DB_NAME     || "task_management",
             },
             dump: {
                 schema: {
@@ -41,7 +43,7 @@ router.get("/backup/download", async (req, res) => {
 `-- ====================================
 -- TMS DATABASE FULL BACKUP
 -- Generated: ${new Date().toISOString()}
--- Database: u213405511_tmsDB (Hostinger)
+-- Database: ${isLocal ? "task_management (Local)" : (process.env.DB_NAME + " (Hostinger)")}
 -- ====================================
 
 SET FOREIGN_KEY_CHECKS=0;
