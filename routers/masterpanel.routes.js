@@ -486,7 +486,9 @@ router.post('/masterpage/impersonate-token/:id', requireMasterAuth, async (req, 
             expiresAt: Date.now() + 30_000
         });
 
-        return res.json({ success: true, url: `/masterpage/go/${token}` });
+        // ✅ Pass a unique tab ID so the new tab can identify itself
+        const tabId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+        return res.json({ success: true, url: `/masterpage/go/${token}?tabId=${tabId}` });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false });
@@ -510,29 +512,47 @@ router.get('/masterpage/go/:token', async (req, res) => {
 
         if (!adminData.length) return res.send('Admin not found');
 
-        // ✅ KEY FIX: Do NOT call req.session.regenerate()
-        // That destroys the master session in the SAME browser.
-        // Instead, write company data directly into a NEW session
-        // by creating a fresh session object via a separate cookie name.
-        // Since the new tab shares the same cookie, we must save master
-        // auth state first, then overwrite only the company fields.
+        const tabId = req.query.tabId || (Date.now().toString(36));
 
-        // Save master-auth flag so it survives the overwrite
-const wasMaster = req.session.masterAuthenticated;
+        // ✅ Use session.regenerate to create a BRAND NEW session for this tab
+        // This does NOT destroy the master session because the new tab has its own session cookie
+        req.session.regenerate((err) => {
+            if (err) {
+                console.error('Session regenerate error:', err);
+                return res.status(500).send('Session error');
+            }
 
-req.session.adminId             = adminId;
-req.session.userId              = null;
-req.session.userName            = null;
-req.session.role                = 'admin';
-req.session.control_type        = 'ADMIN';
-req.session.adminName           = adminData[0].name;
-req.session.email               = targetAdmin[0].email;
-req.session.impersonating       = true;
-req.session.masterAuthenticated = true;
+            req.session.adminId             = adminId;
+            req.session.userId              = null;
+            req.session.userName            = null;
+            req.session.role                = 'admin';
+            req.session.control_type        = 'ADMIN';
+            req.session.adminName           = adminData[0].name;
+            req.session.email               = targetAdmin[0].email;
+            req.session.impersonating       = true;
+            req.session.masterAuthenticated = true;
+            req.session.tabId               = tabId;
 
-req.session.save(() => {
-    res.redirect('/home');
-});
+            req.session.save(() => {
+                // ✅ Send HTML that stores the tabId in sessionStorage and redirects
+                // sessionStorage is TAB-SPECIFIC — other tabs are not affected
+                res.send(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>Loading...</title></head>
+                    <body>
+                    <script>
+                        // ✅ Store this tab's company session ID in tab-local storage
+                        sessionStorage.setItem('tms_tab_admin_id', '${adminId}');
+                        sessionStorage.setItem('tms_tab_id', '${tabId}');
+                        window.location.replace('/home');
+                    </script>
+                    <p style="font-family:sans-serif;padding:40px;color:#555;">Loading company...</p>
+                    </body>
+                    </html>
+                `);
+            });
+        });
 
     } catch (err) {
         console.error(err);

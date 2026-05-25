@@ -219,9 +219,14 @@ AND (t.who_assigned='user' OR t.who_assigned='owner')
 router.post('/update-task-date', async (req, res) => {
     const { id, due_date } = req.body;
     try {
+        const adminId = req.session.adminId;
+        const [rows] = await con.query("SELECT admin_id FROM tasks WHERE id=?", [id]);
+        if (!rows.length || String(rows[0].admin_id) !== String(adminId)) {
+            return res.status(403).json({ success: false, message: 'Session mismatch' });
+        }
         await con.query("UPDATE tasks SET due_date=? WHERE id=?", [due_date, id]);
         req.io.emit('update_tasks');
-          notifyMobile(); // ✅ ADD — tells mobile clients to refresh
+        notifyMobile();
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -231,6 +236,11 @@ router.post('/update-task-date', async (req, res) => {
 router.post('/update-task-status', async (req, res) => {
     const { id, status } = req.body;
     try {
+        const adminId = req.session.adminId;
+        const [rows] = await con.query("SELECT admin_id FROM tasks WHERE id=?", [id]);
+        if (!rows.length || String(rows[0].admin_id) !== String(adminId)) {
+            return res.status(403).json({ success: false, message: 'Session mismatch' });
+        }
         const completedAt = status === 'COMPLETED' ? new Date() : null;
         await con.query("UPDATE tasks SET status=?, completed_at=? WHERE id=?", [status, completedAt, id]);
 
@@ -309,9 +319,14 @@ router.post('/update-task-status', async (req, res) => {
 router.post('/update-task-section', async (req, res) => {
     const { id, section } = req.body;
     try {
+        const adminId = req.session.adminId;
+        const [rows] = await con.query("SELECT admin_id FROM tasks WHERE id=?", [id]);
+        if (!rows.length || String(rows[0].admin_id) !== String(adminId)) {
+            return res.status(403).json({ success: false, message: 'Session mismatch' });
+        }
         await con.query("UPDATE tasks SET section=? WHERE id=?", [section, id]);
         req.io.emit('update_tasks');
-          notifyMobile(); // ✅ ADD — tells mobile clients to refresh
+        notifyMobile();
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -364,6 +379,11 @@ router.post('/edit-task-details', async (req, res) => {
 
         // ================= UPDATE QUERY =================
 
+const [taskCheck] = await con.query("SELECT admin_id FROM tasks WHERE id=?", [id]);
+        if (!taskCheck.length || String(taskCheck[0].admin_id) !== String(req.session.adminId)) {
+            return res.status(403).json({ success: false, message: 'Session mismatch' });
+        }
+
         await con.query(
             `UPDATE tasks 
              SET title=?, description=?, priority=?, due_date=?, 
@@ -393,9 +413,14 @@ router.post('/edit-task-details', async (req, res) => {
 
 router.post('/delete-task/:id', async (req, res) => {
     try {
+        const adminId = req.session.adminId;
+        const [rows] = await con.query("SELECT admin_id FROM tasks WHERE id=?", [req.params.id]);
+        if (!rows.length || String(rows[0].admin_id) !== String(adminId)) {
+            return res.status(403).json({ success: false, message: 'Session mismatch' });
+        }
         await con.query("DELETE FROM tasks WHERE id=?", [req.params.id]);
         req.io.emit('update_tasks');
-        notifyMobile(); // ✅ ADD — tells mobile clients to refresh
+        notifyMobile();
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -432,6 +457,11 @@ router.post('/api/bulk-update-date', async (req, res) => {
   const { ids, due_date } = req.body;
   if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
   try {
+    const adminId = req.session.adminId;
+    const placeholders = ids.map(() => '?').join(',');
+    const [taskRows] = await con.query(`SELECT id, admin_id FROM tasks WHERE id IN (${placeholders})`, ids);
+    const allOwned = taskRows.length === ids.length && taskRows.every(t => String(t.admin_id) === String(adminId));
+    if (!allOwned) return res.status(403).json({ success: false, message: 'Session mismatch' });
     // Format as "YYYY-MM-DD 00:00:00" for MySQL datetime column
     const formattedDate = due_date ? due_date.split('T')[0] + ' 00:00:00' : null;
     await Promise.all(ids.map(id =>
@@ -447,6 +477,12 @@ router.post('/api/bulk-update-priority', async (req, res) => {
   const { ids, priority } = req.body;
   if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
   try {
+    const adminId = req.session.adminId;
+    const placeholders = ids.map(() => '?').join(',');
+    const [taskRows] = await con.query(`SELECT id, admin_id FROM tasks WHERE id IN (${placeholders})`, ids);
+    const allOwned = taskRows.length === ids.length && taskRows.every(t => String(t.admin_id) === String(adminId));
+    if (!allOwned) return res.status(403).json({ success: false, message: 'Session mismatch' });
+
     await Promise.all(ids.map(id =>
       con.query("UPDATE tasks SET priority=? WHERE id=?", [priority.toUpperCase(), id])
     ));
@@ -460,6 +496,12 @@ router.post('/api/bulk-update-section', async (req, res) => {
   const { ids, section } = req.body;
   if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
   try {
+    const adminId = req.session.adminId;
+    const placeholders = ids.map(() => '?').join(',');
+    const [taskRows] = await con.query(`SELECT id, admin_id FROM tasks WHERE id IN (${placeholders})`, ids);
+    const allOwned = taskRows.length === ids.length && taskRows.every(t => String(t.admin_id) === String(adminId));
+    if (!allOwned) return res.status(403).json({ success: false, message: 'Session mismatch' });
+
     await Promise.all(ids.map(id =>
       con.query("UPDATE tasks SET section=? WHERE id=?", [section, id])
     ));
@@ -473,6 +515,12 @@ router.post('/api/bulk-delete', async (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || !ids.length) return res.json({ success: false });
   try {
+    const adminId = req.session.adminId;
+    const placeholders = ids.map(() => '?').join(',');
+    const [taskRows] = await con.query(`SELECT id, admin_id FROM tasks WHERE id IN (${placeholders})`, ids);
+    const allOwned = taskRows.length === ids.length && taskRows.every(t => String(t.admin_id) === String(adminId));
+    if (!allOwned) return res.status(403).json({ success: false, message: 'Session mismatch' });
+
     await Promise.all(ids.map(id =>
       con.query("DELETE FROM tasks WHERE id=?", [id])
     ));
@@ -522,6 +570,23 @@ router.get('/api/section-labels', async (req, res) => {
   } catch (err) {
     res.json({ success: true, labelChanges: 'Change', labelUpdate: 'Update' });
   }
+});
+
+// ✅ NEW: Returns the current session's adminId so tabs can verify they match
+router.get('/api/get-session-admin-id', (req, res) => {
+    if (!req.session.adminId) return res.json({ adminId: null });
+    return res.json({ adminId: req.session.adminId });
+});
+
+// ✅ NEW: Returns current session info for navbar refresh
+router.get('/api/get-session-info', (req, res) => {
+    if (!req.session.role) return res.json({ success: false });
+    return res.json({
+        success: true,
+        adminId: req.session.adminId,
+        userName: req.session.userName || req.session.adminName || null,
+        role: req.session.role
+    });
 });
 
 module.exports = router;

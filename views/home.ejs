@@ -3216,8 +3216,58 @@ const board = document.querySelector('.content-wrapper');
 // REPLACE THIS: _selfUpdating was being set but never checked here
 // This caused socket to overwrite your optimistic UI immediately after drag
 const socket = io();
+
+// ── Session guard: detect stale tab ──
+function _showStaleTabMessage() {
+  document.body.innerHTML = `
+    <div style="
+      font-family:Arial,sans-serif;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      height:100vh; background:#2E2D2D; color:#fff; text-align:center; padding:40px;
+    ">
+      <div style="font-size:48px; margin-bottom:20px;">⚠️</div>
+      <h2 style="color:#0F8989; margin-bottom:10px;">Wrong Company Session</h2>
+      <p style="color:#aaa; font-size:14px; max-width:400px; line-height:1.6;">
+        This tab belongs to a different company. Your actions were blocked to protect data.
+      </p>
+      <p style="color:#666; font-size:12px; margin-top:10px;">This tab will close in 3 seconds...</p>
+    </div>
+  `;
+  setTimeout(() => { try { window.close(); } catch(e) { window.location.href = '/'; } }, 3000);
+}
+
+const _tabAdminId = sessionStorage.getItem('tms_tab_admin_id');
+if (_tabAdminId) {
+  fetch('/api/get-session-admin-id')
+    .then(r => r.json())
+    .then(data => {
+      if (data.adminId && String(data.adminId) !== String(_tabAdminId)) {
+        _showStaleTabMessage();
+      }
+    })
+    .catch(() => {});
+}
+
+// ── Intercept all fetch calls — if server returns 403 with "Session mismatch", show stale tab message ──
+const _origFetch = window.fetch;
+window.fetch = function(...args) {
+  return _origFetch.apply(this, args).then(async response => {
+    if (response.status === 403) {
+      const cloned = response.clone();
+      try {
+        const data = await cloned.json();
+        if (data && data.message === 'Session mismatch') {
+          _showStaleTabMessage();
+        }
+      } catch(e) { /* not JSON, ignore */ }
+    }
+    return response;
+  });
+};
+
 socket.on('update_tasks', () => {
-  if (_selfUpdating) return; // ✅ skip if WE triggered this update — optimistic UI already correct
+  if (_selfUpdating) return;
   refreshTasksUI();
 });
 </script>

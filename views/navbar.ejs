@@ -1119,7 +1119,7 @@ prioritySelected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></
     });
 
     // --- ZERO RELOAD NAME UPDATE LOGIC ---
-    window.globalSocket.on('update_session_name', (data) => {
+window.globalSocket.on('update_session_name', (data) => {
         // 1. If the updated user is the one currently logged in, update Welcome text
         if (currentSessionUserId == data.userId) {
             const welcomeDiv = document.getElementById('navWelcomeText');
@@ -1135,6 +1135,32 @@ prioritySelected.innerHTML = item.innerText + ' <i class="fa fa-chevron-down"></
             }
         }
     });
+
+    // ✅ NEW: Poll session every 3 seconds — if adminId changed (bg session switch), reload navbar info
+    let _lastKnownAdminId = null;
+
+    async function checkSessionAndRefreshNavbar() {
+        try {
+            const res = await fetch('/api/get-session-info');
+            const data = await res.json();
+            if (!data.success) return;
+
+            if (_lastKnownAdminId === null) {
+                // First check — just store, don't reload
+                _lastKnownAdminId = data.adminId;
+                return;
+            }
+
+            if (String(data.adminId) !== String(_lastKnownAdminId)) {
+                // Session changed (master panel switched company) — reload page to get fresh navbar
+                _lastKnownAdminId = data.adminId;
+                window.location.reload();
+            }
+        } catch (e) { /* silent */ }
+    }
+
+    setInterval(checkSessionAndRefreshNavbar, 3000);
+    checkSessionAndRefreshNavbar();
 
 
 
