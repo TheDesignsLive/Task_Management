@@ -1436,23 +1436,50 @@ div.querySelector('.save-btn').addEventListener('click', async (e) => {
     if (task.status !== 'COMPLETED') div.draggable = true;
 
     // ✅ Update local state instantly so UI reflects change without waiting
-    const localTask = currentTasks.find(t => t.id == task.id);
+const localTask = currentTasks.find(t => t.id == task.id);
     if (localTask) {
       localTask.title = title;
       localTask.description = description;
       localTask.priority = priority;
       localTask.due_date = due_date;
+      // ✅ Preserve section — do NOT let edit move the task to another section
+      // localTask.section stays unchanged intentionally
     }
     renderAllSections(currentTasks);
 
-    // ✅ Fire-and-forget — socket will sync other users
-    _selfUpdating = true;
+// ✅ Fire-and-forget — socket will sync other users
+_selfUpdating = true;
     fetch('/edit-task-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: task.id, title, description, priority, due_date, assigned_to })
-    }).then(() => {
-      setTimeout(() => { _selfUpdating = false; }, 2000);
+    }).then(async (res) => {
+      const data = await res.json();
+      if (data.success) {
+        // ✅ Re-fetch only this task's section from server to sync correctly,
+        // but keep _selfUpdating true until we manually re-render
+        const freshRes = await fetch('/api/get-all-tasks');
+        const freshData = await freshRes.json();
+        if (freshData.success) {
+          // Merge: only update fields that edit-task-details changes, preserve nothing else
+          freshData.tasks.forEach(ft => {
+            const lt = currentTasks.find(t => String(t.id) === String(ft.id));
+            if (lt) {
+              lt.title = ft.title;
+              lt.description = ft.description;
+              lt.priority = ft.priority;
+              lt.due_date = ft.due_date;
+              lt.assigned_to = ft.assigned_to;
+              lt.assigned_by_name = ft.assigned_by_name;
+              // ✅ section deliberately NOT overwritten here
+            } else {
+              currentTasks.push(ft);
+            }
+          });
+          renderAllSections(currentTasks);
+        }
+      }
+      _selfUpdating = false;
     }).catch(() => {
       _selfUpdating = false;
     });
