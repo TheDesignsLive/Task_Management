@@ -40,22 +40,39 @@ router.get('/task-export', async (req, res) => {
         `;
         const params = [adminId];
 
-        if (role === 'admin') {
-            query += ` AND t.assigned_to = 0`;
-        } else {
-            query += ` AND t.assigned_to = ?`;
-            params.push(userId);
-        }
+        if (section === 'ASSIGNED_BY_ME' || section === 'COMPLETED_BY_ME') {
+            // assigned_by = current user — jo unhone assign kiye (doosron ko)
+            if (role === 'admin') {
+                query += ` AND t.assigned_by = ? AND t.who_assigned = 'admin' AND t.assigned_to != 0`;
+                params.push(adminId);
+            } else {
+                query += ` AND t.assigned_by = ? AND t.who_assigned != 'admin' AND t.assigned_to != ?`;
+                params.push(userId, userId);
+            }
 
-        if (section === 'ALL') {
-            // Koi section filter nahi — sab aayega
-        } else if (section === 'COMPLETED') {
-            query += ` AND t.status = 'COMPLETED'`;
+            if (section === 'COMPLETED_BY_ME') {
+                query += ` AND t.status = 'COMPLETED'`;
+            } else {
+                query += ` AND t.status != 'COMPLETED'`;
+            }
         } else {
-            query += ` AND t.status != 'COMPLETED' AND t.section = ?`;
-            params.push(section);
-        }
+            // Normal role-based filter
+            if (role === 'admin') {
+                query += ` AND t.assigned_to = 0`;
+            } else {
+                query += ` AND t.assigned_to = ?`;
+                params.push(userId);
+            }
 
+            if (section === 'ALL') {
+                // Koi section filter nahi
+            } else if (section === 'COMPLETED') {
+                query += ` AND t.status = 'COMPLETED'`;
+            } else {
+                query += ` AND t.status != 'COMPLETED' AND t.section = ?`;
+                params.push(section);
+            }
+        }
         if (date) {
             query += ` AND DATE_FORMAT(t.due_date, '%Y-%m-%d') = ?`;
             params.push(date);

@@ -767,12 +767,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const EXPORT_SECTIONS = [
-  { key: 'ALL',       label: '📦 All Sections' },
-  { key: 'TASK',      label: 'Task' },
-  { key: 'CHANGES',   label: '<%= label_changes %>' },
-  { key: 'UPDATE',    label: '<%= label_update %>' },
-  { key: 'OTHERS',    label: 'Others' },
-  { key: 'COMPLETED', label: 'Completed' },
+  { key: 'ALL',            label: '📦 All Sections' },
+  { key: 'TASK',           label: 'Task' },
+  { key: 'CHANGES',        label: '<%= label_changes %>' },
+  { key: 'UPDATE',         label: '<%= label_update %>' },
+  { key: 'OTHERS',         label: 'Others' },
+  { key: 'COMPLETED',      label: 'Completed' },
+  { key: 'ASSIGNED_BY_ME', label: '📤 Assigned By Me' },
+  { key: 'COMPLETED_BY_ME',label: '✅ Completed (Assigned By Me)' },
 ];
 
 function openExportDialog() {
