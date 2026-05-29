@@ -141,12 +141,15 @@ const label_update = adminRows[0]?.label_update || 'Update';
         if (controlType !== "NONE" || controlType === "NONE") { 
 
 let taskQuery = `
-                SELECT t.*, 
+                SELECT 
+                t.id, t.title, t.description, t.priority, t.due_date,
+                t.status, t.assigned_by, t.assigned_to, t.who_assigned,
+                t.repeat_type, t.admin_id, t.completed_at,
                 CASE 
                     WHEN t.status = 'COMPLETED' THEN 'COMPLETED'
                     ELSE t.section
                 END AS section,
-           CASE 
+                CASE 
                     WHEN t.assigned_to = 0 THEN COALESCE(a.name, 'Admin')
                     ELSE COALESCE(u1.name, 'Deleted User')
                 END AS assigned_to_name,
@@ -213,8 +216,9 @@ let taskQuery = `
 
             taskQuery += " ORDER BY t.due_date ASC";
 
-            const [taskRows] = await con.query(taskQuery, params);
+const [taskRows] = await con.query(taskQuery, params);
             tasks = taskRows;
+            console.log('DEBUG repeat_type sample:', taskRows.slice(0,3).map(t => ({ id: t.id, title: t.title, repeat_type: t.repeat_type })));
         }
 
         const renderData = {
