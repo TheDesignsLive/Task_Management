@@ -1247,6 +1247,18 @@ document.getElementById('alarmBtn').addEventListener('click', function(e) {
 
   panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 });
+document.getElementById('navAlarmCountdown').addEventListener('click', function(e) {
+  e.stopPropagation();
+
+  const panel = document.getElementById('alarmPanel');
+  const btn = document.getElementById('alarmBtn');
+  const rect = btn.getBoundingClientRect();
+
+  panel.style.top = (rect.bottom + 10) + "px";
+  panel.style.left = (rect.left - 200) + "px"; // adjust width
+
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+});
 document.addEventListener('click', function(e) {
   const panel = document.getElementById('alarmPanel');
   const btn = document.getElementById('alarmBtn');
