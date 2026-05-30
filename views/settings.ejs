@@ -772,9 +772,8 @@ const EXPORT_SECTIONS = [
   { key: 'CHANGES',        label: '<%= label_changes %>' },
   { key: 'UPDATE',         label: '<%= label_update %>' },
   { key: 'OTHERS',         label: 'Others' },
-  { key: 'COMPLETED',      label: 'Completed' },
+{ key: 'COMPLETED',      label: 'Completed' },
   { key: 'ASSIGNED_BY_ME', label: 'Assigned By Me' },
-  { key: 'COMPLETED_BY_ME',label: 'Completed (Assigned By Me)' },
 ];
 
 function openExportDialog() {
@@ -861,13 +860,13 @@ async function doExportExcel() {
   }
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('Tasks');
-  ws.columns = [
+ws.columns = [
     { key: 'title', width: 32 }, { key: 'desc', width: 42 },
     { key: 'priority', width: 12 }, { key: 'due', width: 16 },
-    { key: 'created', width: 16 }, { key: 'by', width: 24 }, { key: 'status', width: 12 },
-    { key: 'section', width: 14 },
+    { key: 'by', width: 24 }, { key: 'to', width: 24 },
+    { key: 'status', width: 12 }, { key: 'section', width: 14 },
   ];
-  const hr = ws.addRow(['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status', 'Section']);
+  const hr = ws.addRow(['Title', 'Description', 'Priority', 'Due Date', 'Assigned By', 'Assigned To', 'Status', 'Section']);
   hr.height = 22;
   hr.eachCell(cell => {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F8989' } };
@@ -878,7 +877,7 @@ async function doExportExcel() {
   exportState.tasks.forEach(t => {
     const p = (t.priority || 'LOW').toUpperCase();
     const c = pc[p] || pc.LOW;
-    const row = ws.addRow([t.title||'', t.description||'', p, t.due_date||'', t.created_at||'', t.assigned_by_name||(t.is_self?'Self':''), t.status||'', t.section_label||t.section||'']);
+const row = ws.addRow([t.title||'', t.description||'', p, t.due_date||'', t.assigned_by_name||(t.is_self?'Self':''), t.assigned_to_name||'', t.status||'', t.section_label||t.section||'']);
     row.height = 20;
     row.eachCell({ includeEmpty: true }, (cell, col) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + c.bg } };
@@ -894,12 +893,13 @@ async function doExportExcel() {
 }
 
 function doExportCsv() {
-  const header = ['Title', 'Description', 'Priority', 'Due Date', 'Created At', 'Assigned By', 'Status', 'Section'];
+const header = ['Title', 'Description', 'Priority', 'Due Date', 'Assigned By', 'Assigned To', 'Status', 'Section'];
   const rows = exportState.tasks.map(t => [
     `"${(t.title||'').replace(/"/g,'""')}"`,
     `"${(t.description||'').replace(/"/g,'""')}"`,
-    t.priority||'', t.due_date||'', t.created_at||'',
+    t.priority||'', t.due_date||'',
     `"${((t.assigned_by_name||(t.is_self?'Self':''))||'').replace(/"/g,'""')}"`,
+    `"${(t.assigned_to_name||'').replace(/"/g,'""')}"`,
     t.status||'',
     t.section_label||t.section||''
   ]);

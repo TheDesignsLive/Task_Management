@@ -12,16 +12,20 @@ router.get('/task-export', async (req, res) => {
     if (!section) return res.status(400).json({ success: false, message: 'section required' });
 
     try {
-        let query = `
+let query = `
             SELECT 
                 t.id, t.title, t.description, t.priority, t.status, t.section,
                 DATE_FORMAT(t.due_date, '%Y-%m-%d') AS due_date,
-                DATE_FORMAT(t.created_at, '%Y-%m-%d') AS created_at,
+              
                 CASE 
                     WHEN t.who_assigned = 'admin' THEN CONCAT(a.name, ' (Admin)')
                     WHEN t.who_assigned = 'owner' THEN CONCAT(u2.name, ' (Admin)')
                     ELSE u2.name
                 END AS assigned_by_name,
+                CASE
+                    WHEN t.assigned_to = 0 THEN CONCAT(adm.name, ' (Admin)')
+                    ELSE u3.name
+                END AS assigned_to_name,
                 CASE
                     WHEN t.who_assigned = 'admin' AND t.assigned_to = 0 THEN 1
                     WHEN t.who_assigned != 'admin' AND t.assigned_by = t.assigned_to THEN 1
@@ -36,6 +40,8 @@ router.get('/task-export', async (req, res) => {
             FROM tasks t
             LEFT JOIN admins a ON t.assigned_by = a.id AND t.who_assigned = 'admin'
             LEFT JOIN users u2 ON t.assigned_by = u2.id AND t.who_assigned != 'admin'
+            LEFT JOIN admins adm ON t.admin_id = adm.id
+            LEFT JOIN users u3 ON t.assigned_to = u3.id AND t.assigned_to != 0
             WHERE t.admin_id = ?
         `;
         const params = [adminId];
@@ -55,19 +61,23 @@ router.get('/task-export', async (req, res) => {
             } else {
                 query += ` AND t.status != 'COMPLETED'`;
             }
-        } else {
-            // Normal role-based filter
-            if (role === 'admin') {
-                query += ` AND t.assigned_to = 0`;
-            } else {
-                query += ` AND t.assigned_to = ?`;
-                params.push(userId);
-            }
-
+} else {
             if (section === 'ALL') {
+                // Normal role-based filter
+                if (role === 'admin') {
+                    query += ` AND t.assigned_to = 0`;
+                } else {
+                    query += ` AND t.assigned_to = ?`;
+                    params.push(userId);
+                }
                 // Koi section filter nahi
             } else if (section === 'COMPLETED') {
-                query += ` AND t.status = 'COMPLETED'`;
+                // Include completed tasks assigned TO me + completed tasks assigned BY me
+                if (role === 'admin') {
+                    query += ` AND t.status = 'COMPLETED' AND (t.assigned_to = 0 OR (t.assigned_by = ${adminId} AND t.who_assigned = 'admin' AND t.assigned_to != 0))`;
+                } else {
+                    query += ` AND t.status = 'COMPLETED' AND (t.assigned_to = ${userId} OR (t.assigned_by = ${userId} AND t.who_assigned != 'admin' AND t.assigned_to != ${userId}))`;
+                }
             } else {
                 query += ` AND t.status != 'COMPLETED' AND t.section = ?`;
                 params.push(section);
