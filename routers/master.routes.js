@@ -325,12 +325,8 @@ router.post('/update-task-status', async (req, res) => {
 
   console.log('[Repeat Debug] task id:', id, '| repeat_type:', repeatType, '| due_date:', task.due_date);
 
-  if (repeatType && repeatType !== 'none') {
+if (repeatType && repeatType !== 'none') {
           let baseDate = task.due_date ? new Date(task.due_date) : new Date();
-
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          if (baseDate < today) baseDate = today;
 
           let nextDate = new Date(baseDate);
           if (repeatType === 'daily') {
