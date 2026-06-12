@@ -51,7 +51,7 @@ const [adminTasksRows] = await con.query(
 
 const [userOwnTasksRows] = await con.query(
 `SELECT id, title, description, priority, due_date, status, section,
-            assigned_by, assigned_to, who_assigned, admin_id, completed_at
+            assigned_by, assigned_to, who_assigned, repeat_type, admin_id, completed_at
      FROM tasks 
      WHERE admin_id=? AND assigned_to=? AND (who_assigned='user' OR who_assigned='owner') AND assigned_by=? 
      ORDER BY due_date ASC`,

@@ -1397,10 +1397,15 @@ overlay.querySelectorAll('[data-repeat-val]').forEach(btn => {
           renderAllSections(currentTasks);
 
           // ✅ Fire-and-forget — socket will sync other users
+          _selfUpdating = true;
           fetch('/api/repeat/set-repeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ task_id: task.id, repeat_type: newRepeat })
+          }).then(() => {
+            setTimeout(() => { _selfUpdating = false; }, 2000);
+          }).catch(() => {
+            _selfUpdating = false;
           });
         });
       });
