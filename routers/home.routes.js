@@ -418,10 +418,11 @@ router.post('/delete-task/:id', async (req, res) => {
         if (!rows.length || String(rows[0].admin_id) !== String(adminId)) {
             return res.status(403).json({ success: false, message: 'Session mismatch' });
         }
-        await con.query("DELETE FROM tasks WHERE id=?", [req.params.id]);
-        req.io.emit('update_tasks');
-        notifyMobile();
-        res.json({ success: true });
+  await con.query("DELETE FROM tasks WHERE id=?", [req.params.id]);
+await con.query("DELETE FROM task_templates WHERE id=?", [req.params.id]);
+req.io.emit('update_tasks');
+notifyMobile();
+res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
     }
@@ -441,7 +442,25 @@ router.post('/delete-completed-tasks', async (req, res) => {
             params = [adminId, userId];
         }
 
+  // Get IDs before deleting so we can clean templates too
+        let selectQuery, selectParams;
+        if (role === 'admin') {
+          selectQuery  = "SELECT id FROM tasks WHERE admin_id=? AND assigned_to=0 AND status='COMPLETED'";
+          selectParams = [adminId];
+        } else {
+          selectQuery  = "SELECT id FROM tasks WHERE admin_id=? AND assigned_to=? AND status='COMPLETED'";
+          selectParams = [adminId, userId];
+        }
+        const [completedRows] = await con.query(selectQuery, selectParams);
+
         await con.query(query, params);
+
+        if (completedRows.length > 0) {
+          const ids = completedRows.map(r => r.id);
+          const placeholders = ids.map(() => '?').join(',');
+          await con.query(`DELETE FROM task_templates WHERE id IN (${placeholders})`, ids);
+        }
+
         req.io.emit('update_tasks');
         notifyMobile();
         res.json({ success: true });
@@ -521,9 +540,12 @@ router.post('/api/bulk-delete', async (req, res) => {
     const allOwned = taskRows.length === ids.length && taskRows.every(t => String(t.admin_id) === String(adminId));
     if (!allOwned) return res.status(403).json({ success: false, message: 'Session mismatch' });
 
-    await Promise.all(ids.map(id =>
-      con.query("DELETE FROM tasks WHERE id=?", [id])
-    ));
+await Promise.all(ids.map(id =>
+  Promise.all([
+    con.query("DELETE FROM tasks WHERE id=?", [id]),
+    con.query("DELETE FROM task_templates WHERE id=?", [id])
+  ])
+));
     req.io.emit('update_tasks');
     notifyMobile();
     res.json({ success: true });

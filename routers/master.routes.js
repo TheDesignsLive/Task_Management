@@ -503,10 +503,11 @@ router.post('/update-task-section', async (req, res) => {
 // ==============================
 router.post('/delete-task/:id', async (req, res) => {
   try {
-    await con.execute("DELETE FROM tasks WHERE id = ?", [req.params.id]);
-    req.io.emit('update_tasks');
-    notifyMobile();
-    res.status(200).json({ success: true });
+  await con.execute("DELETE FROM tasks WHERE id = ?", [req.params.id]);
+await con.execute("DELETE FROM task_templates WHERE id = ?", [req.params.id]);
+req.io.emit('update_tasks');
+notifyMobile();
+res.status(200).json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false });
@@ -537,9 +538,25 @@ router.post('/delete-completed-tasks', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Forbidden: Invalid role' });
     }
 
+// Get IDs before deleting so we can clean templates too
+    let selectQuery, selectParams;
+    if (role === 'admin') {
+      selectQuery  = "SELECT id FROM tasks WHERE admin_id = ? AND assigned_to = 0 AND status = 'COMPLETED'";
+      selectParams = [adminId];
+    } else {
+      selectQuery  = "SELECT id FROM tasks WHERE admin_id = ? AND assigned_to = ? AND status = 'COMPLETED'";
+      selectParams = [adminId, userId];
+    }
+    const [completedRows] = await db.query(selectQuery, selectParams);
+
     const [result] = await db.query(query, params);
 
     if (result.affectedRows > 0) {
+      if (completedRows.length > 0) {
+        const ids = completedRows.map(r => r.id);
+        const placeholders = ids.map(() => '?').join(',');
+        await db.query(`DELETE FROM task_templates WHERE id IN (${placeholders})`, ids);
+      }
       req.io.emit('update_tasks');
       notifyMobile();
     }

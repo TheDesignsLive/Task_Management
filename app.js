@@ -233,11 +233,33 @@ cron.schedule('0 0 * * *', () => {
         else debugLog('Old announcements cleaned up.');
     });
 
-    // Execute Tasks deletion
-    con.query(deleteTasksSql, (err) => {
-        if (err) console.error('Auto-cleanup Tasks Error:', err);
-        else debugLog('Old completed tasks cleaned up.');
-    });
+// Execute Tasks deletion — clean templates first, then delete tasks
+    con.query(
+        `SELECT id FROM tasks 
+         WHERE status = 'COMPLETED' 
+         AND due_date IS NOT NULL
+         AND due_date < DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+05:30'), INTERVAL 31 DAY)`,
+        async (selErr, oldRows) => {
+            if (selErr) {
+                console.error('Auto-cleanup Tasks Select Error:', selErr);
+                return;
+            }
+            if (oldRows && oldRows.length > 0) {
+                const ids = oldRows.map(r => r.id);
+                const placeholders = ids.map(() => '?').join(',');
+                try {
+                    await con.query(`DELETE FROM task_templates WHERE id IN (${placeholders})`, ids);
+                    debugLog('Old task templates cleaned up.');
+                } catch (templateErr) {
+                    console.error('Auto-cleanup Templates Error:', templateErr);
+                }
+            }
+            con.query(deleteTasksSql, (err) => {
+                if (err) console.error('Auto-cleanup Tasks Error:', err);
+                else debugLog('Old completed tasks cleaned up.');
+            });
+        }
+    );
 });
 
 
