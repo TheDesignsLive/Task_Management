@@ -17,6 +17,8 @@ const transporter = nodemailer.createTransport({
         user: "social.designs.live@gmail.com",
         pass: "ipka xjqi uach zrpc"
     }
+
+
 });
 
 // ================= SEND OTP =================

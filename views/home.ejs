@@ -1198,17 +1198,7 @@ div.dataset.assignedBy = task.assigned_by ?? "";
 </svg>
 ` : ''}
 
-      ${task.repeat_type && task.repeat_type !== 'none' ? `
-        <span class="repeat-badge" style="
-          font-size:9px; color:#a78bfa; cursor:pointer;
-          padding:2px 5px; border-radius:3px;
-          background:rgba(167,139,250,0.1);
-          border:1px solid rgba(167,139,250,0.35);
-          font-weight:700; letter-spacing:0.3px;
-          white-space:nowrap; flex-shrink:0;
-          line-height:1.4;
-        ">🔁 ${task.repeat_type}</span>
-      ` : ''}
+
 
       
         <div class="task-date ${isPastDate(task.due_date) && task.status !== 'COMPLETED' ? 'past-date' : ''}">
@@ -1224,7 +1214,6 @@ div.dataset.assignedBy = task.assigned_by ?? "";
 
 <div class="${task.status === 'COMPLETED' ? 'completed-menu' : 'task-options-menu'}">
         ${task.status !== 'COMPLETED' ? `<div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>` : ''}
-        ${task.status !== 'COMPLETED' ? `<div class="repeat-opt"><i class="fa-solid fa-rotate"></i> Repeat</div>` : ''}
         ${task.status === 'COMPLETED' ? `<div class="edit-opt"><i class="fa-solid fa-pen"></i> Edit</div>` : ''}
         <div class="delete-opt" style="color:red"><i class="fa-solid fa-trash"></i> Delete</div>
       </div>
@@ -1263,7 +1252,7 @@ div.dataset.assignedBy = task.assigned_by ?? "";
   };
 
 div.addEventListener('dblclick', (e) => {
-    if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .repeat-badge')) return;
+    if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu')) return;
     const editBox = div.querySelector('.edit-box');
     if (editBox.style.display === 'flex') {
       editBox.style.display = 'none';
@@ -1319,107 +1308,7 @@ const editOpt = div.querySelector('.edit-opt');
     });
   }
 
-  // ── Repeat option ──
-  const repeatOptEl = div.querySelector('.repeat-opt');
-  if (repeatOptEl) {
-    repeatOptEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menu.style.display = 'none';
-
-      // Build repeat modal
-      const existing = document.getElementById('repeat-modal-overlay');
-      if (existing) existing.remove();
-
-      const overlay = document.createElement('div');
-      overlay.id = 'repeat-modal-overlay';
-      overlay.style.cssText = `
-        position:fixed; inset:0; background:rgba(0,0,0,0.6);
-        z-index:99999; display:flex; align-items:center; justify-content:center;
-      `;
-
-      const currentRepeat = task.repeat_type || 'none';
-      const options = [
-        { value: 'none',    label: 'Off',          icon: '🚫', desc: 'Does not repeat' },
-        { value: 'daily',   label: 'Every day',    icon: '📆', desc: 'Repeats daily' },
-        { value: 'weekly',  label: 'Every week',   icon: '🗓️', desc: 'Same day each week' },
-        { value: 'monthly', label: 'Every month',  icon: '📅', desc: 'Same date each month' },
-      ];
-
-      overlay.innerHTML = `
-        <div style="
-          background:#2E2D2D; border-radius:16px; border-top:2px solid #0F8989;
-          width:320px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);
-          font-family:Arial,sans-serif;
-        ">
-          <div style="padding:14px 18px 10px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #3C3A3A;">
-            <span style="color:#CDF4F4; font-weight:700; font-size:15px;">🔁 Repeat Task</span>
-            <button id="repeat-modal-close" style="
-              background:#3C3A3A; border:1px solid #0F8989; color:#aaa;
-              width:28px; height:28px; border-radius:8px; cursor:pointer; font-size:12px;
-            ">✕</button>
-          </div>
-          <div>
-            ${options.map(opt => `
-              <button data-repeat-val="${opt.value}" style="
-                display:flex; align-items:center; gap:12px;
-                width:100%; border:none; border-bottom:1px solid #3C3A3A;
-                padding:14px 18px; cursor:pointer; text-align:left;
-                font-family:Arial,sans-serif;
-                background:${currentRepeat === opt.value ? 'rgba(15,137,137,0.12)' : '#2E2D2D'};
-              ">
-                <span style="font-size:20px;">${opt.icon}</span>
-                <span style="flex:1;">
-                  <span style="display:block; color:#eee; font-size:14px; font-weight:${currentRepeat === opt.value ? 700 : 400};">${opt.label}</span>
-                  <span style="display:block; color:#aaa; font-size:11px; margin-top:2px;">${opt.desc}</span>
-                </span>
-                ${currentRepeat === opt.value ? '<span style="color:#0F8989; font-size:18px;">✓</span>' : ''}
-              </button>
-            `).join('')}
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(overlay);
-
-      document.getElementById('repeat-modal-close').addEventListener('click', () => overlay.remove());
-      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
-
-overlay.querySelectorAll('[data-repeat-val]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const newRepeat = btn.dataset.repeatVal;
-          overlay.remove();
-
-          // ✅ Update local state instantly — no wait for server
-          const localTask = currentTasks.find(t => t.id == task.id);
-          if (localTask) {
-            localTask.repeat_type = newRepeat;
-          }
-          renderAllSections(currentTasks);
-
-          // ✅ Fire-and-forget — socket will sync other users
-          _selfUpdating = true;
-          fetch('/api/repeat/set-repeat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ task_id: task.id, repeat_type: newRepeat })
-          }).then(() => {
-            setTimeout(() => { _selfUpdating = false; }, 2000);
-          }).catch(() => {
-            _selfUpdating = false;
-          });
-        });
-      });
-    });
-  }
-
-  // ── Repeat badge click → opens same repeat modal ──
-  const repeatBadge = div.querySelector('.repeat-badge');
-  if (repeatBadge) {
-    repeatBadge.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (repeatOptEl) repeatOptEl.dispatchEvent(new Event('click', { bubbles: false }));
-    });
-  }
+  
 
   div.querySelector('.cancel-btn').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1503,75 +1392,31 @@ div.querySelector('.task-checkbox').addEventListener('change', async (e) => {
 
     const isChecked = e.target.checked;
     const status = isChecked ? 'COMPLETED' : 'OPEN';
-    const section = isChecked ? 'COMPLETED' : 'TASK';
 
-// ✅ If unchecking a repeat task, delete the cloned next task before restoring
-    if (!isChecked && task.repeat_type && task.repeat_type !== 'none') {
-      try {
-        await fetch('/api/delete-repeat-clone', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: task.title,
-            assigned_to: task.assigned_to,
-            assigned_by: task.assigned_by,
-            repeat_type: task.repeat_type,
-            original_date: task.due_date ? task.due_date.split('T')[0] : null
-          })
-        });
-        // ✅ Also remove the clone from local currentTasks so it disappears instantly
-        // The clone has same title/assigned_to/assigned_by/repeat_type, status=OPEN,
-        // and due_date > original task's due_date
-        const originalDate = task.due_date ? task.due_date.split('T')[0] : null;
-        currentTasks = currentTasks.filter(t => {
-          if (String(t.id) === String(task.id)) return true; // keep the original
-          if (t.title !== task.title) return true;
-          if (String(t.assigned_to) !== String(task.assigned_to)) return true;
-          if (String(t.assigned_by) !== String(task.assigned_by)) return true;
-          if (t.repeat_type !== task.repeat_type) return true;
-          if (t.status !== 'OPEN') return true;
-          // ✅ Remove if same task identity + OPEN + date after original
-          if (originalDate && t.due_date) {
-            const cloneDate = t.due_date.split('T')[0];
-            if (cloneDate > originalDate) return false; // this is the clone — remove it
-          }
-          return true;
-        });
-      } catch(err) { /* silent fail */ }
-    }
-
-    // ✅ INSTANT visual feedback — move card immediately, no wait
+    // ✅ Section never changes — task stays in its current section
     const localTask = currentTasks.find(t => t.id == task.id);
+    const currentSection = localTask ? localTask.section : task.section;
+
+    // ✅ INSTANT visual feedback — only status changes, section stays
     if (localTask) {
       localTask.status = status;
-      localTask.section = section;
       localTask.completed_at = status === 'COMPLETED' ? new Date().toISOString() : null;
     }
     renderAllSections(currentTasks);
-// ✅ Fire-and-forget — do NOT await, do NOT refreshTasksUI after
-    // Socket will trigger refresh for OTHER users; this user already sees the update
-_selfUpdating = true;
-fetch('/update-task-status', {
+
+    _selfUpdating = true;
+    fetch('/update-task-status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: task.id, status, section })
-    }).then(async () => {
+      body: JSON.stringify({ id: task.id, status, section: currentSection })
+    }).then(() => {
       _checkboxInFlight.delete(taskIdStr);
-      if (status === 'COMPLETED') {
-        // Refresh to pick up new repeat task spawned by server
-        _selfUpdating = false;
-        await refreshTasksUI();
-      } else {
-        // ✅ OPEN (uncheck): keep _selfUpdating=true for 3s so socket-triggered
-        // refreshTasksUI() is blocked — prevents duplicate clone flash
-        setTimeout(() => { _selfUpdating = false; }, 3000);
-      }
+      setTimeout(() => { _selfUpdating = false; }, 2000);
     }).catch(() => {
       _checkboxInFlight.delete(taskIdStr);
       _selfUpdating = false;
       if (localTask) {
         localTask.status = isChecked ? 'OPEN' : 'COMPLETED';
-        localTask.section = isChecked ? 'TASK' : 'COMPLETED';
         localTask.completed_at = null;
       }
       renderAllSections(currentTasks);
@@ -2486,7 +2331,7 @@ function attachMultiSelectToTask(div, taskId) {
 
   // Left-click: select / shift-range / ctrl-toggle
   div.addEventListener('click', (e) => {
-    if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .edit-box, .info-icon, .repeat-badge')) return;
+    if (e.target.closest('.task-checkbox, .dots-btn, .task-options-menu, .completed-menu, .edit-box, .info-icon')) return;
 
     if (e.shiftKey && lastClickedTaskEl) {
       e.preventDefault();

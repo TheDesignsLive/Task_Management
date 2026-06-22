@@ -423,12 +423,7 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
       <% } else { %><div style="width:14px;"></div><% } %>
-<% if(task.repeat_type && task.repeat_type !== 'none'){ %>
-<span style="font-size:9px;color:#a78bfa;padding:2px 5px;border-radius:3px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.35);font-weight:700;letter-spacing:0.3px;white-space:nowrap;flex-shrink:0;line-height:1.4;">🔁 <%= task.repeat_type %></span>
-      <% } else { %>
-      <span style="display:inline-block;width:52px;flex-shrink:0;"></span>
-      <% } %>
-      <div class="task-owner-name"><%= task.assigned_to_name %></div>
+<div class="task-owner-name"><%= task.assigned_to_name %></div>
       <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
     </div>
     <div class="task-details">
@@ -467,11 +462,6 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-<% if(task.repeat_type && task.repeat_type !== 'none'){ %>
-<span style="font-size:9px;color:#a78bfa;padding:2px 5px;border-radius:3px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.35);font-weight:700;letter-spacing:0.3px;white-space:nowrap;flex-shrink:0;line-height:1.4;">🔁 <%= task.repeat_type %></span>
-<% } else { %>
-<span style="display:inline-block;width:52px;flex-shrink:0;"></span>
-<% } %>
 <div class="task-owner-name"><%= task.assigned_to_name %></div>
 <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
         </div>
@@ -508,11 +498,6 @@ if(task.due_date){
 <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8.5"></line><line x1="12" y1="11" x2="12" y2="16"></line>
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
-<% if(task.repeat_type && task.repeat_type !== 'none'){ %>
-<span style="font-size:9px;color:#a78bfa;padding:2px 5px;border-radius:3px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.35);font-weight:700;letter-spacing:0.3px;white-space:nowrap;flex-shrink:0;line-height:1.4;">🔁 <%= task.repeat_type %></span>
-<% } else { %>
-<span style="display:inline-block;width:52px;flex-shrink:0;"></span>
-<% } %>
 <div class="task-owner-name"><%= task.assigned_to_name %></div>
 <div class="task-date <%= isPast ? 'past-date' : '' %>"><%= taskDate %></div>
 </div>
@@ -547,11 +532,6 @@ if(task.due_date){
 </svg>
 <% } else { %><div style="width:14px;"></div><% } %>
 
-<% if(task.repeat_type && task.repeat_type !== 'none'){ %>
-<span style="font-size:9px;color:#a78bfa;padding:2px 5px;border-radius:3px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.35);font-weight:700;letter-spacing:0.3px;white-space:nowrap;flex-shrink:0;line-height:1.4;">🔁 <%= task.repeat_type %></span>
-<% } else { %>
-<span style="display:inline-block;width:52px;flex-shrink:0;"></span>
-<% } %>
 <div class="task-owner-name"><%= task.assigned_to_name %></div>
 <div class="task-date <%= isPastO ? 'past-date' : '' %>"><%= taskDateO %></div>
 </div>
