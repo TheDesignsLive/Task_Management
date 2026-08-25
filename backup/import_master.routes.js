@@ -19,6 +19,14 @@ const transporter = nodemailer.createTransport({
     }
 
 
+    //     auth: {
+    //     user: "gmfruitshalvad@gmail.com",
+    //     pass: "vtlo fwhe bijl xdlx"
+    // }
+
+    
+
+
 });
 
 // ================= SEND OTP =================
@@ -41,6 +49,7 @@ router.post("/import/send-otp", (req, res) => {
 
             await transporter.sendMail({
                 from: "social.designs.live@gmail.com",
+                    //   from: "gmfruitshalvad@gmail.com",
                 to: masterEmail,
                 subject: "🔐 Secure Database Import OTP",
                 html: `
